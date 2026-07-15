@@ -23,3 +23,15 @@ npm run dev
 
 Server: `http://localhost:4000`
 Client: `http://localhost:5173`
+
+## Verification
+
+Run:
+
+```bash
+npm run test
+npm run typecheck
+npm run build
+```
+
+The app intentionally starts in mock mode. The real Mobius data source is blocked until a later integration step.
