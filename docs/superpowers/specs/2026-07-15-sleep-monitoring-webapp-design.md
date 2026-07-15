@@ -12,6 +12,8 @@ The initial product will provide one focused dashboard:
 - Generate mock samples every five minutes.
 - Render sleep stage samples as a square pulse, or stepped, chart.
 - Render breathing samples as a line chart.
+- Support variable session lengths in the chart model, with real sessions expected to reach roughly ten hours or more.
+- Let users drag horizontally through longer sessions while both charts keep the same visible time window.
 - Keep the chart implementation easy to revise because graph style and layout are expected to change often.
 
 The initial product will not include authentication, persistent storage, historical session browsing, real IoT credentials, or upload workflows. Those concerns should be anticipated through clean module boundaries, not implemented yet.
@@ -94,7 +96,9 @@ Summary calculations should ignore non-positive breathing values when calculatin
 
 ## Mock Data
 
-The mock provider will generate 25 samples per signal: one sample every five minutes across a two-hour window, including both the start and end timestamps.
+The first mock provider will generate 25 samples per signal: one sample every five minutes across a two-hour window, including both the start and end timestamps. This two-hour dataset exists only to validate the initial design and graph behavior. It must not be treated as the production session length.
+
+The chart and API design should allow much longer sessions. A real session may contain roughly ten hours of samples, and future data may vary further by user, device, sleep duration, and platform delivery behavior.
 
 The start time can be fixed for reproducibility. A reasonable first value is `20260714230000`, which produces data from 23:00 to 01:00. The generated sequence should include plausible variation:
 
@@ -113,13 +117,17 @@ Recommended frontend modules:
 - `client/src/api/sleepApi.ts`: API call and response typing.
 - `client/src/types/sleep.ts`: frontend data contracts.
 - `client/src/data/chartTransforms.ts`: timestamp and chart data transformations.
+- `client/src/data/timeWindow.ts`: visible time-window calculations for long sessions.
 - `client/src/charts/chartConfig.ts`: colors, labels, axis behavior, tooltip formatting.
 - `client/src/charts/SleepStageChart.tsx`: stepped sleep stage chart.
 - `client/src/charts/BreathingChart.tsx`: line breathing chart.
+- `client/src/components/TimeWindowController.tsx`: shared horizontal drag or range control for moving through longer sessions.
 - `client/src/components/SummaryMetric.tsx`: compact metric display.
 - `client/src/styles.css`: visual system and layout.
 
 The chart components should be deliberately thin. They should receive transformed data and read visual choices from `chartConfig`, so future graph changes mostly happen in config or transform files.
+
+Both charts should share one visible time-window state. The UI can default to a two-hour view for readability, but the underlying session may be longer. Horizontal drag gestures, and optionally a compact range control, should update the visible time domain for both charts together. This avoids each chart drifting to a different time range while monitoring the same sleep session.
 
 ## UI Design Direction
 
@@ -144,15 +152,25 @@ Sleep stage chart:
 
 - Use a stepped line or area style to create a square pulse effect.
 - Y-axis domain is fixed to `[0, 2]`.
+- X-axis domain is controlled by the shared visible time window, not hardcoded to two hours.
 - Show labels for 0, 1, and 2 instead of raw unlabeled ticks.
 - Tooltip displays human-readable time and stage label.
 
 Breathing chart:
 
 - Use a standard line chart for positive breathing values.
+- X-axis domain is controlled by the same shared visible time window as the sleep stage chart.
 - Preserve `-1` and `0` as visible events, either as points on the baseline or highlighted markers.
 - Tooltip explains `-1` as movement and `0` as apnea recognition failure.
 - Average breathing summary excludes `-1` and `0`.
+
+Long-session navigation:
+
+- Convert `yyyyMMddHHmmss` timestamps into numeric time values before charting.
+- Keep the full dataset in memory for the current session, but render the currently visible time range.
+- Default visible range can be two hours for the mock UI, while the full domain comes from `startedAt` and `endedAt`.
+- Horizontal dragging pans the visible range left and right while clamping to the full session domain.
+- If a chart library feature such as a brush is used, it should be wrapped behind the same `TimeWindowController` boundary so it can be replaced later without rewriting chart components.
 
 ## Error And Loading States
 
