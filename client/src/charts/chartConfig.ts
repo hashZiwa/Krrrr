@@ -9,10 +9,16 @@ export const chartColors = {
 };
 
 export const sleepStageLabels: Record<number, string> = {
-  0: "얕음",
-  1: "중간",
-  2: "깊음",
+  0: "깸",
+  1: "얕은 잠",
+  2: "깊은 잠",
 };
+
+export const sleepStageGuideLines = [
+  { value: 0, color: "#b94a48", strokeWidth: 1.5 },
+  { value: 1, color: "#8aa6a3", strokeWidth: 2.5 },
+  { value: 2, color: "#276b7a", strokeWidth: 3.5 },
+];
 
 export function formatBreathingValue(value: number): string {
   if (value === -1) return "뒤척임";
