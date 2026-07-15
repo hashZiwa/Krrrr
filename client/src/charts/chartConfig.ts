@@ -20,6 +20,18 @@ export const sleepStageLineStyles: Record<number, { color: string; strokeWidth: 
   2: { color: "#276b7a", strokeWidth: 3.5 },
 };
 
+export type SleepStageTooltipPayloadItem = {
+  value?: unknown;
+};
+
+export function getSleepStageTooltipValue(payload?: SleepStageTooltipPayloadItem[] | null): number | null {
+  const item = payload?.find((entry) => {
+    return typeof entry.value === "number" && entry.value in sleepStageLabels;
+  });
+
+  return typeof item?.value === "number" ? item.value : null;
+}
+
 export function formatBreathingValue(value: number): string {
   if (value === -1) return "뒤척임";
   if (value === 0) return "무호흡 인식 실패";

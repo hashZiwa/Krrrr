@@ -171,6 +171,27 @@ h1 {
   min-height: 280px;
 }
 
+.chart-tooltip {
+  display: grid;
+  gap: 4px;
+  min-width: 96px;
+  padding: 10px 12px;
+  border: 1px solid #d9e3e5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #172326;
+  box-shadow: 0 8px 24px rgba(23, 35, 38, 0.12);
+}
+
+.chart-tooltip strong {
+  font-size: 13px;
+}
+
+.chart-tooltip span {
+  color: #3c565c;
+  font-size: 13px;
+}
+
 @media (max-width: 760px) {
   .dashboard-header {
     align-items: flex-start;

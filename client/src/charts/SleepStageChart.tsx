@@ -10,12 +10,39 @@ import {
 import { formatTimeLabel, toSleepStageSegments } from "../data/chartTransforms";
 import type { TimeWindow } from "../data/timeWindow";
 import type { ChartSample } from "../types/sleep";
-import { chartColors, sleepStageLabels, sleepStageLineStyles } from "./chartConfig";
+import {
+  chartColors,
+  getSleepStageTooltipValue,
+  sleepStageLabels,
+  sleepStageLineStyles,
+  type SleepStageTooltipPayloadItem,
+} from "./chartConfig";
 
 type SleepStageChartProps = {
   data: ChartSample[];
   window: TimeWindow;
 };
+
+type SleepStageTooltipProps = {
+  active?: boolean;
+  label?: number;
+  payload?: SleepStageTooltipPayloadItem[];
+};
+
+function SleepStageTooltip({ active, label, payload }: SleepStageTooltipProps) {
+  const value = getSleepStageTooltipValue(payload);
+
+  if (!active || value === null) {
+    return null;
+  }
+
+  return (
+    <div className="chart-tooltip">
+      <strong>{formatTimeLabel(Number(label))}</strong>
+      <span>{sleepStageLabels[value]}</span>
+    </div>
+  );
+}
 
 export function SleepStageChart({ data, window }: SleepStageChartProps) {
   const segments = toSleepStageSegments(data);
@@ -43,10 +70,7 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
               stroke={chartColors.axis}
               width={56}
             />
-            <Tooltip
-              labelFormatter={(value) => formatTimeLabel(Number(value))}
-              formatter={(value) => [sleepStageLabels[Number(value)], "단계"]}
-            />
+            <Tooltip content={<SleepStageTooltip />} />
             {segments.map((segment, index) => {
               const style = sleepStageLineStyles[segment.value];
 
