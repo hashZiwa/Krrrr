@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMeasuredAt, toChartSamples, toSleepStageSegments } from "../data/chartTransforms";
+import { getHourlyTimeTicks, parseMeasuredAt, toChartSamples, toSleepStageSegments } from "../data/chartTransforms";
 
 describe("chartTransforms", () => {
   it("parses yyyyMMddHHmmss timestamps into local Date milliseconds", () => {
@@ -43,5 +43,15 @@ describe("chartTransforms", () => {
       { timeMs: samples[1].timeMs, value: 1 },
       { timeMs: samples[2].timeMs, value: 1 },
     ]);
+  });
+
+  it("creates x-axis ticks on one-hour boundaries within the visible window", () => {
+    const start = parseMeasuredAt("20260714231500");
+    const end = parseMeasuredAt("20260715021500");
+
+    const ticks = getHourlyTimeTicks(start, end);
+
+    expect(ticks.map((tick) => new Date(tick).getHours())).toEqual([0, 1, 2]);
+    expect(ticks.map((tick) => new Date(tick).getMinutes())).toEqual([0, 0, 0]);
   });
 });

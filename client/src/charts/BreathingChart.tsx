@@ -24,8 +24,7 @@ export function BreathingChart({ data, window }: BreathingChartProps) {
   return (
     <section className="chart-panel">
       <div className="chart-panel__header">
-        <h2>호흡</h2>
-        <span>양수는 분당 호흡 횟수</span>
+        <h2>호흡 모니터</h2>
       </div>
       <div className="chart-frame">
         <ResponsiveContainer width="100%" height={280}>

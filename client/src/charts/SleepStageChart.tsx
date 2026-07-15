@@ -1,5 +1,6 @@
 import {
   CartesianGrid,
+  Customized,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -7,14 +8,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatTimeLabel, toSleepStageSegments } from "../data/chartTransforms";
+import { formatTimeLabel, getHourlyTimeTicks, toSleepStageSegments } from "../data/chartTransforms";
 import type { TimeWindow } from "../data/timeWindow";
 import type { ChartSample } from "../types/sleep";
 import {
   chartColors,
   getSleepStageTooltipValue,
+  getSleepStageSegmentClipPadding,
+  shouldRenderSleepStageGlow,
   sleepStageLabels,
   sleepStageLineStyles,
+  sleepStageSegmentGlow,
   type SleepStageTooltipPayloadItem,
 } from "./chartConfig";
 
@@ -28,6 +32,105 @@ type SleepStageTooltipProps = {
   label?: number;
   payload?: SleepStageTooltipPayloadItem[];
 };
+
+type AxisMap = Record<string, { scale?: (value: number) => number }>;
+
+type ChartOffset = {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+};
+
+type SleepStageSegmentsLayerProps = {
+  data: ChartSample[];
+  xAxisMap?: AxisMap;
+  yAxisMap?: AxisMap;
+  offset?: ChartOffset;
+};
+
+function getPrimaryScale(axisMap?: AxisMap) {
+  return Object.values(axisMap ?? {})[0]?.scale;
+}
+
+function SleepStageSegmentsLayer({
+  data,
+  xAxisMap,
+  yAxisMap,
+  offset,
+}: SleepStageSegmentsLayerProps) {
+  const xScale = getPrimaryScale(xAxisMap);
+  const yScale = getPrimaryScale(yAxisMap);
+  const segments = toSleepStageSegments(data);
+
+  if (!xScale || !yScale || !offset) {
+    return null;
+  }
+
+  const clipPathId = "sleep-stage-segment-clip";
+  const glowGradientId = (value: number) => `sleep-stage-glow-${value}`;
+  const clipPadding = getSleepStageSegmentClipPadding();
+
+  return (
+    <g>
+      <defs>
+        <clipPath id={clipPathId}>
+          <rect
+            x={offset.left - clipPadding}
+            y={offset.top - clipPadding}
+            width={offset.width + clipPadding * 2}
+            height={offset.height + clipPadding * 2}
+          />
+        </clipPath>
+        {sleepStageSegmentGlow.stages.map((value) => {
+          const style = sleepStageLineStyles[value];
+
+          return (
+            <linearGradient key={value} id={glowGradientId(value)} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={style.color} stopOpacity={sleepStageSegmentGlow.opacity} />
+              <stop offset="100%" stopColor={style.color} stopOpacity={0} />
+            </linearGradient>
+          );
+        })}
+      </defs>
+      <g clipPath={`url(#${clipPathId})`}>
+        {segments.map((segment, index) => {
+          const style = sleepStageLineStyles[segment.value];
+          const [start, end] = segment.points;
+          const x1 = xScale(start.timeMs);
+          const x2 = xScale(end.timeMs);
+          const y = yScale(segment.value);
+          const key = `${start.timeMs}-${index}`;
+          const strokeOffset = style.strokeWidth / 2;
+
+          return (
+            <g key={key}>
+              {shouldRenderSleepStageGlow(segment.value) ? (
+                <rect
+                  x={Math.min(x1, x2)}
+                  y={y + strokeOffset}
+                  width={Math.abs(x2 - x1)}
+                  height={sleepStageSegmentGlow.height}
+                  rx={strokeOffset}
+                  fill={`url(#${glowGradientId(segment.value)})`}
+                />
+              ) : null}
+              <line
+                x1={x1}
+                x2={x2}
+                y1={y}
+                y2={y}
+                stroke={style.color}
+                strokeWidth={style.strokeWidth}
+                strokeLinecap="round"
+              />
+            </g>
+          );
+        })}
+      </g>
+    </g>
+  );
+}
 
 function SleepStageTooltip({ active, label, payload }: SleepStageTooltipProps) {
   const value = getSleepStageTooltipValue(payload);
@@ -45,12 +148,12 @@ function SleepStageTooltip({ active, label, payload }: SleepStageTooltipProps) {
 }
 
 export function SleepStageChart({ data, window }: SleepStageChartProps) {
-  const segments = toSleepStageSegments(data);
+  const hourlyTicks = getHourlyTimeTicks(window.start, window.end);
 
   return (
     <section className="chart-panel">
       <div className="chart-panel__header">
-        <h2>수면 단계</h2>
+        <h2>수면 단계 모니터</h2>
       </div>
       <div className="chart-frame">
         <ResponsiveContainer width="100%" height={280}>
@@ -60,36 +163,24 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
               dataKey="timeMs"
               type="number"
               domain={[window.start, window.end]}
+              ticks={hourlyTicks}
+              tick={{ fontSize: 12, fill: chartColors.axis }}
               tickFormatter={formatTimeLabel}
-              stroke={chartColors.axis}
+              stroke="transparent"
+              tickMargin={8}
             />
             <YAxis
               domain={[0, 2]}
               ticks={[0, 1, 2]}
+              tick={{ fontSize: 13, fill: chartColors.axis }}
+              strokeWidth={2}
               tickFormatter={(value) => sleepStageLabels[Number(value)]}
               stroke={chartColors.axis}
-              width={56}
+              width={65}
+              tickMargin={8}
             />
             <Tooltip content={<SleepStageTooltip />} />
-            {segments.map((segment, index) => {
-              const style = sleepStageLineStyles[segment.value];
-
-              return (
-                <Line
-                  key={`${segment.points[0].timeMs}-${index}`}
-                  type="linear"
-                  data={segment.points}
-                  dataKey="value"
-                  stroke={style.color}
-                  strokeWidth={style.strokeWidth}
-                  dot={false}
-                  activeDot={false}
-                  isAnimationActive={false}
-                  connectNulls={false}
-                  legendType="none"
-                />
-              );
-            })}
+            <Customized component={<SleepStageSegmentsLayer data={data} />} />
             <Line
               type="linear"
               dataKey="value"

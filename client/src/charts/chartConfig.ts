@@ -15,10 +15,28 @@ export const sleepStageLabels: Record<number, string> = {
 };
 
 export const sleepStageLineStyles: Record<number, { color: string; strokeWidth: number }> = {
-  0: { color: "#b94a48", strokeWidth: 1.5 },
-  1: { color: "#8aa6a3", strokeWidth: 2.5 },
-  2: { color: "#276b7a", strokeWidth: 3.5 },
+  0: { color: "#f8c302ff", strokeWidth: 4 },
+  1: { color: "#239bf1", strokeWidth: 5 },
+  2: { color: "#5541e6", strokeWidth: 7 },
 };
+
+export const sleepStageSegmentGlow = {
+  stages: [1, 2],
+  height: 70,
+  opacity: 0.28,
+} as const;
+
+export const sleepStageSegmentClipPaddingBuffer = 12;
+
+export function getSleepStageSegmentClipPadding(): number {
+  const maxStrokeWidth = Math.max(...Object.values(sleepStageLineStyles).map((style) => style.strokeWidth));
+
+  return maxStrokeWidth / 2 + sleepStageSegmentClipPaddingBuffer;
+}
+
+export function shouldRenderSleepStageGlow(value: number): boolean {
+  return sleepStageSegmentGlow.stages.includes(value as 1 | 2);
+}
 
 export type SleepStageTooltipPayloadItem = {
   value?: unknown;

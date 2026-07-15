@@ -18,6 +18,22 @@ export function formatTimeLabel(timeMs: number): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+export function getHourlyTimeTicks(startMs: number, endMs: number): number[] {
+  const firstTick = new Date(startMs);
+
+  firstTick.setMinutes(0, 0, 0);
+  if (firstTick.getTime() < startMs) {
+    firstTick.setHours(firstTick.getHours() + 1);
+  }
+
+  const ticks: number[] = [];
+  for (let tick = firstTick.getTime(); tick <= endMs; tick += 60 * 60 * 1000) {
+    ticks.push(tick);
+  }
+
+  return ticks;
+}
+
 export function toChartSamples(samples: SensorSample[]): ChartSample[] {
   return samples.map((sample) => {
     const timeMs = parseMeasuredAt(sample.measuredAt);
