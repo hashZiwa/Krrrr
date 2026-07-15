@@ -15,6 +15,7 @@ IoT 플랫폼에서 수집된 수면 센서 데이터를 사용자가 확인하�
 - 차트 모델은 가변 길이 세션을 지원해야 하며, 실제 세션은 대략 10시간 이상까지 들어올 수 있다고 전제한다.
 - 긴 세션에서는 사용자가 그래프를 좌우로 드래그하며 이동할 수 있고, 두 그래프는 같은 시간 구간을 함께 바라보도록 한다.
 - 그래프 스타일과 레이아웃은 자주 바뀔 가능성이 있으므로, 차트 구현은 수정하기 쉬운 형태로 유지한다.
+- 첫 구현에서는 mock 데이터만 사용한다. 실제 플랫폼 통신은 나중에 명시적으로 활성화할 수 있는 비활성 통합 경로로만 준비한다.
 
 초기 제품에는 인증, 영구 저장소, 과거 세션 탐색, 실제 IoT 인증 정보, 업로드 워크플로는 포함하지 않는다. 다만 이런 기능은 이후 추가될 수 있으므로, 명확한 모듈 경계를 통해 확장 가능성을 확보한다.
 
@@ -35,6 +36,8 @@ React와 Vite는 빠른 UI 개발 환경을 제공한다. Express는 작지만 �
 
 이 엔드포인트는 최신 수면 세션 하나의 메타데이터, 원본 샘플, 가벼운 요약 값을 반환한다. 초기 구현은 mock provider를 사용하지만, 라우트 핸들러가 직접 데이터를 생성하지 않고 provider/service 인터페이스에 의존하도록 만든다.
 
+기본 실행 데이터 소스는 반드시 mock 전용이어야 한다. 서버 설정값으로 `SLEEP_DATA_SOURCE` 같은 값을 두고, 첫 구현에서는 기본값이자 유일하게 활성화된 값으로 `mock`을 사용한다. 향후 `mobius` 값을 통해 실제 플랫폼 통신을 활성화할 수 있지만, 사용자가 명시적으로 요청하고 필요한 플랫폼 설정을 제공하기 전까지는 막아둔다.
+
 권장 서버 모듈:
 
 - `server/src/index.ts`: Express 앱 시작점과 미들웨어 설정.
@@ -53,9 +56,25 @@ React와 Vite는 빠른 UI 개발 환경을 제공한다. Express는 작지만 �
 - `sleepAnalysisService`: 수면 품질, 무호흡 의심, 뒤척임 빈도, 깊은 수면 비율을 계산한다.
 - `platformUploadService`: 파생 이벤트나 주석 데이터를 IoT 플랫폼에 다시 업로드한다.
 
+Provider 선택은 `sleepDataProviderFactory` 같은 한 곳에서 처리한다. 초기 동작 예시는 다음과 같다.
+
+```ts
+const dataSource = env.SLEEP_DATA_SOURCE ?? "mock";
+
+if (dataSource === "mock") {
+  return mockSleepDataProvider;
+}
+
+throw new Error("Real platform data source is not enabled yet.");
+```
+
+이렇게 하면 지금은 mock 경로를 쉽게 사용하면서, 초기 UI 개발 중 실수로 네트워크 호출이나 인증 정보가 필요한 동작이 발생하는 일을 막을 수 있다.
+
 ## IoT 플랫폼 통신 방식
 
 예시 Vue 파일은 Mobius/oneM2M 계열의 통신 방식을 보여준다. 이 프로젝트에서는 해당 방식을 React 프론트엔드가 아니라 Express 서버에서 적용한다. 프론트엔드는 이 서비스가 제공하는 API만 호출하고, 플랫폼 인증 정보, 요청 헤더, 응답 파싱, polling, 업로드 처리는 서버가 담당한다.
+
+이 통합은 초기 구현에서는 계획만 되어 있는 비활성 경로다. 기본 동작에서는 Mobius/oneM2M 엔드포인트를 호출하지 않는다. 실제 플랫폼 연동을 요청받기 전까지 `mobiusClient`와 `mobiusSleepDataProvider`는 미구현, stub, 또는 서버 측 기능 플래그 뒤에 둔다.
 
 확인된 플랫폼 통신 패턴:
 
@@ -83,6 +102,8 @@ React와 Vite는 빠른 UI 개발 환경을 제공한다. Express는 작지만 �
 - POST 요청 시 `Content-Type: application/json;ty=4`
 
 이 값들은 소스 코드가 아니라 서버 환경변수에 저장한다. 예시 파일은 프론트 코드 안에 API key가 직접 들어 있지만, 이 프로젝트에서는 API key나 플랫폼 식별 정보가 브라우저에 노출되지 않게 한다.
+
+실제 플랫폼 접근을 위한 환경변수는 `SLEEP_DATA_SOURCE=mock` 상태에서는 선택 사항이어야 한다. Mock 모드에서는 Mobius 인증 정보가 없어도 서버가 정상적으로 시작되어야 한다. 나중에 `SLEEP_DATA_SOURCE=mobius`를 요청하면, 서버 시작 시 플랫폼 기본 URL, AE path, origin, API key, creator, lecture, 필요한 container mapping을 모두 검증해야 한다.
 
 Mobius 클라이언트는 플랫폼 형태에 가까운 작은 메서드를 제공한다.
 

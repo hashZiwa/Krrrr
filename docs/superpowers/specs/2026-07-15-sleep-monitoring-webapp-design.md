@@ -15,6 +15,7 @@ The initial product will provide one focused dashboard:
 - Support variable session lengths in the chart model, with real sessions expected to reach roughly ten hours or more.
 - Let users drag horizontally through longer sessions while both charts keep the same visible time window.
 - Keep the chart implementation easy to revise because graph style and layout are expected to change often.
+- Use mock data only for the first implementation. Real platform communication should be present only as a disabled, opt-in integration path.
 
 The initial product will not include authentication, persistent storage, historical session browsing, real IoT credentials, or upload workflows. Those concerns should be anticipated through clean module boundaries, not implemented yet.
 
@@ -35,6 +36,8 @@ The server will expose an API that already resembles the future production contr
 
 The endpoint returns one latest sleep session with metadata, raw samples, and lightweight summary values. The initial implementation will use a mock provider, but route handlers should depend on a provider/service interface rather than directly generating data inside the route.
 
+The default runtime data source must be mock-only. Add a server-side configuration value such as `SLEEP_DATA_SOURCE`, with `mock` as the default and only enabled value for the first implementation. A future `mobius` value can activate real platform communication, but it should remain blocked until the user explicitly asks to enable it and supplies the required platform configuration.
+
 Recommended server modules:
 
 - `server/src/index.ts`: Express app bootstrap and middleware.
@@ -53,9 +56,25 @@ Future provider modules can include:
 - `sleepAnalysisService`: computes sleep quality, apnea suspicion, movement frequency, and deep sleep ratio.
 - `platformUploadService`: uploads derived events or annotations back to the IoT platform.
 
+Provider selection should happen in one place, for example `sleepDataProviderFactory`. Initial behavior:
+
+```ts
+const dataSource = env.SLEEP_DATA_SOURCE ?? "mock";
+
+if (dataSource === "mock") {
+  return mockSleepDataProvider;
+}
+
+throw new Error("Real platform data source is not enabled yet.");
+```
+
+This makes the mock path easy to use now while preventing accidental network calls or credential-dependent behavior during early UI development.
+
 ## IoT Platform Communication
 
 The sample Vue file shows a Mobius/oneM2M-style communication pattern. This project should adapt that pattern on the Express server, not in the React frontend. The frontend should call only this service's own API, while the server owns platform credentials, request headers, response parsing, polling, and upload behavior.
+
+This integration is a planned, disabled path for the initial build. Do not call Mobius/oneM2M endpoints by default. Keep `mobiusClient` and `mobiusSleepDataProvider` either unimplemented, stubbed, or guarded behind a server-side feature flag until real platform integration is requested.
 
 Observed platform pattern:
 
@@ -83,6 +102,8 @@ Required headers should be supplied by the server from environment variables:
 - `Content-Type: application/json;ty=4` for POST requests
 
 The server should store these values in environment variables rather than source code. The sample file contains credentials directly in frontend code, but this project should avoid exposing API keys or platform identity values to the browser.
+
+Environment variables for real platform access should be optional while `SLEEP_DATA_SOURCE=mock`. The server should start successfully without Mobius credentials in mock mode. If `SLEEP_DATA_SOURCE=mobius` is requested later, startup validation should require the platform base URL, AE path, origin, API key, creator, lecture, and any required container mapping.
 
 The Mobius client should expose small, platform-shaped methods:
 
