@@ -41,14 +41,69 @@ React와 Vite는 빠른 UI 개발 환경을 제공한다. Express는 작지만 �
 - `server/src/routes/sleepSessions.ts`: API 라우트 정의.
 - `server/src/services/sleepSessionService.ts`: 세션 조회와 요약 계산 흐름 조정.
 - `server/src/providers/mockSleepDataProvider.ts`: mock 샘플 데이터 생성.
+- `server/src/providers/mobiusSleepDataProvider.ts`: 향후 Mobius/oneM2M 플랫폼 데이터 조회.
+- `server/src/clients/mobiusClient.ts`: Mobius HTTP GET/POST를 감싸는 저수준 클라이언트.
 - `server/src/models/sleep.ts`: 서버 측 공유 데이터 타입.
+- `server/src/config/env.ts`: 서버 측 플랫폼 인증 정보와 기본 URL 검증.
 - `server/src/utils/time.ts`: 타임스탬프 포맷과 샘플 간격 관련 유틸리티.
 
 이후 추가 가능한 provider/service 모듈:
 
-- `iotSleepDataProvider`: 실제 IoT 플랫폼에서 데이터를 가져온다.
+- `iotSleepDataProvider` 또는 `mobiusSleepDataProvider`: 실제 IoT 플랫폼에서 데이터를 가져온다.
 - `sleepAnalysisService`: 수면 품질, 무호흡 의심, 뒤척임 빈도, 깊은 수면 비율을 계산한다.
 - `platformUploadService`: 파생 이벤트나 주석 데이터를 IoT 플랫폼에 다시 업로드한다.
+
+## IoT 플랫폼 통신 방식
+
+예시 Vue 파일은 Mobius/oneM2M 계열의 통신 방식을 보여준다. 이 프로젝트에서는 해당 방식을 React 프론트엔드가 아니라 Express 서버에서 적용한다. 프론트엔드는 이 서비스가 제공하는 API만 호출하고, 플랫폼 인증 정보, 요청 헤더, 응답 파싱, polling, 업로드 처리는 서버가 담당한다.
+
+확인된 플랫폼 통신 패턴:
+
+- 최신 content instance 조회: `GET /{aePath}/{containerName}/la`
+- content instance 생성: `POST /{aePath}/{containerName}`
+- 업로드 요청 body 형식:
+
+```json
+{
+  "m2m:cin": {
+    "rn": "4-yyyyMMddHHmmssSSS",
+    "con": "value"
+  }
+}
+```
+
+필요한 헤더는 서버가 환경변수에서 읽어 넣는다.
+
+- `X-M2M-RI`
+- `X-M2M-Origin`
+- `Accept: application/json`
+- `X-API-KEY`
+- `X-AUTH-CUSTOM-CREATOR`
+- `X-AUTH-CUSTOM-LECTURE`
+- POST 요청 시 `Content-Type: application/json;ty=4`
+
+이 값들은 소스 코드가 아니라 서버 환경변수에 저장한다. 예시 파일은 프론트 코드 안에 API key가 직접 들어 있지만, 이 프로젝트에서는 API key나 플랫폼 식별 정보가 브라우저에 노출되지 않게 한다.
+
+Mobius 클라이언트는 플랫폼 형태에 가까운 작은 메서드를 제공한다.
+
+```ts
+type MobiusCin = {
+  rn?: string;
+  ri?: string;
+  con?: string | number;
+};
+
+type MobiusClient = {
+  getLatestCin(containerName: string): Promise<MobiusCin>;
+  createCin(containerName: string, content: string | number): Promise<MobiusCin>;
+};
+```
+
+Provider 계층은 플랫폼 container 데이터를 이 서비스의 도메인 모델로 변환한다. 예를 들어 수면 단계와 호흡 container를 조회한 뒤, 값을 파싱하고 측정 시간 기준으로 정렬하여 `SensorSample[]`로 반환한다. 플랫폼 데이터가 압축 문자열이나 혼합 이벤트 형식으로 들어오면, 그 파싱은 차트 컴포넌트가 아니라 provider 또는 parser 모듈에서 처리한다.
+
+Polling도 서버가 담당한다. Vue 예시는 여러 container를 2초 간격으로 조회한다. 이 서비스의 첫 운영 버전은 `/api/sleep-sessions/latest` 호출 시점에 데이터를 가져오거나, 이후 서버 측 polling/cache 계층을 추가할 수 있다. Polling을 도입할 경우 독립적인 container 실패가 전체 세션 응답을 막지 않도록 `Promise.allSettled(containers.map(...))` 형태를 사용한다.
+
+플랫폼 업로드 기능은 `platformUploadService` 뒤에 추가한다. 업로드 후보는 분석 결과, 이벤트 주석, 사용자가 확인한 수면 플래그 등이 될 수 있다. 업로드 payload 생성은 같은 `createCin` helper를 재사용해 oneM2M 형식이 한 곳에 모이게 한다.
 
 ## 데이터 모델
 

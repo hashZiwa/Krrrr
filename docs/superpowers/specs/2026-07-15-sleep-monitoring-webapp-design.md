@@ -41,14 +41,69 @@ Recommended server modules:
 - `server/src/routes/sleepSessions.ts`: API route definitions.
 - `server/src/services/sleepSessionService.ts`: session retrieval and summary orchestration.
 - `server/src/providers/mockSleepDataProvider.ts`: mock sample generation.
+- `server/src/providers/mobiusSleepDataProvider.ts`: future Mobius/oneM2M platform data retrieval.
+- `server/src/clients/mobiusClient.ts`: low-level Mobius HTTP GET/POST wrapper.
 - `server/src/models/sleep.ts`: shared server-side data types.
+- `server/src/config/env.ts`: validated server-side platform credentials and base URLs.
 - `server/src/utils/time.ts`: timestamp formatting and sample interval helpers.
 
 Future provider modules can include:
 
-- `iotSleepDataProvider`: fetches data from the real IoT platform.
+- `iotSleepDataProvider` or `mobiusSleepDataProvider`: fetches data from the real IoT platform.
 - `sleepAnalysisService`: computes sleep quality, apnea suspicion, movement frequency, and deep sleep ratio.
 - `platformUploadService`: uploads derived events or annotations back to the IoT platform.
+
+## IoT Platform Communication
+
+The sample Vue file shows a Mobius/oneM2M-style communication pattern. This project should adapt that pattern on the Express server, not in the React frontend. The frontend should call only this service's own API, while the server owns platform credentials, request headers, response parsing, polling, and upload behavior.
+
+Observed platform pattern:
+
+- Latest content instance lookup: `GET /{aePath}/{containerName}/la`
+- Content instance creation: `POST /{aePath}/{containerName}`
+- Request body shape for uploads:
+
+```json
+{
+  "m2m:cin": {
+    "rn": "4-yyyyMMddHHmmssSSS",
+    "con": "value"
+  }
+}
+```
+
+Required headers should be supplied by the server from environment variables:
+
+- `X-M2M-RI`
+- `X-M2M-Origin`
+- `Accept: application/json`
+- `X-API-KEY`
+- `X-AUTH-CUSTOM-CREATOR`
+- `X-AUTH-CUSTOM-LECTURE`
+- `Content-Type: application/json;ty=4` for POST requests
+
+The server should store these values in environment variables rather than source code. The sample file contains credentials directly in frontend code, but this project should avoid exposing API keys or platform identity values to the browser.
+
+The Mobius client should expose small, platform-shaped methods:
+
+```ts
+type MobiusCin = {
+  rn?: string;
+  ri?: string;
+  con?: string | number;
+};
+
+type MobiusClient = {
+  getLatestCin(containerName: string): Promise<MobiusCin>;
+  createCin(containerName: string, content: string | number): Promise<MobiusCin>;
+};
+```
+
+The provider layer should translate platform containers into this service's domain model. For example, sleep stage and breathing containers should be fetched, parsed, sorted by measurement time, and returned as `SensorSample[]`. If platform data arrives as packed strings or mixed event formats, parsing should happen inside the provider or a parser module, not inside chart components.
+
+Polling should also remain server-owned. The Vue sample polls several containers every two seconds. For this service, the first production version can either fetch on demand when `/api/sleep-sessions/latest` is called or add a server-side polling/cache layer later. If polling is introduced, use `Promise.allSettled(containers.map(...))` so independent container failures do not block the whole session response.
+
+Platform upload features should be added behind `platformUploadService`. Candidate uploads include derived analysis results, event annotations, or user-reviewed sleep flags. Upload payload creation should reuse the same `createCin` helper so oneM2M formatting stays in one place.
 
 ## Data Model
 
