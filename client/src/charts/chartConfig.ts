@@ -14,11 +14,11 @@ export const sleepStageLabels: Record<number, string> = {
   2: "깊은 잠",
 };
 
-export const sleepStageGuideLines = [
-  { value: 0, color: "#b94a48", strokeWidth: 1.5 },
-  { value: 1, color: "#8aa6a3", strokeWidth: 2.5 },
-  { value: 2, color: "#276b7a", strokeWidth: 3.5 },
-];
+export const sleepStageLineStyles: Record<number, { color: string; strokeWidth: number }> = {
+  0: { color: "#b94a48", strokeWidth: 1.5 },
+  1: { color: "#8aa6a3", strokeWidth: 2.5 },
+  2: { color: "#276b7a", strokeWidth: 3.5 },
+};
 
 export function formatBreathingValue(value: number): string {
   if (value === -1) return "뒤척임";

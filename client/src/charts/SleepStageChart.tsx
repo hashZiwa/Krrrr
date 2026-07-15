@@ -1,16 +1,16 @@
 import {
-  Area,
-  AreaChart,
-  ReferenceLine,
+  CartesianGrid,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
-import { formatTimeLabel } from "../data/chartTransforms";
+import { formatTimeLabel, toSleepStageSegments } from "../data/chartTransforms";
 import type { TimeWindow } from "../data/timeWindow";
 import type { ChartSample } from "../types/sleep";
-import { chartColors, sleepStageGuideLines, sleepStageLabels } from "./chartConfig";
+import { chartColors, sleepStageLabels, sleepStageLineStyles } from "./chartConfig";
 
 type SleepStageChartProps = {
   data: ChartSample[];
@@ -18,6 +18,8 @@ type SleepStageChartProps = {
 };
 
 export function SleepStageChart({ data, window }: SleepStageChartProps) {
+  const segments = toSleepStageSegments(data);
+
   return (
     <section className="chart-panel">
       <div className="chart-panel__header">
@@ -25,7 +27,8 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
       </div>
       <div className="chart-frame">
         <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={data} margin={{ top: 12, right: 20, bottom: 0, left: 0 }}>
+          <LineChart data={data} margin={{ top: 12, right: 20, bottom: 0, left: 0 }}>
+            <CartesianGrid stroke={chartColors.grid} strokeDasharray="4 4" />
             <XAxis
               dataKey="timeMs"
               type="number"
@@ -44,24 +47,35 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
               labelFormatter={(value) => formatTimeLabel(Number(value))}
               formatter={(value) => [sleepStageLabels[Number(value)], "단계"]}
             />
-            {sleepStageGuideLines.map((line) => (
-              <ReferenceLine
-                key={line.value}
-                y={line.value}
-                stroke={line.color}
-                strokeWidth={line.strokeWidth}
-                ifOverflow="extendDomain"
-              />
-            ))}
-            <Area
-              type="stepAfter"
+            {segments.map((segment, index) => {
+              const style = sleepStageLineStyles[segment.value];
+
+              return (
+                <Line
+                  key={`${segment.points[0].timeMs}-${index}`}
+                  type="linear"
+                  data={segment.points}
+                  dataKey="value"
+                  stroke={style.color}
+                  strokeWidth={style.strokeWidth}
+                  dot={false}
+                  activeDot={false}
+                  isAnimationActive={false}
+                  connectNulls={false}
+                  legendType="none"
+                />
+              );
+            })}
+            <Line
+              type="linear"
               dataKey="value"
-              stroke={chartColors.sleepLine}
-              fill={chartColors.sleepFill}
-              strokeWidth={3}
+              stroke="transparent"
+              strokeWidth={0}
+              dot={false}
+              activeDot={false}
               isAnimationActive={false}
             />
-          </AreaChart>
+          </LineChart>
         </ResponsiveContainer>
       </div>
     </section>

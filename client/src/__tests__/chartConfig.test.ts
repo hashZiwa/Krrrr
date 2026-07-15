@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sleepStageGuideLines, sleepStageLabels } from "../charts/chartConfig";
+import { sleepStageLabels, sleepStageLineStyles } from "../charts/chartConfig";
 
 describe("chartConfig", () => {
   it("uses the requested sleep stage labels", () => {
@@ -10,10 +10,9 @@ describe("chartConfig", () => {
     });
   });
 
-  it("configures one horizontal guide line per sleep stage", () => {
-    expect(sleepStageGuideLines).toHaveLength(3);
-    expect(sleepStageGuideLines.map((line) => line.value)).toEqual([0, 1, 2]);
-    expect(new Set(sleepStageGuideLines.map((line) => line.color)).size).toBe(3);
-    expect(new Set(sleepStageGuideLines.map((line) => line.strokeWidth)).size).toBe(3);
+  it("configures one pulse line style per sleep stage", () => {
+    expect(Object.keys(sleepStageLineStyles).map(Number)).toEqual([0, 1, 2]);
+    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.color)).size).toBe(3);
+    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.strokeWidth)).size).toBe(3);
   });
 });

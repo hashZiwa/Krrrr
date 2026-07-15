@@ -29,3 +29,21 @@ export function toChartSamples(samples: SensorSample[]): ChartSample[] {
     };
   });
 }
+
+export type SleepStageSegment = {
+  value: number;
+  points: Array<{
+    timeMs: number;
+    value: number;
+  }>;
+};
+
+export function toSleepStageSegments(samples: ChartSample[]): SleepStageSegment[] {
+  return samples.slice(0, -1).map((sample, index) => ({
+    value: sample.value,
+    points: [
+      { timeMs: sample.timeMs, value: sample.value },
+      { timeMs: samples[index + 1].timeMs, value: sample.value },
+    ],
+  }));
+}
