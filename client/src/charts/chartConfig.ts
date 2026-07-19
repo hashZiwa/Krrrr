@@ -1,11 +1,11 @@
 export const chartColors = {
-  sleepLine: "#276b7a",
-  sleepFill: "#b9dde3",
-  breathingLine: "#6e6a71",
+  sleepLine: "#b86b18",
+  sleepFill: "#f3d8ad",
+  breathingLine: "#62564a",
   movement: "#fff6d4",
   apnea: "#eba4a3",
-  grid: "#d9e3e5",
-  axis: "#66777b",
+  grid: "#e3d6c4",
+  axis: "#8a765f",
 };
 
 export const sleepStageLabels: Record<number, string> = {

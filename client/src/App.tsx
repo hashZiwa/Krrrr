@@ -1,28 +1,85 @@
-import { useEffect, useMemo, useState } from "react";
-import { fetchLatestSleepSession } from "./api/sleepApi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchDisplayDataFiles, fetchDisplayDataSession, type DisplayDataFile } from "./api/displayDataApi";
 import { BreathingChart } from "./charts/BreathingChart";
 import { SleepStageChart } from "./charts/SleepStageChart";
 import { AlarmControlPanel } from "./components/AlarmControlPanel";
+import { DisplayDataSelector } from "./components/DisplayDataSelector";
 import { SummaryMetric } from "./components/SummaryMetric";
 import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
-import { formatTimeLabel, parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
+import { parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
 import type { SleepSessionResponse } from "./types/sleep";
 
 export default function App() {
+  const [displayFiles, setDisplayFiles] = useState<DisplayDataFile[]>([]);
+  const [selectedDisplayFile, setSelectedDisplayFile] = useState("");
   const [session, setSession] = useState<SleepSessionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchLatestSleepSession()
-      .then((nextSession) => {
-        setSession(nextSession);
-      })
-      .catch((nextError: unknown) => {
-        setError(nextError instanceof Error ? nextError.message : "수면 데이터를 불러올 수 없습니다.");
-      })
-      .finally(() => setIsLoading(false));
+  const loadDisplaySession = useCallback(async (fileName: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const nextSession = await fetchDisplayDataSession(fileName);
+      setSession(nextSession);
+    } catch (nextError: unknown) {
+      setError(nextError instanceof Error ? nextError.message : "표시 데이터를 불러오지 못했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadInitialDisplayData() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const nextFiles = await fetchDisplayDataFiles();
+
+        if (!isMounted) return;
+
+        setDisplayFiles(nextFiles);
+
+        const firstFile = nextFiles[0]?.name ?? "";
+        setSelectedDisplayFile(firstFile);
+
+        if (!firstFile) {
+          setSession(null);
+          setError("displaydata 폴더에 CSV 파일이 없습니다.");
+          return;
+        }
+
+        const nextSession = await fetchDisplayDataSession(firstFile);
+
+        if (!isMounted) return;
+
+        setSession(nextSession);
+      } catch (nextError: unknown) {
+        if (!isMounted) return;
+        setError(nextError instanceof Error ? nextError.message : "표시 데이터를 불러오지 못했습니다.");
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    void loadInitialDisplayData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSelectDisplayFile = useCallback(
+    (fileName: string) => {
+      setSelectedDisplayFile(fileName);
+      void loadDisplaySession(fileName);
+    },
+    [loadDisplaySession],
+  );
 
   const chartData = useMemo(() => {
     if (!session) return null;
@@ -33,11 +90,11 @@ export default function App() {
     };
   }, [session]);
 
-  if (isLoading) {
+  if (isLoading && !session) {
     return <main className="app-shell">Loading sleep data</main>;
   }
 
-  if (error) {
+  if (error && !session) {
     return <main className="app-shell app-message">{error}</main>;
   }
 
@@ -54,14 +111,22 @@ export default function App() {
       <header className="dashboard-header">
         <div>
           <p className="eyebrow">수면 관리 IoT 시스템</p>
-          <h1>숙면호흡</h1>
+          <h1>슬립모니터</h1>
         </div>
       </header>
+
+      <DisplayDataSelector
+        files={displayFiles}
+        selectedFile={selectedDisplayFile}
+        isLoading={isLoading}
+        error={error}
+        onSelectFile={handleSelectDisplayFile}
+      />
 
       <section className="summary-grid" aria-label="수면 요약">
         <SummaryMetric
           label="평균 호흡"
-          value={session.summary.averageBreathingRate === null ? "-" : `${session.summary.averageBreathingRate}회/분`}
+          value={session.summary.averageBreathingRate === null ? "-" : `${session.summary.averageBreathingRate}/분`}
         />
         <SummaryMetric label="뒤척임" value={`${session.summary.movementCount}회`} tone="alert" />
         <SummaryMetric label="무호흡 인식 실패" value={`${session.summary.apneaRecognitionFailureCount}회`} tone="alert" />
