@@ -19,6 +19,7 @@ import type { ChartSample } from "../types/sleep";
 import {
   chartColors,
   getSleepStageDisplayValue,
+  getSleepStageTransitionLineCoordinates,
   getSleepStageTooltipValue,
   getSleepStageScrollableWidth,
   getSleepStageSegmentClipPadding,
@@ -97,6 +98,7 @@ function SleepStageSegmentsLayer({
           const x = xScale(transition.timeMs);
           const fromY = yScale(getSleepStageDisplayValue(transition.fromValue));
           const toY = yScale(getSleepStageDisplayValue(transition.toValue));
+          const lineCoordinates = getSleepStageTransitionLineCoordinates(fromY, toY);
           const topColor = fromY <= toY ? fromStyle.color : toStyle.color;
           const bottomColor = fromY <= toY ? toStyle.color : fromStyle.color;
 
@@ -107,8 +109,8 @@ function SleepStageSegmentsLayer({
               gradientUnits={sleepStageTransitionGradientUnits}
               x1={x}
               x2={x}
-              y1={Math.min(fromY, toY)}
-              y2={Math.max(fromY, toY)}
+              y1={lineCoordinates.gradientY1}
+              y2={lineCoordinates.gradientY2}
             >
               {sleepStageTransitionGradientStops.map((stop) => (
                 <stop
@@ -126,14 +128,15 @@ function SleepStageSegmentsLayer({
           const x = xScale(transition.timeMs);
           const fromY = yScale(getSleepStageDisplayValue(transition.fromValue));
           const toY = yScale(getSleepStageDisplayValue(transition.toValue));
+          const lineCoordinates = getSleepStageTransitionLineCoordinates(fromY, toY);
 
           return (
             <line
               key={`${transition.timeMs}-${transition.fromValue}-${transition.toValue}`}
               x1={x}
               x2={x}
-              y1={fromY}
-              y2={toY}
+              y1={lineCoordinates.y1}
+              y2={lineCoordinates.y2}
               stroke={`url(#${transitionGradientId(index)})`}
               strokeWidth={sleepStageTransitionLineStyle.strokeWidth}
               strokeLinecap={sleepStageTransitionLineStyle.strokeLinecap}

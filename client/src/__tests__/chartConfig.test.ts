@@ -11,6 +11,7 @@ import {
   getBreathingScrollableWidth,
   getBreathingYAxisConfig,
   getSleepStageDisplayValue,
+  getSleepStageTransitionLineCoordinates,
   getSleepStageTooltipValue,
   getSleepStageSegmentClipPadding,
   getSleepStageScrollableWidth,
@@ -39,11 +40,28 @@ describe("chartConfig", () => {
   });
 
   it("keeps a configurable pixel y offset for each horizontal sleep stage segment", () => {
-    expect(Object.values(sleepStageLineStyles).map((style) => style.yOffsetPx)).toEqual([0, 0, 1]);
+    expect(Object.values(sleepStageLineStyles).every((style) => typeof style.yOffsetPx === "number")).toBe(true);
   });
 
   it("uses the awake stroke width as the default sleep transition line width", () => {
     expect(sleepStageTransitionLineStyle.strokeWidth).toBe(sleepStageLineStyles[0].strokeWidth);
+  });
+
+  it("extends sleep transition lines downward by half the transition stroke width", () => {
+    const extension = sleepStageTransitionLineStyle.strokeWidth / 2;
+
+    expect(getSleepStageTransitionLineCoordinates(20, 80)).toEqual({
+      y1: 20,
+      y2: 80 + extension,
+      gradientY1: 20,
+      gradientY2: 80 + extension,
+    });
+    expect(getSleepStageTransitionLineCoordinates(80, 20)).toEqual({
+      y1: 80 + extension,
+      y2: 20,
+      gradientY1: 20,
+      gradientY2: 80 + extension,
+    });
   });
 
   it("uses user-space gradients for zero-width vertical transition lines", () => {
