@@ -24,6 +24,7 @@ import {
   getSleepStageSegmentClipPadding,
   sleepStageLabels,
   sleepStageLineStyles,
+  sleepStageTransitionGradientStops,
   sleepStageTransitionGradientUnits,
   sleepStageTransitionLineStyle,
   type SleepStageTooltipPayloadItem,
@@ -109,8 +110,13 @@ function SleepStageSegmentsLayer({
               y1={Math.min(fromY, toY)}
               y2={Math.max(fromY, toY)}
             >
-              <stop offset="0%" stopColor={topColor} />
-              <stop offset="100%" stopColor={bottomColor} />
+              {sleepStageTransitionGradientStops.map((stop) => (
+                <stop
+                  key={`${stop.offset}-${stop.color}`}
+                  offset={stop.offset}
+                  stopColor={stop.color === "from" ? topColor : bottomColor}
+                />
+              ))}
             </linearGradient>
           );
         })}

@@ -17,6 +17,7 @@ import {
   shouldRenderSleepStageGlow,
   sleepStageLabels,
   sleepStageLineStyles,
+  sleepStageTransitionGradientStops,
   sleepStageSegmentGlow,
   sleepStageTransitionGradientUnits,
   sleepStageTransitionLineStyle,
@@ -43,6 +44,15 @@ describe("chartConfig", () => {
 
   it("uses user-space gradients for zero-width vertical transition lines", () => {
     expect(sleepStageTransitionGradientUnits).toBe("userSpaceOnUse");
+  });
+
+  it("keeps configurable from-to stops for sleep transition gradients", () => {
+    expect(sleepStageTransitionGradientStops).toEqual([
+      { offset: "0%", color: "from" },
+      { offset: "45%", color: "from" },
+      { offset: "55%", color: "to" },
+      { offset: "100%", color: "to" },
+    ]);
   });
 
   it("selects one valid sleep stage value from duplicated tooltip payload", () => {

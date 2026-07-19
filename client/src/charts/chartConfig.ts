@@ -27,6 +27,13 @@ export const sleepStageTransitionLineStyle = {
 
 export const sleepStageTransitionGradientUnits = "userSpaceOnUse";
 
+export const sleepStageTransitionGradientStops: Array<{ offset: string; color: "from" | "to" }> = [
+  { offset: "0%", color: "from" },
+  { offset: "45%", color: "from" },
+  { offset: "55%", color: "to" },
+  { offset: "100%", color: "to" },
+];
+
 export const sleepStageSegmentGlow = {
   stages: [] as number[],
   height: 70,
