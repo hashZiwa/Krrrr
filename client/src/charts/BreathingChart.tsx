@@ -360,6 +360,7 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                 <Area
                   type={breathingCurveStyle.type}
                   dataKey="displayValue"
+                  tooltipType="none"
                   fill="url(#breathing-area-gradient)"
                   stroke="none"
                   dot={false}
