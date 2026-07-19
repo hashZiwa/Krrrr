@@ -160,13 +160,6 @@ export function PlatformDataPanel() {
           </div>
         </div>
         <div className="platform-data-panel__header-actions">
-          <button
-            type="button"
-            disabled={status === "loading" || status === "downloading"}
-            onClick={() => void loadGroups(0)}
-          >
-            {getPlatformDataLoadButtonText(hasLoaded)}
-          </button>
           {hasMore ? (
             <button
               type="button"
@@ -176,6 +169,13 @@ export function PlatformDataPanel() {
               더 불러오기
             </button>
           ) : null}
+          <button
+            type="button"
+            disabled={status === "loading" || status === "downloading"}
+            onClick={() => void loadGroups(0)}
+          >
+            {getPlatformDataLoadButtonText(hasLoaded)}
+          </button>
         </div>
       </div>
 

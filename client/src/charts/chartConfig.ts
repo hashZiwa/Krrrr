@@ -35,7 +35,7 @@ export const sleepStageTransitionLineStyle = {
 } as const;
 
 export const sleepStageChartStyle = {
-  opacity: 0.5,
+  opacity: 0.6,
 } as const;
 
 export const sleepStageTransitionGradientUnits = "userSpaceOnUse";
@@ -76,7 +76,7 @@ export const sleepStageSegmentGlow = {
 export const sleepStageSegmentClipPaddingBuffer = 12;
 
 export const breathingSleepStageOverlayStyle = {
-  opacity: 0.34,
+  opacity: 0.33,
   strokeWidthByStage: {
     0: sleepStageLineStyles[0].strokeWidth,
     1: sleepStageLineStyles[1].strokeWidth,
