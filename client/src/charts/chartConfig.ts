@@ -22,8 +22,8 @@ export type SleepStageLineStyle = {
 
 export const sleepStageLineStyles: Record<number, SleepStageLineStyle> = {
   0: { color: "#f8c302ff", strokeWidth: 4, yOffsetPx: 0 },
-  1: { color: "#239bf1", strokeWidth: 10, yOffsetPx: -3 },
-  2: { color: "#5541e6", strokeWidth: 16, yOffsetPx: -6 },
+  1: { color: "#239bf1", strokeWidth: 10, yOffsetPx: 0 },
+  2: { color: "#5541e6", strokeWidth: 16, yOffsetPx: 0 },
 };
 
 export const sleepStageTransitionLineStyle = {
@@ -43,15 +43,20 @@ export const sleepStageTransitionGradientStops: Array<{ offset: string; color: "
 export function getSleepStageTransitionLineCoordinates(
   fromY: number,
   toY: number,
+  fromStrokeWidth: number,
+  toStrokeWidth: number,
 ): { y1: number; y2: number; gradientY1: number; gradientY2: number } {
-  const extension = sleepStageTransitionLineStyle.strokeWidth / 2;
-  const bottomY = Math.max(fromY, toY);
+  const fromExtension = fromStrokeWidth / 2;
+  const toExtension = toStrokeWidth / 2;
+  const fromIsTop = fromY <= toY;
+  const topY = fromIsTop ? fromY - fromExtension : toY - toExtension;
+  const bottomY = fromIsTop ? toY + toExtension : fromY + fromExtension;
 
   return {
-    y1: fromY === bottomY ? fromY + extension : fromY,
-    y2: toY === bottomY ? toY + extension : toY,
-    gradientY1: Math.min(fromY, toY),
-    gradientY2: bottomY + extension,
+    y1: fromIsTop ? topY : bottomY,
+    y2: fromIsTop ? bottomY : topY,
+    gradientY1: topY,
+    gradientY2: bottomY,
   };
 }
 

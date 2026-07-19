@@ -98,7 +98,12 @@ function SleepStageSegmentsLayer({
           const x = xScale(transition.timeMs);
           const fromY = yScale(getSleepStageDisplayValue(transition.fromValue));
           const toY = yScale(getSleepStageDisplayValue(transition.toValue));
-          const lineCoordinates = getSleepStageTransitionLineCoordinates(fromY, toY);
+          const lineCoordinates = getSleepStageTransitionLineCoordinates(
+            fromY,
+            toY,
+            fromStyle.strokeWidth,
+            toStyle.strokeWidth,
+          );
           const topColor = fromY <= toY ? fromStyle.color : toStyle.color;
           const bottomColor = fromY <= toY ? toStyle.color : fromStyle.color;
 
@@ -128,7 +133,14 @@ function SleepStageSegmentsLayer({
           const x = xScale(transition.timeMs);
           const fromY = yScale(getSleepStageDisplayValue(transition.fromValue));
           const toY = yScale(getSleepStageDisplayValue(transition.toValue));
-          const lineCoordinates = getSleepStageTransitionLineCoordinates(fromY, toY);
+          const fromStyle = sleepStageLineStyles[transition.fromValue];
+          const toStyle = sleepStageLineStyles[transition.toValue];
+          const lineCoordinates = getSleepStageTransitionLineCoordinates(
+            fromY,
+            toY,
+            fromStyle.strokeWidth,
+            toStyle.strokeWidth,
+          );
 
           return (
             <line

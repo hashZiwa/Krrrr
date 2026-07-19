@@ -47,20 +47,18 @@ describe("chartConfig", () => {
     expect(sleepStageTransitionLineStyle.strokeWidth).toBe(sleepStageLineStyles[0].strokeWidth);
   });
 
-  it("extends sleep transition lines downward by half the transition stroke width", () => {
-    const extension = sleepStageTransitionLineStyle.strokeWidth / 2;
-
-    expect(getSleepStageTransitionLineCoordinates(20, 80)).toEqual({
-      y1: 20,
-      y2: 80 + extension,
-      gradientY1: 20,
-      gradientY2: 80 + extension,
+  it("extends sleep transition lines by the connected horizontal segment stroke widths", () => {
+    expect(getSleepStageTransitionLineCoordinates(20, 80, 10, 16)).toEqual({
+      y1: 15,
+      y2: 88,
+      gradientY1: 15,
+      gradientY2: 88,
     });
-    expect(getSleepStageTransitionLineCoordinates(80, 20)).toEqual({
-      y1: 80 + extension,
-      y2: 20,
-      gradientY1: 20,
-      gradientY2: 80 + extension,
+    expect(getSleepStageTransitionLineCoordinates(80, 20, 10, 16)).toEqual({
+      y1: 85,
+      y2: 12,
+      gradientY1: 12,
+      gradientY2: 85,
     });
   });
 
