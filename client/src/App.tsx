@@ -4,6 +4,7 @@ import { BreathingChart } from "./charts/BreathingChart";
 import { SleepStageChart } from "./charts/SleepStageChart";
 import { AlarmControlPanel } from "./components/AlarmControlPanel";
 import { DisplayDataSelector } from "./components/DisplayDataSelector";
+import { PlatformDataPanel } from "./components/PlatformDataPanel";
 import { SummaryMetric } from "./components/SummaryMetric";
 import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
 import { parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
@@ -141,6 +142,8 @@ export default function App() {
       <section className="device-panel-grid" aria-label="기기 설정 업로드">
         <AlarmControlPanel />
       </section>
+
+      <PlatformDataPanel />
 
       <TrainingInfoPanel />
     </main>

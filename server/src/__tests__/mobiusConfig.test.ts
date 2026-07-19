@@ -23,6 +23,7 @@ describe("getMobiusConfig", () => {
       MOBIUS_API_KEY: "secret",
       MOBIUS_AUTH_CUSTOM_CREATOR: "creator",
       MOBIUS_AUTH_CUSTOM_LECTURE: "lecture",
+      MOBIUS_STATUS_CONTAINER_BREATH_CONDITION: "STATUS_CNT/BREATH_CONDITION_CNT",
       MOBIUS_UPLOAD_CONTAINER_SLEEP_ANALYSIS: "ANALYSIS/SLEEP_CN",
       MOBIUS_UPLOAD_CONTAINER_EVENT_NOTE: "ANALYSIS/EVENT_NOTE_CN",
     });
@@ -35,6 +36,9 @@ describe("getMobiusConfig", () => {
       apiKey: "secret",
       creator: "creator",
       lecture: "lecture",
+      statusContainers: {
+        breathCondition: "STATUS_CNT/BREATH_CONDITION_CNT",
+      },
       uploadContainers: {
         eventNote: "ANALYSIS/EVENT_NOTE_CN",
         sleepAnalysis: "ANALYSIS/SLEEP_CN",

@@ -6,6 +6,7 @@ export type MobiusConfig = {
   apiKey: string;
   creator: string;
   lecture: string;
+  statusContainers: Record<string, string>;
   uploadContainers: Record<string, string>;
 };
 
@@ -47,11 +48,19 @@ function toCamelCase(value: string): string {
 }
 
 function getUploadContainers(source: NodeJS.ProcessEnv): Record<string, string> {
+  return getContainersByPrefix(source, "MOBIUS_UPLOAD_CONTAINER_");
+}
+
+function getStatusContainers(source: NodeJS.ProcessEnv): Record<string, string> {
+  return getContainersByPrefix(source, "MOBIUS_STATUS_CONTAINER_");
+}
+
+function getContainersByPrefix(source: NodeJS.ProcessEnv, prefix: string): Record<string, string> {
   return Object.entries(source)
-    .filter(([key, value]) => key.startsWith("MOBIUS_UPLOAD_CONTAINER_") && Boolean(value))
+    .filter(([key, value]) => key.startsWith(prefix) && Boolean(value))
     .sort(([left], [right]) => left.localeCompare(right))
     .reduce<Record<string, string>>((containers, [key, value]) => {
-      const featureName = key.replace("MOBIUS_UPLOAD_CONTAINER_", "");
+      const featureName = key.replace(prefix, "");
       containers[toCamelCase(featureName)] = value as string;
       return containers;
     }, {});
@@ -70,6 +79,7 @@ export function getMobiusConfig(source: NodeJS.ProcessEnv = process.env): Mobius
     apiKey: requireValue(source, "MOBIUS_API_KEY"),
     creator: requireValue(source, "MOBIUS_AUTH_CUSTOM_CREATOR"),
     lecture: requireValue(source, "MOBIUS_AUTH_CUSTOM_LECTURE"),
+    statusContainers: getStatusContainers(source),
     uploadContainers: getUploadContainers(source),
   };
 }

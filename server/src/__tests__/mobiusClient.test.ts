@@ -10,6 +10,7 @@ const config: MobiusConfig = {
   apiKey: "secret",
   creator: "creator",
   lecture: "lecture",
+  statusContainers: {},
   uploadContainers: {},
 };
 
@@ -61,5 +62,67 @@ describe("createMobiusClient", () => {
         "X-M2M-RI": "123",
       },
     });
+  });
+
+  it("discovers child content instance URIs with a 500 item page", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        "m2m:uril": [
+          "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180421712",
+          "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718175452835",
+        ],
+      }),
+    });
+    const client = createMobiusClient(config, fetchImpl);
+
+    const result = await client.discoverCinUris("STATUS_CNT/BREATH_CONDITION_CNT", { offset: 0, limit: 500 });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://onem2m.example.test/Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT?fu=1&lvl=1&ty=4&ofst=0&lim=500",
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-API-KEY": "secret",
+          "X-AUTH-CUSTOM-CREATOR": "creator",
+          "X-AUTH-CUSTOM-LECTURE": "lecture",
+          "X-M2M-Origin": "SOrigin_Test",
+          "X-M2M-RI": "123",
+        },
+      },
+    );
+    expect(result).toEqual([
+      "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180421712",
+      "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718175452835",
+    ]);
+  });
+
+  it("gets a content instance by discovered URI", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ "m2m:cin": { rn: "4-20260718180421712", ri: "ri-3", con: 17 } }),
+    });
+    const client = createMobiusClient(config, fetchImpl);
+
+    const result = await client.getCinByUri("Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180421712");
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      "https://onem2m.example.test/Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180421712",
+      {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-API-KEY": "secret",
+          "X-AUTH-CUSTOM-CREATOR": "creator",
+          "X-AUTH-CUSTOM-LECTURE": "lecture",
+          "X-M2M-Origin": "SOrigin_Test",
+          "X-M2M-RI": "123",
+        },
+      },
+    );
+    expect(result).toEqual({ rn: "4-20260718180421712", ri: "ri-3", con: 17 });
   });
 });

@@ -6,10 +6,12 @@ import { loadEnvFile } from "./config/loadEnvFile.js";
 import { getMobiusConfig } from "./config/mobiusConfig.js";
 import { createSleepDataProvider } from "./providers/sleepDataProviderFactory.js";
 import { createDisplayDataRouter } from "./routes/displayData.js";
+import { createPlatformDataRouter } from "./routes/platformData.js";
 import { createPlatformUploadRouter } from "./routes/platformUpload.js";
 import { createSleepSessionRouter } from "./routes/sleepSessions.js";
 import { createSleepStageTrainingRouter } from "./routes/sleepStageTraining.js";
 import { createDisplayDataService } from "./services/displayDataService.js";
+import { createPlatformDataService } from "./services/platformDataService.js";
 import { createPlatformUploadService } from "./services/platformUploadService.js";
 import { createSleepSessionService } from "./services/sleepSessionService.js";
 import { createSleepStageTrainingService } from "./services/sleepStageTrainingService.js";
@@ -26,6 +28,11 @@ void sleepStageTrainingService.loadLatestModel();
 const uploadService = mobiusConfig
   ? createPlatformUploadService(createMobiusClient(mobiusConfig), mobiusConfig.uploadContainers)
   : null;
+const platformDataService = mobiusConfig
+  ? createPlatformDataService(createMobiusClient(mobiusConfig), {
+      breathConditionContainer: mobiusConfig.statusContainers.breathCondition,
+    })
+  : null;
 
 const app = express();
 
@@ -33,6 +40,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/sleep-sessions", createSleepSessionRouter(service));
 app.use("/api/display-data", createDisplayDataRouter(displayDataService));
+app.use("/api/platform-data", createPlatformDataRouter(platformDataService));
 app.use("/api/platform-upload", createPlatformUploadRouter(uploadService));
 app.use("/api/sleep-stage-training", createSleepStageTrainingRouter(sleepStageTrainingService));
 

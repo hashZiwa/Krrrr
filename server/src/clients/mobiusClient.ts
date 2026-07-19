@@ -9,6 +9,8 @@ export type MobiusCin = {
 export type MobiusClient = {
   getLatestCin(containerName: string): Promise<MobiusCin>;
   createCin(containerName: string, content: MobiusCin["con"]): Promise<MobiusCin>;
+  discoverCinUris(containerName: string, options?: { offset?: number; limit?: number }): Promise<string[]>;
+  getCinByUri(uri: string): Promise<MobiusCin>;
 };
 
 type FetchLike = typeof fetch;
@@ -70,6 +72,18 @@ async function requestCin(fetchImpl: FetchLike, url: string, init: RequestInit):
   return parseCinResponse(response);
 }
 
+async function requestUriList(fetchImpl: FetchLike, url: string, init: RequestInit): Promise<string[]> {
+  const response = await fetchImpl(url, init);
+
+  if (!response.ok) {
+    throw new Error(`Mobius discovery request failed with status ${response.status}`);
+  }
+
+  const responseBody = (await response.json()) as { "m2m:uril"?: string[] };
+
+  return responseBody["m2m:uril"] ?? [];
+}
+
 export function createMobiusClient(config: MobiusConfig, fetchImpl: FetchLike = fetch): MobiusClient {
   return {
     getLatestCin(containerName) {
@@ -92,6 +106,30 @@ export function createMobiusClient(config: MobiusConfig, fetchImpl: FetchLike = 
             con: content,
           },
         }),
+      });
+    },
+
+    discoverCinUris(containerName, options = {}) {
+      const offset = options.offset ?? 0;
+      const limit = options.limit ?? 500;
+      const query = new URLSearchParams({
+        fu: "1",
+        lvl: "1",
+        ty: "4",
+        ofst: String(offset),
+        lim: String(limit),
+      });
+
+      return requestUriList(fetchImpl, `${joinUrl(config.baseUrl, config.aePath, containerName)}?${query}`, {
+        method: "GET",
+        headers: commonHeaders(config),
+      });
+    },
+
+    getCinByUri(uri) {
+      return requestCin(fetchImpl, joinUrl(config.baseUrl, uri), {
+        method: "GET",
+        headers: commonHeaders(config),
       });
     },
   };

@@ -348,6 +348,10 @@ h1 {
   margin-top: 16px;
 }
 
+.platform-data-panel {
+  margin-top: 16px;
+}
+
 .device-panel__header {
   display: flex;
   align-items: center;
@@ -367,6 +371,94 @@ h1 {
 .device-panel h2 {
   margin: 0;
   font-size: 20px;
+}
+
+.platform-data-panel .device-panel__header button,
+.platform-data-panel__actions button {
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  cursor: pointer;
+  font-weight: 800;
+  padding: 8px 12px;
+}
+
+.platform-data-panel .device-panel__header button:disabled,
+.platform-data-panel__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.platform-data-panel__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.platform-data-panel__summary span {
+  border: 1px solid #eadfce;
+  border-radius: 6px;
+  color: var(--color-subtle);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 10px;
+}
+
+.platform-data-panel__message {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.platform-data-panel__message--error {
+  color: #d9473f;
+}
+
+.platform-data-panel__groups {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-height: 220px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.platform-data-panel__group {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 10px;
+}
+
+.platform-data-panel__group input {
+  margin-top: 3px;
+}
+
+.platform-data-panel__group span {
+  display: grid;
+  gap: 4px;
+}
+
+.platform-data-panel__group strong {
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.platform-data-panel__group small {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.platform-data-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
 }
 
 .training-panel__actions {
