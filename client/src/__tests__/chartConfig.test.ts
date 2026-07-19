@@ -28,15 +28,16 @@ describe("chartConfig", () => {
   it("uses the requested sleep stage labels", () => {
     expect(sleepStageLabels).toEqual({
       0: "깸",
-      1: "얕은 잠",
-      2: "깊은 잠",
+      1: "REM",
+      2: "얕은 잠",
+      3: "깊은 잠",
     });
   });
 
   it("configures one pulse line style per sleep stage", () => {
-    expect(Object.keys(sleepStageLineStyles).map(Number)).toEqual([0, 1, 2]);
-    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.color)).size).toBe(3);
-    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.strokeWidth)).size).toBe(3);
+    expect(Object.keys(sleepStageLineStyles).map(Number)).toEqual([0, 1, 2, 3]);
+    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.color)).size).toBe(4);
+    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.strokeWidth)).size).toBe(4);
   });
 
   it("keeps horizontal sleep stage segment styles focused on color and stroke width", () => {
@@ -80,7 +81,7 @@ describe("chartConfig", () => {
       { value: undefined },
       { value: 1 },
       { value: 1 },
-      { value: 2 },
+      { value: 3 },
     ];
 
     expect(getSleepStageTooltipValue(payload)).toBe(1);
@@ -91,9 +92,10 @@ describe("chartConfig", () => {
   });
 
   it("maps sleep stages to reversed y-axis display positions", () => {
-    expect(getSleepStageDisplayValue(0)).toBe(2);
-    expect(getSleepStageDisplayValue(1)).toBe(1);
-    expect(getSleepStageDisplayValue(2)).toBe(0);
+    expect(getSleepStageDisplayValue(0)).toBe(3);
+    expect(getSleepStageDisplayValue(1)).toBe(2);
+    expect(getSleepStageDisplayValue(2)).toBe(1);
+    expect(getSleepStageDisplayValue(3)).toBe(0);
   });
 
   it("does not add glow overlays to sleep stage segments", () => {

@@ -28,6 +28,7 @@ import {
   sleepStageTransitionGradientStops,
   sleepStageTransitionGradientUnits,
   sleepStageTransitionLineStyle,
+  sleepStageValues,
   type SleepStageTooltipPayloadItem,
 } from "./chartConfig";
 
@@ -199,7 +200,7 @@ function SleepStageTooltip({ active, label, payload }: SleepStageTooltipProps) {
 function FixedSleepStageYAxis() {
   return (
     <div className="fixed-y-axis fixed-y-axis--sleep" aria-hidden="true">
-      {[0, 1, 2].map((value) => (
+      {sleepStageValues.map((value) => (
         <span key={value}>{sleepStageLabels[value]}</span>
       ))}
     </div>
@@ -235,7 +236,7 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
                   stroke="transparent"
                   tickMargin={8}
                 />
-                <YAxis domain={[0, 2]} ticks={[0, 1, 2]} width={0} hide />
+                <YAxis domain={[0, 3]} ticks={[0, 1, 2, 3]} width={0} hide />
                 <Tooltip content={<SleepStageTooltip />} />
                 <Customized component={<SleepStageSegmentsLayer data={data} />} />
                 <Line

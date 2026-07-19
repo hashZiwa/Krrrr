@@ -10,9 +10,12 @@ export const chartColors = {
 
 export const sleepStageLabels: Record<number, string> = {
   0: "깸",
-  1: "얕은 잠",
-  2: "깊은 잠",
+  1: "REM",
+  2: "얕은 잠",
+  3: "깊은 잠",
 };
+
+export const sleepStageValues = [0, 1, 2, 3] as const;
 
 export type SleepStageLineStyle = {
   color: string;
@@ -21,8 +24,9 @@ export type SleepStageLineStyle = {
 
 export const sleepStageLineStyles: Record<number, SleepStageLineStyle> = {
   0: { color: "#f8c302ff", strokeWidth: 4 },
-  1: { color: "#239bf1", strokeWidth: 12 },
-  2: { color: "#5541e6", strokeWidth: 16 },
+  1: { color: "#22c8a9", strokeWidth: 8 },
+  2: { color: "#239bf1", strokeWidth: 12 },
+  3: { color: "#5541e6", strokeWidth: 16 },
 };
 
 export const sleepStageTransitionLineStyle = {
@@ -191,7 +195,7 @@ export function getSleepStageSegmentClipPadding(): number {
 }
 
 export function getSleepStageDisplayValue(value: number): number {
-  return 2 - value;
+  return 3 - value;
 }
 
 export function shouldRenderSleepStageGlow(value: number): boolean {

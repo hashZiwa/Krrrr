@@ -10,6 +10,7 @@ describe("mockSleepDataProvider", () => {
     expect(session.intervalMinutes).toBe(5);
     expect(session.sleepStageSamples).toHaveLength(49);
     expect(session.breathingSamples).toHaveLength(49);
+    expect(new Set(session.sleepStageSamples.map((sample) => sample.value))).toEqual(new Set([0, 1, 2, 3]));
   });
 
   it("calculates breathing summary without non-positive breathing values", async () => {

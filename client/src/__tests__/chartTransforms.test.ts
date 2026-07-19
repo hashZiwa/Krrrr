@@ -150,7 +150,8 @@ describe("chartTransforms", () => {
       { measuredAt: "20260714230000", value: 0 },
       { measuredAt: "20260714230500", value: 1 },
       { measuredAt: "20260714231000", value: 2 },
-      { measuredAt: "20260714231500", value: 0 },
+      { measuredAt: "20260714231500", value: 3 },
+      { measuredAt: "20260714232000", value: 0 },
     ]);
 
     const segments = toSleepStageOverlaySegments(samples, [10, 20]);
@@ -166,15 +167,22 @@ describe("chartTransforms", () => {
       {
         value: 1,
         points: [
-          { timeMs: samples[1].timeMs, overlayValue: 15 },
-          { timeMs: samples[2].timeMs, overlayValue: 15 },
+          { timeMs: samples[1].timeMs, overlayValue: 16.166666666666664 },
+          { timeMs: samples[2].timeMs, overlayValue: 16.166666666666664 },
         ],
       },
       {
         value: 2,
         points: [
-          { timeMs: samples[2].timeMs, overlayValue: 11.5 },
+          { timeMs: samples[2].timeMs, overlayValue: 13.833333333333332 },
+          { timeMs: samples[3].timeMs, overlayValue: 13.833333333333332 },
+        ],
+      },
+      {
+        value: 3,
+        points: [
           { timeMs: samples[3].timeMs, overlayValue: 11.5 },
+          { timeMs: samples[4].timeMs, overlayValue: 11.5 },
         ],
       },
     ]);

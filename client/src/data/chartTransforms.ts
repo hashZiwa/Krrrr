@@ -104,8 +104,9 @@ export function toSleepStageOverlaySegments(
   const range = max - min;
   const stagePositions: Record<number, number> = {
     0: min + range * 0.85,
-    1: min + range * 0.5,
-    2: min + range * 0.15,
+    1: min + range * (0.15 + (0.7 * 2) / 3),
+    2: min + range * (0.15 + 0.7 / 3),
+    3: min + range * 0.15,
   };
 
   return samples.slice(0, -1).map((sample, index) => {

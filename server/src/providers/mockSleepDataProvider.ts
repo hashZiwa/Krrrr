@@ -6,16 +6,16 @@ const START = new Date(2026, 6, 14, 23, 0, 0);
 const INTERVAL_MINUTES = 5;
 
 const sleepStages = [
-  0, 0, 1, 1, 1,
-  2, 2, 2, 1, 2,
-  2, 2, 1, 1, 2,
-  2, 2, 1, 1, 1,
+  0, 0, 1, 2, 2,
+  3, 3, 3, 2, 3,
+  3, 3, 2, 1, 3,
+  3, 3, 2, 2, 1,
   0, 1, 0, 0, 0,
-  1, 1, 2, 2, 2,
-  1, 1, 1, 2, 2,
-  2, 1, 0, 0, 1,
-  1, 2, 2, 1, 1,
-  0, 0, 1, 1,
+  1, 2, 3, 3, 3,
+  2, 2, 1, 3, 3,
+  3, 2, 1, 0, 1,
+  2, 3, 3, 2, 1,
+  0, 0, 1, 2,
 ];
 
 const breathingValues = [
@@ -53,7 +53,7 @@ function summarize(sleepStageSamples: SensorSample[], breathingSamples: SensorSa
       ? null
       : roundTo(validBreathing.reduce((sum, value) => sum + value, 0) / validBreathing.length, 1);
 
-  const deepSleepCount = sleepStageSamples.filter((sample) => sample.value === 2).length;
+  const deepSleepCount = sleepStageSamples.filter((sample) => sample.value === 3).length;
 
   return {
     averageBreathingRate,
