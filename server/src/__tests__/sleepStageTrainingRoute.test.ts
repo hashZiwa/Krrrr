@@ -57,12 +57,13 @@ describe("createSleepStageTrainingRouter", () => {
             stageCounts: { 0: 1, 1: 1, 2: 2, 3: 1 },
           },
         },
-        evaluation: {
+        trainingEvaluation: {
           total: 5,
           correct: 4,
           accuracy: 0.8,
           stages: {},
         },
+        validationEvaluation: null,
       }),
       incrementalTrainFromRawData: vi.fn(),
     };
@@ -83,12 +84,13 @@ describe("createSleepStageTrainingRouter", () => {
         featureCount: 10,
         stageCounts: { 0: 1, 1: 1, 2: 2, 3: 1 },
       },
-      evaluation: {
+      trainingEvaluation: {
         total: 5,
         correct: 4,
         accuracy: 0.8,
         stages: {},
       },
+      validationEvaluation: null,
     });
   });
 
@@ -111,10 +113,16 @@ describe("createSleepStageTrainingRouter", () => {
             stageCounts: { 0: 2, 1: 3, 2: 6, 3: 3 },
           },
         },
-        evaluation: {
+        trainingEvaluation: {
           total: 14,
           correct: 10,
           accuracy: 0.71,
+          stages: {},
+        },
+        validationEvaluation: {
+          total: 4,
+          correct: 2,
+          accuracy: 0.5,
           stages: {},
         },
       }),
@@ -125,6 +133,10 @@ describe("createSleepStageTrainingRouter", () => {
 
     expect(response.status).toBe(201);
     expect(service.incrementalTrainFromRawData).toHaveBeenCalledOnce();
-    await expect(response.json()).resolves.toMatchObject({ version: 3, trainingMode: "incremental" });
+    await expect(response.json()).resolves.toMatchObject({
+      version: 3,
+      trainingMode: "incremental",
+      validationEvaluation: { accuracy: 0.5 },
+    });
   });
 });

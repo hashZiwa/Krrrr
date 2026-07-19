@@ -342,6 +342,13 @@ h1 {
   margin-top: 12px;
 }
 
+.training-panel__stage-heading {
+  grid-column: 1 / -1;
+  color: #607276;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .training-panel__summary div,
 .training-panel__stage-grid div {
   min-height: 64px;

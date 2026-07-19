@@ -20,7 +20,8 @@ export type StoredSleepStageModel = {
   datasetRows: number;
   trainingExamples: number;
   historyMinutes: number;
-  evaluation: SleepStageModelEvaluation;
+  trainingEvaluation: SleepStageModelEvaluation;
+  validationEvaluation: SleepStageModelEvaluation | null;
   model: SleepStageModel;
 };
 

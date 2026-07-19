@@ -16,7 +16,8 @@ export type SleepStageTrainingStatus =
       trainingExamples: number;
       trainedAt: string;
       stageCounts: Record<string, number>;
-      evaluation?: SleepStageEvaluation;
+      trainingEvaluation?: SleepStageEvaluation;
+      validationEvaluation?: SleepStageEvaluation | null;
       sourceFiles?: string[];
     };
 
@@ -27,7 +28,8 @@ export type SleepStageTrainingResponse = {
   files: string[];
   datasetRows: number;
   trainingExamples: number;
-  evaluation: SleepStageEvaluation;
+  trainingEvaluation: SleepStageEvaluation;
+  validationEvaluation: SleepStageEvaluation | null;
   model: {
     trainedAt: string;
     featureCount: number;

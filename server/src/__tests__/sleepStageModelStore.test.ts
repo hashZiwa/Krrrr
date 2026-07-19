@@ -15,7 +15,8 @@ function storedModel(version = 1): StoredSleepStageModel {
     datasetRows: 6,
     trainingExamples: 5,
     historyMinutes: 1,
-    evaluation: { total: 5, correct: 4, accuracy: 0.8, stages: {} },
+    trainingEvaluation: { total: 5, correct: 4, accuracy: 0.8, stages: {} },
+    validationEvaluation: null,
     model: {
       labels: [0, 1, 2, 3],
       featureMeans: [1],

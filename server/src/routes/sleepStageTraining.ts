@@ -19,7 +19,8 @@ export function createSleepStageTrainingRouter(service: TrainingService): Router
       files: result.files,
       datasetRows: result.datasetRows,
       trainingExamples: result.trainingExamples,
-      evaluation: result.evaluation,
+      trainingEvaluation: result.trainingEvaluation,
+      validationEvaluation: result.validationEvaluation,
       model: {
         trainedAt: result.model.metadata.trainedAt,
         featureCount: result.model.metadata.featureCount,

@@ -12,6 +12,7 @@ import type { SourceFileFingerprint, SleepStageTrainingMode, StoredSleepStageMod
 
 export type SleepStageTrainingServiceOptions = {
   rawDataDir?: string;
+  validationDataDir?: string;
   modelDir?: string;
   historyMinutes?: number;
 };
@@ -24,7 +25,8 @@ export type SleepStageTrainingResult = {
   sourceFileFingerprints: SourceFileFingerprint[];
   datasetRows: number;
   trainingExamples: number;
-  evaluation: SleepStageModelEvaluation;
+  trainingEvaluation: SleepStageModelEvaluation;
+  validationEvaluation: SleepStageModelEvaluation | null;
   model: SleepStageModel;
 };
 
@@ -44,7 +46,17 @@ function findNamedDir(startDir: string, dirName: string): string {
 }
 
 function findRawDataDir(startDir: string): string {
-  return findNamedDir(startDir, "rawdata");
+  const rawDataDir = findNamedDir(startDir, "rawdata");
+  const trainDataDir = join(rawDataDir, "train");
+
+  return existsSync(trainDataDir) ? trainDataDir : rawDataDir;
+}
+
+function findValidationDataDir(startDir: string): string | null {
+  const rawDataDir = findNamedDir(startDir, "rawdata");
+  const validationDataDir = join(rawDataDir, "validation");
+
+  return existsSync(validationDataDir) ? validationDataDir : null;
 }
 
 function findModelDir(startDir: string): string {
@@ -76,6 +88,16 @@ async function getCsvFiles(rawDataDir: string): Promise<string[]> {
   return files;
 }
 
+async function getOptionalCsvFiles(dataDir: string | null): Promise<string[]> {
+  if (!dataDir || !existsSync(dataDir)) return [];
+  const entries = await readdir(dataDir, { withFileTypes: true });
+
+  return entries
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".csv"))
+    .map((entry) => entry.name)
+    .sort();
+}
+
 async function fingerprintFile(rawDataDir: string, file: string): Promise<SourceFileFingerprint> {
   const filePath = join(rawDataDir, file);
   const [content, fileStat] = await Promise.all([readFile(filePath), stat(filePath)]);
@@ -90,6 +112,9 @@ async function fingerprintFile(rawDataDir: string, file: string): Promise<Source
 
 export function createSleepStageTrainingService(options: SleepStageTrainingServiceOptions = {}) {
   const rawDataDir = options.rawDataDir ?? process.env.SLEEP_STAGE_RAWDATA_DIR ?? findRawDataDir(process.cwd());
+  const validationDataDir =
+    options.validationDataDir ??
+    (options.rawDataDir ? null : process.env.SLEEP_STAGE_VALIDATION_DATA_DIR ?? findValidationDataDir(process.cwd()));
   const modelDir = options.modelDir ?? process.env.SLEEP_STAGE_MODEL_DIR ?? findModelDir(process.cwd());
   const historyMinutes = options.historyMinutes ?? 5;
   const store = createSleepStageModelStore(modelDir);
@@ -103,9 +128,18 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
       await Promise.all(files.map(async (file) => parseSleepStageCsv(await readFile(join(rawDataDir, file), "utf8"))))
     ).flat();
     const examples = createWindowedSleepStageExamples(rows, { historyMinutes });
+    const validationFiles = await getOptionalCsvFiles(validationDataDir);
+    const validationRows = (
+      await Promise.all(
+        validationFiles.map(async (file) => parseSleepStageCsv(await readFile(join(validationDataDir ?? "", file), "utf8"))),
+      )
+    ).flat();
+    const validationExamples = createWindowedSleepStageExamples(validationRows, { historyMinutes });
 
     model = trainSleepStageModel(examples);
-    const evaluation = evaluateSleepStageModel(model, examples);
+    const trainingEvaluation = evaluateSleepStageModel(model, examples);
+    const validationEvaluation =
+      validationExamples.length > 0 ? evaluateSleepStageModel(model, validationExamples) : null;
     const version = await store.getNextVersion();
     const trainedAt = new Date().toISOString();
     const savedModel = await store.save({
@@ -117,7 +151,8 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
       datasetRows: rows.length,
       trainingExamples: examples.length,
       historyMinutes,
-      evaluation,
+      trainingEvaluation,
+      validationEvaluation,
       model,
     });
     storedModel = savedModel;
@@ -130,7 +165,8 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
       sourceFileFingerprints,
       datasetRows: rows.length,
       trainingExamples: examples.length,
-      evaluation,
+      trainingEvaluation,
+      validationEvaluation,
       model,
     };
   }
@@ -156,7 +192,8 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
             trainingExamples: currentModel.metadata.trainingExamples,
             trainedAt: currentStoredModel?.trainedAt ?? currentModel.metadata.trainedAt,
             stageCounts: currentModel.metadata.stageCounts,
-            evaluation: currentStoredModel?.evaluation,
+            trainingEvaluation: currentStoredModel?.trainingEvaluation,
+            validationEvaluation: currentStoredModel?.validationEvaluation,
             sourceFiles: currentStoredModel?.sourceFiles,
           }
         : { trained: false };

@@ -5,6 +5,7 @@ import {
   trainSleepStageModel,
   type SleepStageTrainingStatus,
   type TrainingMode,
+  type SleepStageEvaluation,
 } from "../api/sleepStageTrainingApi";
 
 const stageLabels: Record<string, string> = {
@@ -27,6 +28,14 @@ export function getTrainingModeText(mode?: TrainingMode): string {
 export function getTrainingStatusText(status: SleepStageTrainingStatus): string {
   if (!status.trained) return "미학습";
   return status.version ? `v${status.version} 학습 완료` : "학습 완료";
+}
+
+export function getPrimaryEvaluation(
+  status: SleepStageTrainingStatus,
+): { label: string; evaluation?: SleepStageEvaluation } {
+  if (!status.trained) return { label: "검증 정확도" };
+  if (status.validationEvaluation) return { label: "검증 정확도", evaluation: status.validationEvaluation };
+  return { label: "학습셋 정확도", evaluation: status.trainingEvaluation };
 }
 
 function formatDateTime(value?: string): string {
@@ -66,7 +75,8 @@ export function TrainingInfoPanel() {
         trainingExamples: result.trainingExamples,
         trainedAt: result.model.trainedAt,
         stageCounts: result.model.stageCounts,
-        evaluation: result.evaluation,
+        trainingEvaluation: result.trainingEvaluation,
+        validationEvaluation: result.validationEvaluation,
         sourceFiles: result.files,
       });
       setActionState("idle");
@@ -75,7 +85,8 @@ export function TrainingInfoPanel() {
     }
   }
 
-  const stageEntries = status.trained ? Object.entries(status.evaluation?.stages ?? {}) : [];
+  const primaryEvaluation = getPrimaryEvaluation(status);
+  const stageEntries = Object.entries(primaryEvaluation.evaluation?.stages ?? {});
 
   return (
     <section className="device-panel training-panel">
@@ -109,7 +120,7 @@ export function TrainingInfoPanel() {
         </div>
         <div>
           <span>전체 정확도</span>
-          <strong>{status.trained ? formatAccuracy(status.evaluation?.accuracy) : "-"}</strong>
+          <strong>{formatAccuracy(primaryEvaluation.evaluation?.accuracy)}</strong>
         </div>
         <div>
           <span>학습 시각</span>
@@ -123,6 +134,7 @@ export function TrainingInfoPanel() {
 
       {stageEntries.length > 0 ? (
         <div className="training-panel__stage-grid">
+          <span className="training-panel__stage-heading">{primaryEvaluation.label}</span>
           {stageEntries.map(([stage, item]) => (
             <div key={stage}>
               <span>{stageLabels[stage] ?? stage}</span>

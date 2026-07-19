@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatAccuracy, getTrainingModeText, getTrainingStatusText } from "../components/TrainingInfoPanel";
+import { formatAccuracy, getPrimaryEvaluation, getTrainingModeText, getTrainingStatusText } from "../components/TrainingInfoPanel";
 
 describe("TrainingInfoPanel helpers", () => {
   it("formats training status and mode text", () => {
@@ -14,5 +14,19 @@ describe("TrainingInfoPanel helpers", () => {
   it("formats accuracy as a percentage", () => {
     expect(formatAccuracy(0.83018)).toBe("83.0%");
     expect(formatAccuracy(undefined)).toBe("-");
+  });
+
+  it("prefers validation evaluation over training evaluation", () => {
+    expect(
+      getPrimaryEvaluation({
+        trained: true,
+        version: 1,
+        trainingExamples: 10,
+        trainedAt: "now",
+        stageCounts: {},
+        trainingEvaluation: { total: 10, correct: 9, accuracy: 0.9, stages: {} },
+        validationEvaluation: { total: 4, correct: 2, accuracy: 0.5, stages: {} },
+      }),
+    ).toMatchObject({ label: "검증 정확도", evaluation: { accuracy: 0.5 } });
   });
 });
