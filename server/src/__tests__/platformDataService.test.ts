@@ -26,12 +26,13 @@ describe("platformDataService", () => {
       breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
     });
 
-    const result = await service.discoverBreathConditionGroups();
+    const result = await service.discoverBreathConditionGroups({ offset: 500 });
 
     expect(client.discoverCinUris).toHaveBeenCalledWith("STATUS_CNT/BREATH_CONDITION_CNT", {
-      offset: 0,
+      offset: 500,
       limit: 500,
     });
+    expect(result).toMatchObject({ nextOffset: 1000, hasMore: false, itemCount: 4 });
     expect(result.groups).toEqual([
       {
         key: "2026-07-17",
@@ -85,7 +86,15 @@ describe("platformDataService", () => {
       breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
     });
 
-    const csv = await service.exportBreathConditionCsv(["2026-07-18"]);
+    const csv = await service.exportBreathConditionCsv([
+      {
+        label: "2026-07-18 18:00 - 2026-07-19 18:00",
+        items: [
+          { rn: "4-20260718180000000", uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180000000" },
+          { rn: "4-20260719175959000", uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719175959000" },
+        ],
+      },
+    ]);
 
     expect(csv).toContain("groupLabel,rn,measuredAt,con");
     expect(csv).toContain("2026-07-18 18:00 - 2026-07-19 18:00,4-20260718180000000,20260718180000,20");

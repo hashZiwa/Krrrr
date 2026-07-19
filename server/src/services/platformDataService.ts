@@ -18,11 +18,23 @@ export type PlatformDataGroup = {
 
 export type PlatformDataDiscovery = {
   groups: PlatformDataGroup[];
+  itemCount: number;
+  nextOffset: number;
+  hasMore: boolean;
+};
+
+export type PlatformDataDiscoveryOptions = {
+  offset?: number;
+};
+
+export type PlatformDataExportGroup = {
+  label: string;
+  items: PlatformDataItem[];
 };
 
 export type PlatformDataService = {
-  discoverBreathConditionGroups(): Promise<PlatformDataDiscovery>;
-  exportBreathConditionCsv(groupKeys: string[]): Promise<string>;
+  discoverBreathConditionGroups(options?: PlatformDataDiscoveryOptions): Promise<PlatformDataDiscovery>;
+  exportBreathConditionCsv(groups: PlatformDataExportGroup[]): Promise<string>;
 };
 
 type PlatformDataServiceOptions = {
@@ -93,7 +105,7 @@ function csvEscape(value: unknown): string {
   return text;
 }
 
-function toCsvRow(group: PlatformDataGroup, cin: MobiusCin): string {
+function toCsvRow(group: Pick<PlatformDataExportGroup, "label">, cin: MobiusCin): string {
   const rn = cin.rn ?? "";
   const measuredAt = rn ? formatMeasuredAt(parseCinDateFromRn(rn) ?? new Date(0)) : "";
 
@@ -104,12 +116,15 @@ export function createPlatformDataService(
   client: Pick<MobiusClient, "discoverCinUris" | "getCinByUri">,
   options: PlatformDataServiceOptions,
 ): PlatformDataService {
-  async function discoverBreathConditionGroups(): Promise<PlatformDataDiscovery> {
+  async function discoverBreathConditionGroups(
+    discoveryOptions: PlatformDataDiscoveryOptions = {},
+  ): Promise<PlatformDataDiscovery> {
     if (!options.breathConditionContainer) {
       throw new Error("No Mobius breath condition status container configured");
     }
 
-    const uris = await client.discoverCinUris(options.breathConditionContainer, { offset: 0, limit: discoveryLimit });
+    const offset = discoveryOptions.offset ?? 0;
+    const uris = await client.discoverCinUris(options.breathConditionContainer, { offset, limit: discoveryLimit });
     const groups = new Map<string, PlatformDataGroup>();
 
     for (const uri of uris) {
@@ -141,6 +156,9 @@ export function createPlatformDataService(
     }
 
     return {
+      itemCount: uris.length,
+      nextOffset: offset + discoveryLimit,
+      hasMore: uris.length === discoveryLimit,
       groups: [...groups.values()]
         .map((group) => ({
           ...group,
@@ -153,13 +171,10 @@ export function createPlatformDataService(
   return {
     discoverBreathConditionGroups,
 
-    async exportBreathConditionCsv(groupKeys) {
-      const selectedKeys = new Set(groupKeys);
-      const { groups } = await discoverBreathConditionGroups();
-      const selectedGroups = groups.filter((group) => selectedKeys.has(group.key));
+    async exportBreathConditionCsv(groups) {
       const rows = ["groupLabel,rn,measuredAt,con"];
 
-      for (const group of selectedGroups) {
+      for (const group of groups) {
         for (const item of group.items) {
           rows.push(toCsvRow(group, await client.getCinByUri(item.uri)));
         }

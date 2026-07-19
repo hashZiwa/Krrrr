@@ -2,21 +2,27 @@ import { describe, expect, it } from "vitest";
 import {
   getDownloadFileName,
   getPlatformDataGroupDisplayName,
+  getPlatformDataLoadButtonText,
   getPlatformDataStatusText,
-  getSelectedGroupCountText,
+  getTotalDataText,
 } from "../components/PlatformDataPanel";
 
 describe("PlatformDataPanel helpers", () => {
   it("formats platform data status text", () => {
     expect(getPlatformDataStatusText("idle")).toBe("대기 중");
-    expect(getPlatformDataStatusText("loading")).toBe("플랫폼 확인 중...");
-    expect(getPlatformDataStatusText("success")).toBe("플랫폼 데이터 확인 완료");
-    expect(getPlatformDataStatusText("error")).toBe("플랫폼 데이터 확인 실패");
+    expect(getPlatformDataStatusText("loading")).toBe("데이터 불러오는 중...");
+    expect(getPlatformDataStatusText("success")).toBe("데이터 불러오기 완료");
+    expect(getPlatformDataStatusText("error")).toBe("데이터 불러오기 실패");
   });
 
-  it("formats selected group counts", () => {
-    expect(getSelectedGroupCountText(0)).toBe("선택된 묶음 없음");
-    expect(getSelectedGroupCountText(2)).toBe("2개 묶음 선택됨");
+  it("formats total data counts", () => {
+    expect(getTotalDataText(0)).toBe("총 0개 데이터");
+    expect(getTotalDataText(23)).toBe("총 23개 데이터");
+  });
+
+  it("formats load button text by loaded state", () => {
+    expect(getPlatformDataLoadButtonText(false)).toBe("데이터 불러오기");
+    expect(getPlatformDataLoadButtonText(true)).toBe("데이터 새로고침");
   });
 
   it("creates a csv download file name from selected date keys", () => {
@@ -36,6 +42,6 @@ describe("PlatformDataPanel helpers", () => {
         count: 12,
         items: [],
       }),
-    ).toBe("26년 07월 18일 오후 6시 ~ 익일 오후 6시");
+    ).toBe("26년 07월 18일");
   });
 });

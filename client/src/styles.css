@@ -374,36 +374,60 @@ h1 {
 }
 
 .platform-data-panel .device-panel__header button,
-.platform-data-panel__actions button {
+.platform-data-panel__footer button {
   border: 1px solid var(--color-primary);
   border-radius: 6px;
   background: var(--color-primary);
   color: var(--color-surface);
   cursor: pointer;
+  font-size: 13px;
   font-weight: 800;
-  padding: 8px 12px;
+  padding: 6px 9px;
 }
 
 .platform-data-panel .device-panel__header button:disabled,
-.platform-data-panel__actions button:disabled {
+.platform-data-panel__footer button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }
 
-.platform-data-panel__summary {
+.platform-data-panel__header-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  justify-content: flex-end;
 }
 
-.platform-data-panel__summary span {
-  border: 1px solid #eadfce;
-  border-radius: 6px;
-  color: var(--color-subtle);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 8px 10px;
+.platform-data-panel__title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.platform-data-panel__inline-status {
+  min-height: 18px;
+  color: transparent;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  opacity: 0;
+}
+
+.platform-data-panel__inline-status--loading,
+.platform-data-panel__inline-status--downloading {
+  color: #d78318;
+  opacity: 1;
+}
+
+.platform-data-panel__inline-status--success {
+  animation: upload-status-fade 2.6s ease forwards;
+  color: #67c95b;
+}
+
+.platform-data-panel__inline-status--error {
+  animation: upload-status-fade 2.6s ease forwards;
+  color: #d9473f;
 }
 
 .platform-data-panel__message {
@@ -435,7 +459,7 @@ h1 {
   cursor: pointer;
   inline-size: max-content;
   max-inline-size: 100%;
-  padding: 8px 10px;
+  padding: 7px 9px;
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
@@ -451,8 +475,8 @@ h1 {
 }
 
 .platform-data-panel__group img {
-  inline-size: 28px;
-  block-size: 28px;
+  inline-size: 26px;
+  block-size: 26px;
   flex: 0 0 auto;
 }
 
@@ -483,10 +507,18 @@ h1 {
   color: var(--color-primary);
 }
 
-.platform-data-panel__actions {
+.platform-data-panel__footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 14px;
+}
+
+.platform-data-panel__footer span {
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .training-panel__actions {
@@ -502,8 +534,9 @@ h1 {
   background: var(--color-primary);
   color: var(--color-surface);
   cursor: pointer;
+  font-size: 13px;
   font-weight: 800;
-  padding: 8px 12px;
+  padding: 6px 9px;
 }
 
 .training-panel__actions button:disabled {

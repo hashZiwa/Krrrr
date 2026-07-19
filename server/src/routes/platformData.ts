@@ -1,14 +1,28 @@
 import { Router } from "express";
-import type { PlatformDataService } from "../services/platformDataService.js";
+import type { PlatformDataExportGroup, PlatformDataService } from "../services/platformDataService.js";
 
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === "string");
+function isExportGroup(value: unknown): value is PlatformDataExportGroup {
+  if (!value || typeof value !== "object") return false;
+
+  const group = value as PlatformDataExportGroup;
+
+  return (
+    typeof group.label === "string" &&
+    Array.isArray(group.items) &&
+    group.items.every((item) => typeof item?.rn === "string" && typeof item?.uri === "string")
+  );
+}
+
+function getOffset(value: unknown): number {
+  const offset = Number(value ?? 0);
+
+  return Number.isFinite(offset) && offset > 0 ? Math.floor(offset) : 0;
 }
 
 export function createPlatformDataRouter(service: PlatformDataService | null): Router {
   const router = Router();
 
-  router.get("/breath-condition/discovery", async (_req, res) => {
+  router.get("/breath-condition/discovery", async (req, res) => {
     if (!service) {
       res.status(503).json({
         error: "platform_data_not_configured",
@@ -18,7 +32,7 @@ export function createPlatformDataRouter(service: PlatformDataService | null): R
     }
 
     try {
-      res.json(await service.discoverBreathConditionGroups());
+      res.json(await service.discoverBreathConditionGroups({ offset: getOffset(req.query.offset) }));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown platform data discovery failure";
       res.status(500).json({ error: "platform_data_discovery_failed", message });
@@ -34,18 +48,18 @@ export function createPlatformDataRouter(service: PlatformDataService | null): R
       return;
     }
 
-    const groupKeys = (req.body as { groupKeys?: unknown }).groupKeys;
+    const groups = (req.body as { groups?: unknown }).groups;
 
-    if (!isStringArray(groupKeys) || groupKeys.length === 0) {
+    if (!Array.isArray(groups) || groups.length === 0 || !groups.every(isExportGroup)) {
       res.status(400).json({
-        error: "platform_data_invalid_group_keys",
-        message: "Request body must include at least one group key.",
+        error: "platform_data_invalid_groups",
+        message: "Request body must include at least one export group.",
       });
       return;
     }
 
     try {
-      const csv = await service.exportBreathConditionCsv(groupKeys);
+      const csv = await service.exportBreathConditionCsv(groups);
 
       res
         .status(200)

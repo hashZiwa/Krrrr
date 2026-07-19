@@ -33,10 +33,11 @@ describe("createPlatformDataRouter", () => {
     };
     const baseUrl = await createTestServer(service);
 
-    const response = await fetch(`${baseUrl}/api/platform-data/breath-condition/discovery`);
+    const response = await fetch(`${baseUrl}/api/platform-data/breath-condition/discovery?offset=500`);
 
     await expect(response.json()).resolves.toEqual({ groups: [{ key: "2026-07-18", count: 2 }] });
     expect(response.status).toBe(200);
+    expect(service.discoverBreathConditionGroups).toHaveBeenCalledWith({ offset: 500 });
   });
 
   it("returns csv for selected group keys", async () => {
@@ -49,13 +50,25 @@ describe("createPlatformDataRouter", () => {
     const response = await fetch(`${baseUrl}/api/platform-data/breath-condition/export`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ groupKeys: ["2026-07-18"] }),
+      body: JSON.stringify({
+        groups: [
+          {
+            label: "2026-07-18 18:00 - 2026-07-19 18:00",
+            items: [{ rn: "4-20260718180000000", uri: "Mobius/ae/4-20260718180000000" }],
+          },
+        ],
+      }),
     });
 
     await expect(response.text()).resolves.toBe("groupLabel,rn,measuredAt,con\n");
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/csv");
-    expect(service.exportBreathConditionCsv).toHaveBeenCalledWith(["2026-07-18"]);
+    expect(service.exportBreathConditionCsv).toHaveBeenCalledWith([
+      {
+        label: "2026-07-18 18:00 - 2026-07-19 18:00",
+        items: [{ rn: "4-20260718180000000", uri: "Mobius/ae/4-20260718180000000" }],
+      },
+    ]);
   });
 
   it("returns service unavailable when platform data is not configured", async () => {

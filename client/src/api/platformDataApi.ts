@@ -14,10 +14,13 @@ export type PlatformDataGroup = {
 
 export type PlatformDataDiscoveryResponse = {
   groups: PlatformDataGroup[];
+  itemCount: number;
+  nextOffset: number;
+  hasMore: boolean;
 };
 
-export async function fetchBreathConditionGroups(): Promise<PlatformDataDiscoveryResponse> {
-  const response = await fetch("/api/platform-data/breath-condition/discovery");
+export async function fetchBreathConditionGroups(offset = 0): Promise<PlatformDataDiscoveryResponse> {
+  const response = await fetch(`/api/platform-data/breath-condition/discovery?offset=${offset}`);
 
   if (!response.ok) {
     throw new Error(`Failed to discover platform data: ${response.status}`);
@@ -26,11 +29,16 @@ export async function fetchBreathConditionGroups(): Promise<PlatformDataDiscover
   return response.json() as Promise<PlatformDataDiscoveryResponse>;
 }
 
-export async function exportBreathConditionCsv(groupKeys: string[]): Promise<Blob> {
+export async function exportBreathConditionCsv(groups: PlatformDataGroup[]): Promise<Blob> {
   const response = await fetch("/api/platform-data/breath-condition/export", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ groupKeys }),
+    body: JSON.stringify({
+      groups: groups.map((group) => ({
+        label: group.label,
+        items: group.items,
+      })),
+    }),
   });
 
   if (!response.ok) {
