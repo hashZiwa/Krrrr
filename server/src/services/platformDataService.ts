@@ -95,8 +95,18 @@ function getRnFromUri(uri: string): string | null {
   return uri.split("/").filter(Boolean).at(-1) ?? null;
 }
 
-function isValidBreathConditionValue(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= -1 && value <= 60;
+function isValidBreathConditionValue(value: unknown): boolean {
+  if (typeof value === "number") {
+    return Number.isInteger(value) && value >= -1 && value <= 60;
+  }
+
+  if (typeof value !== "string" || !/^-?\d+$/.test(value)) {
+    return false;
+  }
+
+  const parsed = Number(value);
+
+  return parsed >= -1 && parsed <= 60;
 }
 
 function csvEscape(value: unknown): string {

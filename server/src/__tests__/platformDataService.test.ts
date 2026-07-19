@@ -20,10 +20,10 @@ function createClient(): MobiusClient {
       con: uri.includes("19190000000")
         ? "17"
         : uri.includes("19185000000")
-          ? 61
+          ? "61"
           : uri.includes("180000000")
-            ? 20
-            : 12,
+            ? "20"
+            : "12",
     })),
   };
 }
@@ -48,8 +48,12 @@ describe("platformDataService", () => {
         label: "2026-07-19 18:00 - 2026-07-20 18:00",
         startAt: "20260719180000",
         endAt: "20260720180000",
-        count: 1,
+        count: 2,
         items: [
+          {
+            rn: "4-20260719190000000",
+            uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719190000000",
+          },
           {
             rn: "4-20260719180000000",
             uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719180000000",
@@ -114,8 +118,8 @@ describe("platformDataService", () => {
     expect(csv).toContain("groupLabel,rn,measuredAt,con");
     expect(csv).toContain("2026-07-18 18:00 - 2026-07-19 18:00,4-20260718180000000,20260718180000,20");
     expect(csv).toContain("2026-07-18 18:00 - 2026-07-19 18:00,4-20260719175959000,20260719175959,12");
+    expect(csv).toContain("2026-07-18 18:00 - 2026-07-19 18:00,4-20260719190000000,20260719190000,17");
     expect(csv).not.toContain("4-20260718175959000");
-    expect(csv).not.toContain("4-20260719190000000");
   });
 
   it("keeps pagination based on raw discovery count while grouping only valid numeric content", async () => {
@@ -127,7 +131,7 @@ describe("platformDataService", () => {
     vi.mocked(client.discoverCinUris).mockResolvedValue(rawUris);
     vi.mocked(client.getCinByUri).mockImplementation(async (uri: string) => ({
       rn: uri.split("/").at(-1),
-      con: uri.endsWith("000000") ? -1 : "junk",
+      con: uri.endsWith("000000") ? "-1" : "junk",
     }));
     const service = createPlatformDataService(client, {
       breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
