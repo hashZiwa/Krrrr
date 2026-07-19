@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getHourlyTimeTicks,
+  getSleepStageValueAtTime,
   parseMeasuredAt,
   toBreathingEventOverlays,
   toBreathingDisplaySamples,
@@ -31,6 +32,17 @@ describe("chartTransforms", () => {
       timeLabel: "23:00",
     });
     expect(typeof samples[0].timeMs).toBe("number");
+  });
+
+  it("finds the sleep stage value measured at the hovered time", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: 0 },
+      { measuredAt: "20260714230500", value: 1 },
+      { measuredAt: "20260714231000", value: 3 },
+    ]);
+
+    expect(getSleepStageValueAtTime(samples, samples[2].timeMs)).toBe(3);
+    expect(getSleepStageValueAtTime(samples, samples[2].timeMs + 1)).toBeNull();
   });
 
   it("creates horizontal sleep stage segments without vertical transitions", () => {

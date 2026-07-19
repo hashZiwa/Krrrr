@@ -46,6 +46,10 @@ export function toChartSamples(samples: SensorSample[]): ChartSample[] {
   });
 }
 
+export function getSleepStageValueAtTime(samples: ChartSample[], timeMs: number): number | null {
+  return samples.find((sample) => sample.timeMs === timeMs)?.value ?? null;
+}
+
 export type SleepStageSegment = {
   value: number;
   points: Array<{

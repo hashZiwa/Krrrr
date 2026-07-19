@@ -13,6 +13,7 @@ import {
 import {
   formatTimeLabel,
   getHourlyTimeTicks,
+  getSleepStageValueAtTime,
   toBreathingDisplaySamples,
   toBreathingEventOverlays,
   toSleepStageOverlaySegments,
@@ -41,6 +42,7 @@ import {
   getBreathingScrollableWidth,
   getBreathingYAxisConfig,
   getSleepStageTransitionLineCoordinates,
+  sleepStageLabels,
   sleepStageLineStyles,
   sleepStageTransitionGradientStops,
   sleepStageTransitionGradientUnits,
@@ -76,8 +78,26 @@ type SleepStageOverlayLayerProps = {
   offset?: ChartOffset;
 };
 
+type BreathingTooltipPayloadItem = {
+  payload?: ChartSample & { displayValue?: number | null };
+};
+
+type BreathingTooltipProps = {
+  active?: boolean;
+  label?: string | number;
+  payload?: BreathingTooltipPayloadItem[];
+  sleepStageData: ChartSample[];
+  showSleepStage: boolean;
+};
+
 function getPrimaryScale(axisMap?: AxisMap) {
   return Object.values(axisMap ?? {})[0]?.scale;
+}
+
+function getBreathingTooltipValue(payload?: BreathingTooltipPayloadItem[] | null): number | null {
+  const item = payload?.find((entry) => typeof entry.payload?.value === "number");
+
+  return typeof item?.payload?.value === "number" ? item.payload.value : null;
 }
 
 function BreathingEventOverlayLayer({ data, xAxisMap, offset }: BreathingEventOverlayLayerProps) {
@@ -294,6 +314,24 @@ function BreathingEventLegend() {
   );
 }
 
+function BreathingTooltip({ active, label, payload, sleepStageData, showSleepStage }: BreathingTooltipProps) {
+  const timeMs = Number(label);
+  const breathingValue = getBreathingTooltipValue(payload);
+  const sleepStageValue = showSleepStage ? getSleepStageValueAtTime(sleepStageData, timeMs) : null;
+
+  if (!active || !Number.isFinite(timeMs) || breathingValue === null) {
+    return null;
+  }
+
+  return (
+    <div className="chart-tooltip">
+      <strong>{formatTimeLabel(timeMs)}</strong>
+      <span>호흡: {formatBreathingValue(breathingValue)}</span>
+      {sleepStageValue !== null ? <span>수면 단계: {sleepStageLabels[sleepStageValue] ?? sleepStageValue}</span> : null}
+    </div>
+  );
+}
+
 export function BreathingChart({ data, sleepStageData, window }: BreathingChartProps) {
   const [showSleepStageOverlay, setShowSleepStageOverlay] = useState(false);
   const hourlyTicks = getHourlyTimeTicks(window.start, window.end);
@@ -354,6 +392,9 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                 />
                 <YAxis domain={yAxisConfig.domain} ticks={yAxisConfig.ticks} width={0} hide />
                 <Tooltip
+                  content={
+                    <BreathingTooltip sleepStageData={sleepStageData} showSleepStage={showSleepStageOverlay} />
+                  }
                   labelFormatter={(value) => formatTimeLabel(Number(value))}
                   formatter={(_value, _name, item) => [formatBreathingValue(Number(item.payload.value)), "호흡"]}
                 />
