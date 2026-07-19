@@ -18,20 +18,26 @@ export function formatTimeLabel(timeMs: number): string {
   return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function getHourlyTimeTicks(startMs: number, endMs: number): number[] {
+export function getTimeTicksByInterval(startMs: number, endMs: number, intervalMinutes: number): number[] {
   const firstTick = new Date(startMs);
+  const intervalMs = intervalMinutes * 60 * 1000;
 
-  firstTick.setMinutes(0, 0, 0);
+  firstTick.setSeconds(0, 0);
+  firstTick.setMinutes(Math.ceil(firstTick.getMinutes() / intervalMinutes) * intervalMinutes);
   if (firstTick.getTime() < startMs) {
-    firstTick.setHours(firstTick.getHours() + 1);
+    firstTick.setTime(firstTick.getTime() + intervalMs);
   }
 
   const ticks: number[] = [];
-  for (let tick = firstTick.getTime(); tick <= endMs; tick += 60 * 60 * 1000) {
+  for (let tick = firstTick.getTime(); tick <= endMs; tick += intervalMs) {
     ticks.push(tick);
   }
 
   return ticks;
+}
+
+export function getTwentyMinuteTimeTicks(startMs: number, endMs: number): number[] {
+  return getTimeTicksByInterval(startMs, endMs, 20);
 }
 
 export function toChartSamples(samples: SensorSample[]): ChartSample[] {

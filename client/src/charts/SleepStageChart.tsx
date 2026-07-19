@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import {
   formatTimeLabel,
-  getHourlyTimeTicks,
+  getTwentyMinuteTimeTicks,
   toSleepStageSegments,
   toSleepStageTransitionSegments,
 } from "../data/chartTransforms";
@@ -209,7 +209,7 @@ function FixedSleepStageYAxis() {
 }
 
 export function SleepStageChart({ data, window }: SleepStageChartProps) {
-  const hourlyTicks = getHourlyTimeTicks(window.start, window.end);
+  const timeTicks = getTwentyMinuteTimeTicks(window.start, window.end);
   const scrollableWidth = getSleepStageScrollableWidth(window.start, window.end);
 
   return (
@@ -231,7 +231,7 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
                   dataKey="timeMs"
                   type="number"
                   domain={[window.start, window.end]}
-                  ticks={hourlyTicks}
+                  ticks={timeTicks}
                   tick={{ fontSize: 12, fill: chartColors.axis }}
                   tickFormatter={formatTimeLabel}
                   stroke="transparent"

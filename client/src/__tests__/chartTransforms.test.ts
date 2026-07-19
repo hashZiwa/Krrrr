@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  getHourlyTimeTicks,
+  formatTimeLabel,
+  getTwentyMinuteTimeTicks,
   getSleepStageValueAtTime,
   parseMeasuredAt,
   toBreathingEventOverlays,
@@ -91,14 +92,23 @@ describe("chartTransforms", () => {
     ]);
   });
 
-  it("creates x-axis ticks on one-hour boundaries within the visible window", () => {
+  it("creates x-axis ticks on 20-minute boundaries within the visible window", () => {
     const start = parseMeasuredAt("20260714231500");
     const end = parseMeasuredAt("20260715021500");
 
-    const ticks = getHourlyTimeTicks(start, end);
+    const ticks = getTwentyMinuteTimeTicks(start, end);
 
-    expect(ticks.map((tick) => new Date(tick).getHours())).toEqual([0, 1, 2]);
-    expect(ticks.map((tick) => new Date(tick).getMinutes())).toEqual([0, 0, 0]);
+    expect(ticks.map(formatTimeLabel)).toEqual([
+      "23:20",
+      "23:40",
+      "00:00",
+      "00:20",
+      "00:40",
+      "01:00",
+      "01:20",
+      "01:40",
+      "02:00",
+    ]);
   });
 
   it("creates breathing event overlays centered between adjacent samples", () => {

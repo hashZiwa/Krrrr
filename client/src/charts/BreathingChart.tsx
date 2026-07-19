@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   formatTimeLabel,
-  getHourlyTimeTicks,
+  getTwentyMinuteTimeTicks,
   getSleepStageValueAtTime,
   toBreathingDisplaySamples,
   toBreathingEventOverlays,
@@ -334,7 +334,7 @@ function BreathingTooltip({ active, label, payload, sleepStageData, showSleepSta
 
 export function BreathingChart({ data, sleepStageData, window }: BreathingChartProps) {
   const [showSleepStageOverlay, setShowSleepStageOverlay] = useState(false);
-  const hourlyTicks = getHourlyTimeTicks(window.start, window.end);
+  const timeTicks = getTwentyMinuteTimeTicks(window.start, window.end);
   const scrollableWidth = getBreathingScrollableWidth(window.start, window.end);
   const displayData = toBreathingDisplaySamples(data);
   const yAxisConfig = getBreathingYAxisConfig(data.map((sample) => sample.value));
@@ -384,7 +384,7 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                   dataKey="timeMs"
                   type="number"
                   domain={[window.start, window.end]}
-                  ticks={hourlyTicks}
+                  ticks={timeTicks}
                   tick={{ fontSize: 12, fill: chartColors.axis }}
                   tickFormatter={formatTimeLabel}
                   stroke="transparent"
