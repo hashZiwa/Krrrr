@@ -120,15 +120,15 @@ describe("chartConfig", () => {
   it("scales the sleep stage chart width by session duration", () => {
     const oneHourMs = 60 * 60 * 1000;
 
-    expect(getSleepStageScrollableWidth(0, oneHourMs)).toBe(360);
-    expect(getSleepStageScrollableWidth(0, 10 * oneHourMs)).toBe(3000);
+    expect(getSleepStageScrollableWidth(0, oneHourMs)).toBe(420);
+    expect(getSleepStageScrollableWidth(0, 10 * oneHourMs)).toBe(4200);
   });
 
   it("uses the same scroll width rule for breathing charts", () => {
     const oneHourMs = 60 * 60 * 1000;
 
-    expect(getBreathingScrollableWidth(0, oneHourMs)).toBe(360);
-    expect(getBreathingScrollableWidth(0, 10 * oneHourMs)).toBe(3000);
+    expect(getBreathingScrollableWidth(0, oneHourMs)).toBe(420);
+    expect(getBreathingScrollableWidth(0, 10 * oneHourMs)).toBe(4200);
   });
 
   it("keeps breathing y-axis ticks in config", () => {
@@ -175,6 +175,7 @@ describe("chartConfig", () => {
   it("keeps the soft breathing curve and gradient fill configurable", () => {
     expect(breathingCurveStyle.type).toBe("natural");
     expect(breathingCurveStyle.strokeWidth).toBeGreaterThan(0);
+    expect(breathingCurveStyle.showDots).toBe(false);
     expect(breathingFillGradientStops.length).toBeGreaterThanOrEqual(3);
     expect(breathingStrokeGradientStops.length).toBeGreaterThanOrEqual(2);
   });

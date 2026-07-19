@@ -80,6 +80,7 @@ export const breathingCurveStyle = {
   type: "natural",
   strokeWidth: 3,
   dotRadius: 3,
+  showDots: false,
 } as const;
 
 export const breathingFillGradientStops = [
@@ -95,7 +96,7 @@ export const breathingStrokeGradientStops = [
 ] as const;
 
 const sleepStageMinScrollableWidth = 360;
-const sleepStagePixelsPerHour = 300;
+const sleepStagePixelsPerHour = 420;
 
 function getScrollableChartWidth(startMs: number, endMs: number): number {
   const durationHours = Math.max(0, endMs - startMs) / (60 * 60 * 1000);

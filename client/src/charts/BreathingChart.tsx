@@ -302,7 +302,8 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                   dataKey="displayValue"
                   stroke="url(#breathing-stroke-gradient)"
                   strokeWidth={breathingCurveStyle.strokeWidth}
-                  dot={<BreathingDot />}
+                  dot={breathingCurveStyle.showDots ? <BreathingDot /> : false}
+                  activeDot={false}
                   isAnimationActive={false}
                 />
                 <Customized component={<BreathingEventOverlayLayer data={data} />} />
