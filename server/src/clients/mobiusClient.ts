@@ -118,6 +118,7 @@ export function createMobiusClient(config: MobiusConfig, fetchImpl: FetchLike = 
         ty: "4",
         ofst: String(offset),
         lim: String(limit),
+        drt: "2",
       });
 
       return requestUriList(fetchImpl, `${joinUrl(config.baseUrl, config.aePath, containerName)}?${query}`, {

@@ -127,7 +127,7 @@ export function createPlatformDataService(
     const uris = await client.discoverCinUris(options.breathConditionContainer, { offset, limit: discoveryLimit });
     const groups = new Map<string, PlatformDataGroup>();
 
-    for (const uri of uris) {
+    for (const uri of [...uris].sort((left, right) => (getRnFromUri(right) ?? "").localeCompare(getRnFromUri(left) ?? ""))) {
       const rn = getRnFromUri(uri);
       const measuredAt = rn ? parseCinDateFromRn(rn) : null;
 
@@ -162,9 +162,9 @@ export function createPlatformDataService(
       groups: [...groups.values()]
         .map((group) => ({
           ...group,
-          items: [...group.items].sort((left, right) => left.rn.localeCompare(right.rn)),
+          items: [...group.items].sort((left, right) => right.rn.localeCompare(left.rn)),
         }))
-        .sort((left, right) => left.key.localeCompare(right.key)),
+        .sort((left, right) => right.key.localeCompare(left.key)),
     };
   }
 

@@ -80,7 +80,7 @@ describe("createMobiusClient", () => {
     const result = await client.discoverCinUris("STATUS_CNT/BREATH_CONDITION_CNT", { offset: 0, limit: 500 });
 
     expect(fetchImpl).toHaveBeenCalledWith(
-      "https://onem2m.example.test/Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT?fu=1&lvl=1&ty=4&ofst=0&lim=500",
+      "https://onem2m.example.test/Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT?fu=1&lvl=1&ty=4&ofst=0&lim=500&drt=2",
       {
         method: "GET",
         headers: {

@@ -9,6 +9,7 @@ function createClient(): MobiusClient {
     discoverCinUris: vi.fn().mockResolvedValue([
       "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718175959000",
       "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180000000",
+      "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180500000",
       "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719175959000",
       "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719180000000",
     ]),
@@ -32,38 +33,8 @@ describe("platformDataService", () => {
       offset: 500,
       limit: 500,
     });
-    expect(result).toMatchObject({ nextOffset: 1000, hasMore: false, itemCount: 4 });
+    expect(result).toMatchObject({ nextOffset: 1000, hasMore: false, itemCount: 5 });
     expect(result.groups).toEqual([
-      {
-        key: "2026-07-17",
-        label: "2026-07-17 18:00 - 2026-07-18 18:00",
-        startAt: "20260717180000",
-        endAt: "20260718180000",
-        count: 1,
-        items: [
-          {
-            rn: "4-20260718175959000",
-            uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718175959000",
-          },
-        ],
-      },
-      {
-        key: "2026-07-18",
-        label: "2026-07-18 18:00 - 2026-07-19 18:00",
-        startAt: "20260718180000",
-        endAt: "20260719180000",
-        count: 2,
-        items: [
-          {
-            rn: "4-20260718180000000",
-            uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180000000",
-          },
-          {
-            rn: "4-20260719175959000",
-            uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719175959000",
-          },
-        ],
-      },
       {
         key: "2026-07-19",
         label: "2026-07-19 18:00 - 2026-07-20 18:00",
@@ -74,6 +45,40 @@ describe("platformDataService", () => {
           {
             rn: "4-20260719180000000",
             uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719180000000",
+          },
+        ],
+      },
+      {
+        key: "2026-07-18",
+        label: "2026-07-18 18:00 - 2026-07-19 18:00",
+        startAt: "20260718180000",
+        endAt: "20260719180000",
+        count: 3,
+        items: [
+          {
+            rn: "4-20260719175959000",
+            uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719175959000",
+          },
+          {
+            rn: "4-20260718180500000",
+            uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180500000",
+          },
+          {
+            rn: "4-20260718180000000",
+            uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180000000",
+          },
+        ],
+      },
+      {
+        key: "2026-07-17",
+        label: "2026-07-17 18:00 - 2026-07-18 18:00",
+        startAt: "20260717180000",
+        endAt: "20260718180000",
+        count: 1,
+        items: [
+          {
+            rn: "4-20260718175959000",
+            uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718175959000",
           },
         ],
       },
