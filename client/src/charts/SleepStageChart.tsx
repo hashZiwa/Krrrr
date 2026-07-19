@@ -24,6 +24,7 @@ import {
   getSleepStageSegmentClipPadding,
   sleepStageLabels,
   sleepStageLineStyles,
+  sleepStageTransitionGradientUnits,
   sleepStageTransitionLineStyle,
   type SleepStageTooltipPayloadItem,
 } from "./chartConfig";
@@ -92,13 +93,22 @@ function SleepStageSegmentsLayer({
         {transitions.map((transition, index) => {
           const fromStyle = sleepStageLineStyles[transition.fromValue];
           const toStyle = sleepStageLineStyles[transition.toValue];
+          const x = xScale(transition.timeMs);
           const fromY = yScale(getSleepStageDisplayValue(transition.fromValue));
           const toY = yScale(getSleepStageDisplayValue(transition.toValue));
           const topColor = fromY <= toY ? fromStyle.color : toStyle.color;
           const bottomColor = fromY <= toY ? toStyle.color : fromStyle.color;
 
           return (
-            <linearGradient key={index} id={transitionGradientId(index)} x1="0" y1="0" x2="0" y2="1">
+            <linearGradient
+              key={index}
+              id={transitionGradientId(index)}
+              gradientUnits={sleepStageTransitionGradientUnits}
+              x1={x}
+              x2={x}
+              y1={Math.min(fromY, toY)}
+              y2={Math.max(fromY, toY)}
+            >
               <stop offset="0%" stopColor={topColor} />
               <stop offset="100%" stopColor={bottomColor} />
             </linearGradient>

@@ -18,6 +18,7 @@ import {
   sleepStageLabels,
   sleepStageLineStyles,
   sleepStageSegmentGlow,
+  sleepStageTransitionGradientUnits,
   sleepStageTransitionLineStyle,
 } from "../charts/chartConfig";
 
@@ -38,6 +39,10 @@ describe("chartConfig", () => {
 
   it("uses the awake stroke width as the default sleep transition line width", () => {
     expect(sleepStageTransitionLineStyle.strokeWidth).toBe(sleepStageLineStyles[0].strokeWidth);
+  });
+
+  it("uses user-space gradients for zero-width vertical transition lines", () => {
+    expect(sleepStageTransitionGradientUnits).toBe("userSpaceOnUse");
   });
 
   it("selects one valid sleep stage value from duplicated tooltip payload", () => {

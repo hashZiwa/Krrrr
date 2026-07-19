@@ -25,6 +25,8 @@ export const sleepStageTransitionLineStyle = {
   strokeLinecap: "round",
 } as const;
 
+export const sleepStageTransitionGradientUnits = "userSpaceOnUse";
+
 export const sleepStageSegmentGlow = {
   stages: [] as number[],
   height: 70,
