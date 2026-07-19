@@ -23,8 +23,8 @@ export type SleepStageLineStyle = {
 };
 
 export const sleepStageLineStyles: Record<number, SleepStageLineStyle> = {
-  0: { color: "#f8c302ff", strokeWidth: 4 },
-  1: { color: "#22c8a9", strokeWidth: 8 },
+  0: { color: "#ff5f03ff", strokeWidth: 4 },
+  1: { color: "#f8c302ff", strokeWidth: 8 },
   2: { color: "#239bf1", strokeWidth: 12 },
   3: { color: "#5541e6", strokeWidth: 16 },
 };
