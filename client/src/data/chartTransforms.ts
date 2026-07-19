@@ -64,6 +64,30 @@ export function toSleepStageSegments(samples: ChartSample[]): SleepStageSegment[
   }));
 }
 
+export type SleepStageTransitionSegment = {
+  fromValue: number;
+  toValue: number;
+  timeMs: number;
+};
+
+export function toSleepStageTransitionSegments(samples: ChartSample[]): SleepStageTransitionSegment[] {
+  return samples.slice(1).flatMap((sample, index) => {
+    const previous = samples[index];
+
+    if (previous.value === sample.value) {
+      return [];
+    }
+
+    return [
+      {
+        fromValue: previous.value,
+        toValue: sample.value,
+        timeMs: sample.timeMs,
+      },
+    ];
+  });
+}
+
 export type SleepStageOverlaySegment = {
   value: number;
   points: Array<{

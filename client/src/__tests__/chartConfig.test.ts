@@ -18,6 +18,7 @@ import {
   sleepStageLabels,
   sleepStageLineStyles,
   sleepStageSegmentGlow,
+  sleepStageTransitionLineStyle,
 } from "../charts/chartConfig";
 
 describe("chartConfig", () => {
@@ -33,6 +34,10 @@ describe("chartConfig", () => {
     expect(Object.keys(sleepStageLineStyles).map(Number)).toEqual([0, 1, 2]);
     expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.color)).size).toBe(3);
     expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.strokeWidth)).size).toBe(3);
+  });
+
+  it("uses the awake stroke width as the default sleep transition line width", () => {
+    expect(sleepStageTransitionLineStyle.strokeWidth).toBe(sleepStageLineStyles[0].strokeWidth);
   });
 
   it("selects one valid sleep stage value from duplicated tooltip payload", () => {

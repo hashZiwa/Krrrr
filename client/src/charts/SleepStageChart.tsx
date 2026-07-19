@@ -8,7 +8,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatTimeLabel, getHourlyTimeTicks, toSleepStageSegments } from "../data/chartTransforms";
+import {
+  formatTimeLabel,
+  getHourlyTimeTicks,
+  toSleepStageSegments,
+  toSleepStageTransitionSegments,
+} from "../data/chartTransforms";
 import type { TimeWindow } from "../data/timeWindow";
 import type { ChartSample } from "../types/sleep";
 import {
@@ -19,6 +24,7 @@ import {
   getSleepStageSegmentClipPadding,
   sleepStageLabels,
   sleepStageLineStyles,
+  sleepStageTransitionLineStyle,
   type SleepStageTooltipPayloadItem,
 } from "./chartConfig";
 
@@ -62,12 +68,14 @@ function SleepStageSegmentsLayer({
   const xScale = getPrimaryScale(xAxisMap);
   const yScale = getPrimaryScale(yAxisMap);
   const segments = toSleepStageSegments(data);
+  const transitions = toSleepStageTransitionSegments(data);
 
   if (!xScale || !yScale || !offset) {
     return null;
   }
 
   const clipPathId = "sleep-stage-segment-clip";
+  const transitionGradientId = (transitionIndex: number) => `sleep-stage-transition-gradient-${transitionIndex}`;
   const clipPadding = getSleepStageSegmentClipPadding();
 
   return (
@@ -81,8 +89,41 @@ function SleepStageSegmentsLayer({
             height={offset.height + clipPadding * 2}
           />
         </clipPath>
+        {transitions.map((transition, index) => {
+          const fromStyle = sleepStageLineStyles[transition.fromValue];
+          const toStyle = sleepStageLineStyles[transition.toValue];
+          const fromY = yScale(getSleepStageDisplayValue(transition.fromValue));
+          const toY = yScale(getSleepStageDisplayValue(transition.toValue));
+          const topColor = fromY <= toY ? fromStyle.color : toStyle.color;
+          const bottomColor = fromY <= toY ? toStyle.color : fromStyle.color;
+
+          return (
+            <linearGradient key={index} id={transitionGradientId(index)} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={topColor} />
+              <stop offset="100%" stopColor={bottomColor} />
+            </linearGradient>
+          );
+        })}
       </defs>
       <g clipPath={`url(#${clipPathId})`}>
+        {transitions.map((transition, index) => {
+          const x = xScale(transition.timeMs);
+          const fromY = yScale(getSleepStageDisplayValue(transition.fromValue));
+          const toY = yScale(getSleepStageDisplayValue(transition.toValue));
+
+          return (
+            <line
+              key={`${transition.timeMs}-${transition.fromValue}-${transition.toValue}`}
+              x1={x}
+              x2={x}
+              y1={fromY}
+              y2={toY}
+              stroke={`url(#${transitionGradientId(index)})`}
+              strokeWidth={sleepStageTransitionLineStyle.strokeWidth}
+              strokeLinecap={sleepStageTransitionLineStyle.strokeLinecap}
+            />
+          );
+        })}
         {segments.map((segment, index) => {
           const style = sleepStageLineStyles[segment.value];
           const [start, end] = segment.points;

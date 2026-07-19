@@ -7,6 +7,7 @@ import {
   toChartSamples,
   toSleepStageOverlaySegments,
   toSleepStageSegments,
+  toSleepStageTransitionSegments,
 } from "../data/chartTransforms";
 
 describe("chartTransforms", () => {
@@ -50,6 +51,30 @@ describe("chartTransforms", () => {
     expect(segments[1].points).toEqual([
       { timeMs: samples[1].timeMs, value: 1 },
       { timeMs: samples[2].timeMs, value: 1 },
+    ]);
+  });
+
+  it("creates vertical sleep stage transition segments at changed sample times", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: 0 },
+      { measuredAt: "20260714230500", value: 1 },
+      { measuredAt: "20260714231000", value: 1 },
+      { measuredAt: "20260714231500", value: 2 },
+    ]);
+
+    const transitions = toSleepStageTransitionSegments(samples);
+
+    expect(transitions).toEqual([
+      {
+        fromValue: 0,
+        toValue: 1,
+        timeMs: samples[1].timeMs,
+      },
+      {
+        fromValue: 1,
+        toValue: 2,
+        timeMs: samples[3].timeMs,
+      },
     ]);
   });
 

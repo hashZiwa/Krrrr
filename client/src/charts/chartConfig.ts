@@ -20,6 +20,11 @@ export const sleepStageLineStyles: Record<number, { color: string; strokeWidth: 
   2: { color: "#5541e6", strokeWidth: 7 },
 };
 
+export const sleepStageTransitionLineStyle = {
+  strokeWidth: sleepStageLineStyles[0].strokeWidth,
+  strokeLinecap: "round",
+} as const;
+
 export const sleepStageSegmentGlow = {
   stages: [] as number[],
   height: 70,
