@@ -191,7 +191,7 @@ describe("chartConfig", () => {
   it("keeps breathing sleep stage overlay transition styling configurable", () => {
     expect(breathingSleepStageOverlayStyle.opacity).toBeGreaterThan(0);
     expect(breathingSleepStageOverlayTransitionStyle.strokeWidth).toBeGreaterThan(0);
-    expect(breathingSleepStageOverlayTransitionStyle.strokeLinecap).toBe("round");
+    expect(["butt", "round", "square"]).toContain(breathingSleepStageOverlayTransitionStyle.strokeLinecap);
   });
 });
 

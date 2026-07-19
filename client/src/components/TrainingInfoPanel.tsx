@@ -3,17 +3,10 @@ import {
   fetchSleepStageTrainingStatus,
   incrementalTrainSleepStageModel,
   trainSleepStageModel,
+  type SleepStageEvaluation,
   type SleepStageTrainingStatus,
   type TrainingMode,
-  type SleepStageEvaluation,
 } from "../api/sleepStageTrainingApi";
-
-const stageLabels: Record<string, string> = {
-  "0": "깸",
-  "1": "REM",
-  "2": "얕은 잠",
-  "3": "깊은 잠",
-};
 
 export function formatAccuracy(value?: number): string {
   return typeof value === "number" ? `${(value * 100).toFixed(1)}%` : "-";
@@ -86,7 +79,6 @@ export function TrainingInfoPanel() {
   }
 
   const primaryEvaluation = getPrimaryEvaluation(status);
-  const stageEntries = Object.entries(primaryEvaluation.evaluation?.stages ?? {});
 
   return (
     <section className="device-panel training-panel">
@@ -119,7 +111,7 @@ export function TrainingInfoPanel() {
           <strong>{status.trained ? status.trainingExamples : "-"}</strong>
         </div>
         <div>
-          <span>전체 정확도</span>
+          <span>{primaryEvaluation.label}</span>
           <strong>{formatAccuracy(primaryEvaluation.evaluation?.accuracy)}</strong>
         </div>
         <div>
@@ -131,18 +123,6 @@ export function TrainingInfoPanel() {
           <strong>{status.trained ? status.sourceFiles?.length ?? 0 : "-"}</strong>
         </div>
       </div>
-
-      {stageEntries.length > 0 ? (
-        <div className="training-panel__stage-grid">
-          <span className="training-panel__stage-heading">{primaryEvaluation.label}</span>
-          {stageEntries.map(([stage, item]) => (
-            <div key={stage}>
-              <span>{stageLabels[stage] ?? stage}</span>
-              <strong>{formatAccuracy(item.accuracy)}</strong>
-            </div>
-          ))}
-        </div>
-      ) : null}
 
       <p className={`training-panel__message training-panel__message--${actionState}`} aria-live="polite">
         {actionState === "training" ? "학습 중..." : actionState === "error" ? "학습 실패" : ""}

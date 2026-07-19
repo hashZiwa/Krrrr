@@ -138,11 +138,11 @@ export default function App() {
         <SleepStageChart data={chartData.sleepStages} window={sessionWindow} />
       </div>
 
-      <TrainingInfoPanel />
-
       <section className="device-panel-grid" aria-label="기기 설정 업로드">
         <AlarmControlPanel />
       </section>
+
+      <TrainingInfoPanel />
     </main>
   );
 }
