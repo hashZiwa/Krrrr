@@ -145,7 +145,7 @@ function SleepStageSegmentsLayer({
           const [start, end] = segment.points;
           const x1 = xScale(start.timeMs);
           const x2 = xScale(end.timeMs);
-          const y = yScale(getSleepStageDisplayValue(segment.value));
+          const y = yScale(getSleepStageDisplayValue(segment.value)) + style.yOffsetPx;
           const key = `${start.timeMs}-${index}`;
 
           return (
@@ -157,7 +157,7 @@ function SleepStageSegmentsLayer({
               y2={y}
               stroke={style.color}
               strokeWidth={style.strokeWidth}
-              strokeLinecap="round"
+              strokeLinecap="butt"
             />
           );
         })}

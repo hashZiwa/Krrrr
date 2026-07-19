@@ -2,7 +2,7 @@ export const chartColors = {
   sleepLine: "#276b7a",
   sleepFill: "#b9dde3",
   breathingLine: "#6e6a71",
-  movement: "#f8e395",
+  movement: "#fff6d4",
   apnea: "#eba4a3",
   grid: "#d9e3e5",
   axis: "#66777b",
@@ -14,23 +14,29 @@ export const sleepStageLabels: Record<number, string> = {
   2: "깊은 잠",
 };
 
-export const sleepStageLineStyles: Record<number, { color: string; strokeWidth: number }> = {
-  0: { color: "#f8c302ff", strokeWidth: 4 },
-  1: { color: "#239bf1", strokeWidth: 5 },
-  2: { color: "#5541e6", strokeWidth: 7 },
+export type SleepStageLineStyle = {
+  color: string;
+  strokeWidth: number;
+  yOffsetPx: number;
+};
+
+export const sleepStageLineStyles: Record<number, SleepStageLineStyle> = {
+  0: { color: "#f8c302ff", strokeWidth: 4, yOffsetPx: 0 },
+  1: { color: "#239bf1", strokeWidth: 5, yOffsetPx: 0 },
+  2: { color: "#5541e6", strokeWidth: 7, yOffsetPx: 1 },
 };
 
 export const sleepStageTransitionLineStyle = {
   strokeWidth: sleepStageLineStyles[0].strokeWidth,
-  strokeLinecap: "round",
+  strokeLinecap: "butt",
 } as const;
 
 export const sleepStageTransitionGradientUnits = "userSpaceOnUse";
 
 export const sleepStageTransitionGradientStops: Array<{ offset: string; color: "from" | "to" }> = [
   { offset: "0%", color: "from" },
-  { offset: "45%", color: "from" },
-  { offset: "55%", color: "to" },
+  { offset: "3%", color: "from" },
+  { offset: "30%", color: "to" },
   { offset: "100%", color: "to" },
 ];
 
