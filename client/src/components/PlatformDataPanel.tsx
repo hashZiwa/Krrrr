@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import csvIcon from "../assets/csv-icon.png";
 import {
   exportBreathConditionCsv,
   fetchBreathConditionGroups,
@@ -27,6 +28,14 @@ export function getDownloadFileName(groupKeys: string[]): string {
   }
 
   return `breath-condition-${sortedKeys[0]}_to_${sortedKeys[sortedKeys.length - 1]}.csv`;
+}
+
+export function getPlatformDataGroupDisplayName(group: PlatformDataGroup): string {
+  const year = group.startAt.slice(2, 4);
+  const month = group.startAt.slice(4, 6);
+  const day = group.startAt.slice(6, 8);
+
+  return `${year}년 ${month}월 ${day}일 오후 6시 ~ 익일 오후 6시`;
 }
 
 function downloadBlob(blob: Blob, fileName: string) {
@@ -112,14 +121,20 @@ export function PlatformDataPanel() {
       {groups.length > 0 ? (
         <div className="platform-data-panel__groups" aria-label="플랫폼 데이터 날짜 묶음">
           {groups.map((group) => (
-            <label className="platform-data-panel__group" key={group.key}>
+            <label
+              className={`platform-data-panel__group${
+                selectedKeys.includes(group.key) ? " platform-data-panel__group--selected" : ""
+              }`}
+              key={group.key}
+            >
               <input
                 type="checkbox"
                 checked={selectedKeys.includes(group.key)}
                 onChange={(event) => toggleGroup(group.key, event.target.checked)}
               />
+              <img src={csvIcon} alt="" aria-hidden="true" />
               <span>
-                <strong>{group.label}</strong>
+                <strong>{getPlatformDataGroupDisplayName(group)}</strong>
                 <small>{group.count}개 cin</small>
               </span>
             </label>

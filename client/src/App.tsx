@@ -146,6 +146,12 @@ export default function App() {
       <PlatformDataPanel />
 
       <TrainingInfoPanel />
+
+      <footer className="app-credit">
+        <a href="https://www.flaticon.com/kr/free-icons/csv" title="csv 아이콘">
+          Csv 아이콘 제작자: mpanicon - Flaticon
+        </a>
+      </footer>
     </main>
   );
 }
