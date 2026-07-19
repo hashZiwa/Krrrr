@@ -7,6 +7,8 @@ function createClient(): MobiusClient {
     createCin: vi.fn(),
     getLatestCin: vi.fn(),
     discoverCinUris: vi.fn().mockResolvedValue([
+      "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719190000000",
+      "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719185000000",
       "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718175959000",
       "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180000000",
       "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180500000",
@@ -15,7 +17,13 @@ function createClient(): MobiusClient {
     ]),
     getCinByUri: vi.fn(async (uri: string) => ({
       rn: uri.split("/").at(-1),
-      con: uri.includes("180000000") ? 20 : 12,
+      con: uri.includes("19190000000")
+        ? "17"
+        : uri.includes("19185000000")
+          ? 61
+          : uri.includes("180000000")
+            ? 20
+            : 12,
     })),
   };
 }
@@ -33,7 +41,7 @@ describe("platformDataService", () => {
       offset: 500,
       limit: 500,
     });
-    expect(result).toMatchObject({ nextOffset: 1000, hasMore: false, itemCount: 5 });
+    expect(result).toMatchObject({ nextOffset: 1000, hasMore: false, itemCount: 7 });
     expect(result.groups).toEqual([
       {
         key: "2026-07-19",
@@ -83,6 +91,7 @@ describe("platformDataService", () => {
         ],
       },
     ]);
+    expect(client.getCinByUri).toHaveBeenCalledTimes(7);
   });
 
   it("exports selected groups as csv by loading each discovered cin", async () => {
@@ -97,6 +106,7 @@ describe("platformDataService", () => {
         items: [
           { rn: "4-20260718180000000", uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180000000" },
           { rn: "4-20260719175959000", uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719175959000" },
+          { rn: "4-20260719190000000", uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719190000000" },
         ],
       },
     ]);
@@ -105,5 +115,29 @@ describe("platformDataService", () => {
     expect(csv).toContain("2026-07-18 18:00 - 2026-07-19 18:00,4-20260718180000000,20260718180000,20");
     expect(csv).toContain("2026-07-18 18:00 - 2026-07-19 18:00,4-20260719175959000,20260719175959,12");
     expect(csv).not.toContain("4-20260718175959000");
+    expect(csv).not.toContain("4-20260719190000000");
+  });
+
+  it("keeps pagination based on raw discovery count while grouping only valid numeric content", async () => {
+    const rawUris = Array.from({ length: 500 }, (_, index) => {
+      const second = String(index % 60).padStart(2, "0");
+      return `Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-202607191900${second}000`;
+    });
+    const client = createClient();
+    vi.mocked(client.discoverCinUris).mockResolvedValue(rawUris);
+    vi.mocked(client.getCinByUri).mockImplementation(async (uri: string) => ({
+      rn: uri.split("/").at(-1),
+      con: uri.endsWith("000000") ? -1 : "junk",
+    }));
+    const service = createPlatformDataService(client, {
+      breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
+    });
+
+    const result = await service.discoverBreathConditionGroups();
+
+    expect(result.hasMore).toBe(true);
+    expect(result.itemCount).toBe(500);
+    expect(result.groups).toHaveLength(1);
+    expect(result.groups[0].count).toBe(9);
   });
 });

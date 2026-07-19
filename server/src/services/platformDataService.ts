@@ -95,6 +95,10 @@ function getRnFromUri(uri: string): string | null {
   return uri.split("/").filter(Boolean).at(-1) ?? null;
 }
 
+function isValidBreathConditionValue(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= -1 && value <= 60;
+}
+
 function csvEscape(value: unknown): string {
   const text = typeof value === "string" ? value : JSON.stringify(value ?? "");
 
@@ -127,8 +131,14 @@ export function createPlatformDataService(
     const uris = await client.discoverCinUris(options.breathConditionContainer, { offset, limit: discoveryLimit });
     const groups = new Map<string, PlatformDataGroup>();
 
-    for (const uri of [...uris].sort((left, right) => (getRnFromUri(right) ?? "").localeCompare(getRnFromUri(left) ?? ""))) {
-      const rn = getRnFromUri(uri);
+    const sortedUris = [...uris].sort((left, right) => (getRnFromUri(right) ?? "").localeCompare(getRnFromUri(left) ?? ""));
+    const cins = await Promise.all(sortedUris.map((uri) => client.getCinByUri(uri)));
+
+    for (const [index, cin] of cins.entries()) {
+      if (!isValidBreathConditionValue(cin.con)) continue;
+
+      const uri = sortedUris[index];
+      const rn = cin.rn ?? getRnFromUri(uri);
       const measuredAt = rn ? parseCinDateFromRn(rn) : null;
 
       if (!rn || !measuredAt) continue;
@@ -176,7 +186,11 @@ export function createPlatformDataService(
 
       for (const group of groups) {
         for (const item of group.items) {
-          rows.push(toCsvRow(group, await client.getCinByUri(item.uri)));
+          const cin = await client.getCinByUri(item.uri);
+
+          if (isValidBreathConditionValue(cin.con)) {
+            rows.push(toCsvRow(group, cin));
+          }
         }
       }
 

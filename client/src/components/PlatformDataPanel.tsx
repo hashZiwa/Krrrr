@@ -55,7 +55,7 @@ function mergeGroups(currentGroups: PlatformDataGroup[], nextGroups: PlatformDat
 
     const items = new Map(existing.items.map((item) => [item.uri, item]));
     group.items.forEach((item) => items.set(item.uri, item));
-    const mergedItems = [...items.values()].sort((left, right) => left.rn.localeCompare(right.rn));
+    const mergedItems = [...items.values()].sort((left, right) => right.rn.localeCompare(left.rn));
 
     groups.set(group.key, {
       ...existing,
@@ -64,7 +64,7 @@ function mergeGroups(currentGroups: PlatformDataGroup[], nextGroups: PlatformDat
     });
   }
 
-  return [...groups.values()].sort((left, right) => left.key.localeCompare(right.key));
+  return [...groups.values()].sort((left, right) => right.key.localeCompare(left.key));
 }
 
 function downloadBlob(blob: Blob, fileName: string) {
