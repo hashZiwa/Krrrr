@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { getHourlyTimeTicks, parseMeasuredAt, toChartSamples, toSleepStageSegments } from "../data/chartTransforms";
+import {
+  getHourlyTimeTicks,
+  parseMeasuredAt,
+  toBreathingEventOverlays,
+  toBreathingDisplaySamples,
+  toChartSamples,
+  toSleepStageOverlaySegments,
+  toSleepStageSegments,
+} from "../data/chartTransforms";
 
 describe("chartTransforms", () => {
   it("parses yyyyMMddHHmmss timestamps into local Date milliseconds", () => {
@@ -53,5 +61,89 @@ describe("chartTransforms", () => {
 
     expect(ticks.map((tick) => new Date(tick).getHours())).toEqual([0, 1, 2]);
     expect(ticks.map((tick) => new Date(tick).getMinutes())).toEqual([0, 0, 0]);
+  });
+
+  it("creates breathing event overlays centered between adjacent samples", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: 14 },
+      { measuredAt: "20260714230500", value: -1 },
+      { measuredAt: "20260714231000", value: 15 },
+      { measuredAt: "20260714231500", value: 0 },
+      { measuredAt: "20260714232000", value: 16 },
+    ]);
+
+    const overlays = toBreathingEventOverlays(samples);
+
+    expect(overlays).toEqual([
+      {
+        value: -1,
+        timeMs: samples[1].timeMs,
+        startMs: samples[0].timeMs + (samples[1].timeMs - samples[0].timeMs) / 2,
+        endMs: samples[1].timeMs + (samples[2].timeMs - samples[1].timeMs) / 2,
+      },
+      {
+        value: 0,
+        timeMs: samples[3].timeMs,
+        startMs: samples[2].timeMs + (samples[3].timeMs - samples[2].timeMs) / 2,
+        endMs: samples[3].timeMs + (samples[4].timeMs - samples[3].timeMs) / 2,
+      },
+    ]);
+  });
+
+  it("interpolates breathing display values for consecutive abnormal events while keeping original values", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: 14 },
+      { measuredAt: "20260714230500", value: -1 },
+      { measuredAt: "20260714231000", value: 0 },
+      { measuredAt: "20260714231500", value: 10 },
+    ]);
+
+    const displaySamples = toBreathingDisplaySamples(samples);
+
+    expect(displaySamples.map((sample) => sample.value)).toEqual([14, -1, 0, 10]);
+    expect(displaySamples[0].displayValue).toBe(14);
+    expect(displaySamples[1].displayValue).toBeCloseTo(12.67, 2);
+    expect(displaySamples[2].displayValue).toBeCloseTo(11.33, 2);
+    expect(displaySamples[3].displayValue).toBe(10);
+  });
+
+  it("uses the nearest normal breathing value when an abnormal run has only one normal side", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: -1 },
+      { measuredAt: "20260714230500", value: 12 },
+      { measuredAt: "20260714231000", value: 15 },
+      { measuredAt: "20260714231500", value: 0 },
+    ]);
+
+    const displaySamples = toBreathingDisplaySamples(samples);
+
+    expect(displaySamples.map((sample) => sample.displayValue)).toEqual([12, 12, 15, 15]);
+  });
+
+  it("maps sleep stage overlay segments into the breathing y-axis range", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: 0 },
+      { measuredAt: "20260714230500", value: 1 },
+      { measuredAt: "20260714231000", value: 2 },
+    ]);
+
+    const segments = toSleepStageOverlaySegments(samples, [10, 20]);
+
+    expect(segments).toEqual([
+      {
+        value: 0,
+        points: [
+          { timeMs: samples[0].timeMs, overlayValue: 11.5 },
+          { timeMs: samples[1].timeMs, overlayValue: 11.5 },
+        ],
+      },
+      {
+        value: 1,
+        points: [
+          { timeMs: samples[1].timeMs, overlayValue: 15 },
+          { timeMs: samples[2].timeMs, overlayValue: 15 },
+        ],
+      },
+    ]);
   });
 });

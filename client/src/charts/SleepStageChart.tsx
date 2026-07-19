@@ -14,6 +14,7 @@ import type { ChartSample } from "../types/sleep";
 import {
   chartColors,
   getSleepStageTooltipValue,
+  getSleepStageScrollableWidth,
   getSleepStageSegmentClipPadding,
   shouldRenderSleepStageGlow,
   sleepStageLabels,
@@ -147,51 +148,61 @@ function SleepStageTooltip({ active, label, payload }: SleepStageTooltipProps) {
   );
 }
 
+function FixedSleepStageYAxis() {
+  return (
+    <div className="fixed-y-axis fixed-y-axis--sleep" aria-hidden="true">
+      {[2, 1, 0].map((value) => (
+        <span key={value}>{sleepStageLabels[value]}</span>
+      ))}
+    </div>
+  );
+}
+
 export function SleepStageChart({ data, window }: SleepStageChartProps) {
   const hourlyTicks = getHourlyTimeTicks(window.start, window.end);
+  const scrollableWidth = getSleepStageScrollableWidth(window.start, window.end);
 
   return (
     <section className="chart-panel">
       <div className="chart-panel__header">
-        <h2>수면 단계 모니터</h2>
+        <div>
+          <p className="device-panel__eyebrow">Monitor</p>
+          <h2>수면 단계 독립 모니터</h2>
+        </div>
       </div>
-      <div className="chart-frame">
-        <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={data} margin={{ top: 12, right: 20, bottom: 0, left: 0 }}>
-            <CartesianGrid stroke={chartColors.grid} strokeDasharray="4 4" />
-            <XAxis
-              dataKey="timeMs"
-              type="number"
-              domain={[window.start, window.end]}
-              ticks={hourlyTicks}
-              tick={{ fontSize: 12, fill: chartColors.axis }}
-              tickFormatter={formatTimeLabel}
-              stroke="transparent"
-              tickMargin={8}
-            />
-            <YAxis
-              domain={[0, 2]}
-              ticks={[0, 1, 2]}
-              tick={{ fontSize: 13, fill: chartColors.axis }}
-              strokeWidth={2}
-              tickFormatter={(value) => sleepStageLabels[Number(value)]}
-              stroke={chartColors.axis}
-              width={65}
-              tickMargin={8}
-            />
-            <Tooltip content={<SleepStageTooltip />} />
-            <Customized component={<SleepStageSegmentsLayer data={data} />} />
-            <Line
-              type="linear"
-              dataKey="value"
-              stroke="transparent"
-              strokeWidth={0}
-              dot={false}
-              activeDot={false}
-              isAnimationActive={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <div className="scroll-chart-layout">
+        <FixedSleepStageYAxis />
+        <div className="chart-scroll-frame">
+          <div className="chart-scroll-content" style={{ width: `${scrollableWidth}px` }}>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={data} margin={{ top: 12, right: 20, bottom: 0, left: 0 }}>
+                <CartesianGrid stroke={chartColors.grid} strokeDasharray="4 4" />
+                <XAxis
+                  dataKey="timeMs"
+                  type="number"
+                  domain={[window.start, window.end]}
+                  ticks={hourlyTicks}
+                  tick={{ fontSize: 12, fill: chartColors.axis }}
+                  tickFormatter={formatTimeLabel}
+                  stroke="transparent"
+                  tickMargin={8}
+                />
+                <YAxis domain={[0, 2]} ticks={[0, 1, 2]} width={0} hide />
+                <Tooltip content={<SleepStageTooltip />} />
+                <Customized component={<SleepStageSegmentsLayer data={data} />} />
+                <Line
+                  type="linear"
+                  dataKey="value"
+                  stroke="transparent"
+                  strokeWidth={0}
+                  dot={false}
+                  activeDot={false}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  breathingEventOverlayLayers,
+  breathingYAxisTicks,
+  chartColors,
+  getBreathingEventOverlayColor,
+  getBreathingEventOverlayLegendItems,
+  getBreathingEventOverlayOpacity,
+  getBreathingEventOverlayRenderItems,
+  getBreathingEventDotOpacity,
+  getBreathingScrollableWidth,
+  getBreathingYAxisConfig,
   getSleepStageTooltipValue,
   getSleepStageSegmentClipPadding,
+  getSleepStageScrollableWidth,
   shouldRenderSleepStageGlow,
   sleepStageLabels,
   sleepStageLineStyles,
@@ -55,5 +66,77 @@ describe("chartConfig", () => {
     const maxStrokeWidth = Math.max(...Object.values(sleepStageLineStyles).map((style) => style.strokeWidth));
 
     expect(getSleepStageSegmentClipPadding()).toBeGreaterThan(maxStrokeWidth / 2);
+  });
+
+  it("scales the sleep stage chart width by session duration", () => {
+    const oneHourMs = 60 * 60 * 1000;
+
+    expect(getSleepStageScrollableWidth(0, oneHourMs)).toBe(360);
+    expect(getSleepStageScrollableWidth(0, 10 * oneHourMs)).toBe(1800);
+  });
+
+  it("uses the same scroll width rule for breathing charts", () => {
+    const oneHourMs = 60 * 60 * 1000;
+
+    expect(getBreathingScrollableWidth(0, oneHourMs)).toBe(360);
+    expect(getBreathingScrollableWidth(0, 10 * oneHourMs)).toBe(1800);
+  });
+
+  it("keeps breathing y-axis ticks in config", () => {
+    expect(breathingYAxisTicks).toEqual([0, 6, 12, 18]);
+  });
+
+  it("configures separate mask and event overlays for breathing events", () => {
+    expect(Object.keys(breathingEventOverlayLayers)).toEqual(["mask", "event"]);
+    expect(getBreathingEventOverlayColor(-1, "mask")).toBe("#ffffff");
+    expect(getBreathingEventOverlayColor(0, "mask")).toBe("#ffffff");
+    expect(getBreathingEventOverlayColor(-1, "event")).toBe(chartColors.movement);
+    expect(getBreathingEventOverlayColor(0, "event")).toBe(chartColors.apnea);
+  });
+
+  it("keeps movement events partially visible while apnea remains masked", () => {
+    expect(getBreathingEventOverlayOpacity(-1, "mask")).toBeGreaterThan(0);
+    expect(getBreathingEventOverlayOpacity(-1, "mask")).toBeLessThan(1);
+    expect(getBreathingEventOverlayOpacity(0, "mask")).toBe(1);
+    expect(getBreathingEventDotOpacity(-1)).toBeGreaterThan(0);
+    expect(getBreathingEventDotOpacity(-1)).toBeLessThan(1);
+    expect(getBreathingEventDotOpacity(0)).toBe(0);
+  });
+
+  it("renders every mask overlay before any event overlay", () => {
+    const renderItems = getBreathingEventOverlayRenderItems([
+      { timeMs: 1 },
+      { timeMs: 2 },
+    ]);
+
+    expect(renderItems.map((item) => `${item.layer}-${item.overlay.timeMs}`)).toEqual([
+      "mask-1",
+      "mask-2",
+      "event-1",
+      "event-2",
+    ]);
+  });
+
+  it("uses current breathing event overlay colors for the legend", () => {
+    expect(getBreathingEventOverlayLegendItems()).toEqual([
+      { label: "뒤척임", color: chartColors.movement },
+      { label: "무호흡", color: chartColors.apnea },
+    ]);
+  });
+});
+
+describe("breathing y-axis config", () => {
+  it("sets breathing y-axis range from normal values with padding", () => {
+    expect(getBreathingYAxisConfig([14, -1, 0, 16])).toEqual({
+      domain: [12, 18],
+      ticks: [12, 14, 16, 18],
+    });
+  });
+
+  it("keeps a minimum breathing y-axis range when normal values are flat", () => {
+    expect(getBreathingYAxisConfig([12, 12, -1])).toEqual({
+      domain: [9, 15],
+      ticks: [9, 11, 13, 15],
+    });
   });
 });

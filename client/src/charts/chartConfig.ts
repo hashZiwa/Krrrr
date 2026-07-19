@@ -1,9 +1,9 @@
 export const chartColors = {
   sleepLine: "#276b7a",
   sleepFill: "#b9dde3",
-  breathingLine: "#4f6f52",
-  movement: "#c87941",
-  apnea: "#b94a48",
+  breathingLine: "#6e6a71",
+  movement: "#f8e395",
+  apnea: "#eba4a3",
   grid: "#d9e3e5",
   axis: "#66777b",
 };
@@ -28,6 +28,123 @@ export const sleepStageSegmentGlow = {
 
 export const sleepStageSegmentClipPaddingBuffer = 12;
 
+export const breathingSleepStageOverlayStyle = {
+  opacity: 0.34,
+  strokeWidth: 20,
+} as const;
+
+const sleepStageMinScrollableWidth = 360;
+const sleepStagePixelsPerHour = 180;
+
+function getScrollableChartWidth(startMs: number, endMs: number): number {
+  const durationHours = Math.max(0, endMs - startMs) / (60 * 60 * 1000);
+
+  return Math.max(sleepStageMinScrollableWidth, Math.ceil(durationHours * sleepStagePixelsPerHour));
+}
+
+export function getSleepStageScrollableWidth(startMs: number, endMs: number): number {
+  return getScrollableChartWidth(startMs, endMs);
+}
+
+export function getBreathingScrollableWidth(startMs: number, endMs: number): number {
+  return getScrollableChartWidth(startMs, endMs);
+}
+
+export const breathingYAxisTicks = [0, 6, 12, 18];
+export const breathingYAxisPadding = 2;
+export const breathingYAxisMinRange = 6;
+
+export const breathingEventOverlayLayers = {
+  mask: {
+    color: "#ffffff",
+    xInsetRatio: 0.5,
+    yInset: 0,
+    gradientStops: [
+      { offset: "0%", opacity: 0 },
+      { offset: "10%", opacity: 0.9 },
+      { offset: "30%", opacity: 1 },
+      { offset: "70%", opacity: 1 },
+      { offset: "90%", opacity: 0.9 },
+      { offset: "100%", opacity: 0 },
+    ],
+  },
+  event: {
+    xInsetRatio: 0.5,
+    yInset: 0,
+    gradientStops: [
+      { offset: "0%", opacity: 0 },
+      { offset: "35%", opacity: 0.5 },
+      { offset: "50%", opacity: 0.55 },
+      { offset: "65%", opacity: 0.5 },
+      { offset: "100%", opacity: 0 },
+    ],
+  },
+} as const;
+
+export type BreathingEventOverlayLayerKey = keyof typeof breathingEventOverlayLayers;
+
+export const breathingEventVisibility = {
+  movementMaskOpacity: 0.3,
+  movementDotOpacity: 0.8,
+  apneaMaskOpacity: 1,
+  apneaDotOpacity: 0,
+} as const;
+
+export function getBreathingEventOverlayRenderItems<T>(overlays: T[]): Array<{
+  layer: BreathingEventOverlayLayerKey;
+  overlay: T;
+}> {
+  const layers = Object.keys(breathingEventOverlayLayers) as BreathingEventOverlayLayerKey[];
+
+  return layers.flatMap((layer) => overlays.map((overlay) => ({ layer, overlay })));
+}
+
+export function getBreathingEventOverlayColor(value: number, layer: BreathingEventOverlayLayerKey): string {
+  if (layer === "mask") return breathingEventOverlayLayers.mask.color;
+  return value === -1 ? chartColors.movement : chartColors.apnea;
+}
+
+export function getBreathingEventOverlayOpacity(value: number, layer: BreathingEventOverlayLayerKey): number {
+  if (layer !== "mask") return 1;
+  return value === -1 ? breathingEventVisibility.movementMaskOpacity : breathingEventVisibility.apneaMaskOpacity;
+}
+
+export function getBreathingEventDotOpacity(value: number): number {
+  if (value === -1) return breathingEventVisibility.movementDotOpacity;
+  if (value === 0) return breathingEventVisibility.apneaDotOpacity;
+  return 1;
+}
+
+export function getBreathingEventOverlayLegendItems(): Array<{ label: string; color: string }> {
+  return [
+    { label: "뒤척임", color: chartColors.movement },
+    { label: "무호흡", color: chartColors.apnea },
+  ];
+}
+
+export function getBreathingYAxisConfig(values: number[]): { domain: [number, number]; ticks: number[] } {
+  const normalValues = values.filter((value) => value > 0);
+
+  if (normalValues.length === 0) {
+    return { domain: [-1, 18], ticks: [...breathingYAxisTicks] };
+  }
+
+  const min = Math.min(...normalValues);
+  const max = Math.max(...normalValues);
+  const center = (min + max) / 2;
+  const paddedMin = min - breathingYAxisPadding;
+  const paddedMax = max + breathingYAxisPadding;
+  const halfRange = Math.max((paddedMax - paddedMin) / 2, breathingYAxisMinRange / 2);
+  const domainMin = Math.floor(center - halfRange);
+  const domainMax = Math.ceil(center + halfRange);
+  const tickStep = (domainMax - domainMin) / 3;
+
+  return {
+    domain: [domainMin, domainMax],
+    ticks: [0, 1, 2, 3].map((index) => Math.round(domainMin + tickStep * index)),
+  };
+}
+
 export function getSleepStageSegmentClipPadding(): number {
   const maxStrokeWidth = Math.max(...Object.values(sleepStageLineStyles).map((style) => style.strokeWidth));
 
@@ -51,7 +168,7 @@ export function getSleepStageTooltipValue(payload?: SleepStageTooltipPayloadItem
 }
 
 export function formatBreathingValue(value: number): string {
-  if (value === -1) return "뒤척임";
-  if (value === 0) return "무호흡 인식 실패";
-  return `${value}회/분`;
+  if (value === -1) return "뒤척임으로 값 부정확";
+  if (value === 0) return "무호흡";
+  return `${value}회/min`;
 }

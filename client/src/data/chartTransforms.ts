@@ -63,3 +63,123 @@ export function toSleepStageSegments(samples: ChartSample[]): SleepStageSegment[
     ],
   }));
 }
+
+export type SleepStageOverlaySegment = {
+  value: number;
+  points: Array<{
+    timeMs: number;
+    overlayValue: number;
+  }>;
+};
+
+export function toSleepStageOverlaySegments(
+  samples: ChartSample[],
+  breathingDomain: [number, number],
+): SleepStageOverlaySegment[] {
+  const [min, max] = breathingDomain;
+  const range = max - min;
+  const stagePositions: Record<number, number> = {
+    0: min + range * 0.15,
+    1: min + range * 0.5,
+    2: min + range * 0.85,
+  };
+
+  return samples.slice(0, -1).map((sample, index) => {
+    const overlayValue = stagePositions[sample.value] ?? stagePositions[0];
+
+    return {
+      value: sample.value,
+      points: [
+        { timeMs: sample.timeMs, overlayValue },
+        { timeMs: samples[index + 1].timeMs, overlayValue },
+      ],
+    };
+  });
+}
+
+export type BreathingEventOverlay = {
+  value: number;
+  timeMs: number;
+  startMs: number;
+  endMs: number;
+};
+
+export type BreathingDisplaySample = ChartSample & {
+  displayValue: number | null;
+};
+
+function findPreviousNormalSample(samples: ChartSample[], startIndex: number): ChartSample | null {
+  for (let index = startIndex; index >= 0; index -= 1) {
+    if (samples[index].value > 0) return samples[index];
+  }
+
+  return null;
+}
+
+function findNextNormalSample(samples: ChartSample[], startIndex: number): ChartSample | null {
+  for (let index = startIndex; index < samples.length; index += 1) {
+    if (samples[index].value > 0) return samples[index];
+  }
+
+  return null;
+}
+
+export function toBreathingDisplaySamples(samples: ChartSample[]): BreathingDisplaySample[] {
+  const displaySamples = samples.map((sample) => ({
+    ...sample,
+    displayValue: sample.value > 0 ? sample.value : null,
+  }));
+
+  let index = 0;
+  while (index < samples.length) {
+    if (samples[index].value > 0) {
+      index += 1;
+      continue;
+    }
+
+    const runStart = index;
+    while (index < samples.length && samples[index].value <= 0) {
+      index += 1;
+    }
+    const runEnd = index - 1;
+    const previousNormal = findPreviousNormalSample(samples, runStart - 1);
+    const nextNormal = findNextNormalSample(samples, runEnd + 1);
+
+    for (let eventIndex = runStart; eventIndex <= runEnd; eventIndex += 1) {
+      if (previousNormal && nextNormal) {
+        const step = eventIndex - runStart + 1;
+        const runLength = runEnd - runStart + 1;
+        const ratio = step / (runLength + 1);
+
+        displaySamples[eventIndex].displayValue =
+          previousNormal.value + (nextNormal.value - previousNormal.value) * ratio;
+      } else if (previousNormal) {
+        displaySamples[eventIndex].displayValue = previousNormal.value;
+      } else if (nextNormal) {
+        displaySamples[eventIndex].displayValue = nextNormal.value;
+      }
+    }
+  }
+
+  return displaySamples;
+}
+
+export function toBreathingEventOverlays(samples: ChartSample[]): BreathingEventOverlay[] {
+  return samples.flatMap((sample, index) => {
+    if (sample.value > 0) return [];
+
+    const previous = samples[index - 1];
+    const next = samples[index + 1];
+    const previousDelta = previous ? sample.timeMs - previous.timeMs : next ? next.timeMs - sample.timeMs : 0;
+    const nextDelta = next ? next.timeMs - sample.timeMs : previousDelta;
+
+    return [
+      {
+        value: sample.value,
+        timeMs: sample.timeMs,
+        startMs: sample.timeMs - previousDelta / 2,
+        endMs: sample.timeMs + nextDelta / 2,
+      },
+    ];
+  });
+}
