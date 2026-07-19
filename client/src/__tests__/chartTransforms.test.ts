@@ -145,11 +145,12 @@ describe("chartTransforms", () => {
     expect(displaySamples.map((sample) => sample.displayValue)).toEqual([12, 12, 15, 15]);
   });
 
-  it("maps sleep stage overlay segments into the breathing y-axis range", () => {
+  it("maps sleep stage overlay segments into the breathing y-axis range with awake at the top", () => {
     const samples = toChartSamples([
       { measuredAt: "20260714230000", value: 0 },
       { measuredAt: "20260714230500", value: 1 },
       { measuredAt: "20260714231000", value: 2 },
+      { measuredAt: "20260714231500", value: 0 },
     ]);
 
     const segments = toSleepStageOverlaySegments(samples, [10, 20]);
@@ -158,8 +159,8 @@ describe("chartTransforms", () => {
       {
         value: 0,
         points: [
-          { timeMs: samples[0].timeMs, overlayValue: 11.5 },
-          { timeMs: samples[1].timeMs, overlayValue: 11.5 },
+          { timeMs: samples[0].timeMs, overlayValue: 18.5 },
+          { timeMs: samples[1].timeMs, overlayValue: 18.5 },
         ],
       },
       {
@@ -167,6 +168,13 @@ describe("chartTransforms", () => {
         points: [
           { timeMs: samples[1].timeMs, overlayValue: 15 },
           { timeMs: samples[2].timeMs, overlayValue: 15 },
+        ],
+      },
+      {
+        value: 2,
+        points: [
+          { timeMs: samples[2].timeMs, overlayValue: 11.5 },
+          { timeMs: samples[3].timeMs, overlayValue: 11.5 },
         ],
       },
     ]);
