@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  breathingCurveStyle,
   breathingEventOverlayLayers,
+  breathingFillGradientStops,
+  breathingStrokeGradientStops,
   breathingYAxisTicks,
   chartColors,
   getBreathingEventOverlayColor,
@@ -168,6 +171,12 @@ describe("chartConfig", () => {
       { label: "뒤척임", color: chartColors.movement },
       { label: "무호흡", color: chartColors.apnea },
     ]);
+  });
+  it("keeps the soft breathing curve and gradient fill configurable", () => {
+    expect(breathingCurveStyle.type).toBe("natural");
+    expect(breathingCurveStyle.strokeWidth).toBeGreaterThan(0);
+    expect(breathingFillGradientStops.length).toBeGreaterThanOrEqual(3);
+    expect(breathingStrokeGradientStops.length).toBeGreaterThanOrEqual(2);
   });
 });
 

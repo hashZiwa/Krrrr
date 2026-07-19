@@ -76,6 +76,24 @@ export const breathingSleepStageOverlayStyle = {
   strokeWidth: 20,
 } as const;
 
+export const breathingCurveStyle = {
+  type: "natural",
+  strokeWidth: 3,
+  dotRadius: 3,
+} as const;
+
+export const breathingFillGradientStops = [
+  { offset: "0%", color: "#d38457", opacity: 0.62 },
+  { offset: "52%", color: "#e5b878", opacity: 0.54 },
+  { offset: "100%", color: "#f5df88", opacity: 0.46 },
+] as const;
+
+export const breathingStrokeGradientStops = [
+  { offset: "0%", color: "#c66f48" },
+  { offset: "58%", color: "#dca45c" },
+  { offset: "100%", color: "#e7c85d" },
+] as const;
+
 const sleepStageMinScrollableWidth = 360;
 const sleepStagePixelsPerHour = 300;
 

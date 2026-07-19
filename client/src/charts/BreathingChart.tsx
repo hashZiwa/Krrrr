@@ -1,9 +1,10 @@
 import { useState } from "react";
 import {
+  Area,
   CartesianGrid,
+  ComposedChart,
   Customized,
   Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -20,7 +21,10 @@ import type { TimeWindow } from "../data/timeWindow";
 import type { ChartSample } from "../types/sleep";
 import {
   breathingEventOverlayLayers,
+  breathingCurveStyle,
+  breathingFillGradientStops,
   breathingSleepStageOverlayStyle,
+  breathingStrokeGradientStops,
   breathingYAxisTicks,
   type BreathingEventOverlayLayerKey,
   chartColors,
@@ -190,9 +194,9 @@ function BreathingDot(props: { cx?: number; cy?: number; payload?: ChartSample }
     <circle
       cx={props.cx}
       cy={props.cy}
-      r={3}
+      r={breathingCurveStyle.dotRadius}
       fill="#fff"
-      stroke={chartColors.breathingLine}
+      stroke={breathingStrokeGradientStops[0].color}
       opacity={opacity}
     />
   );
@@ -250,7 +254,24 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
         <div className="chart-scroll-frame">
           <div className="chart-scroll-content" style={{ width: `${scrollableWidth}px` }}>
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={displayData} margin={{ top: 12, right: 20, bottom: 0, left: 0 }}>
+              <ComposedChart data={displayData} margin={{ top: 12, right: 20, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="breathing-area-gradient" x1="0" y1="0" x2="1" y2="0">
+                    {breathingFillGradientStops.map((stop) => (
+                      <stop
+                        key={stop.offset}
+                        offset={stop.offset}
+                        stopColor={stop.color}
+                        stopOpacity={stop.opacity}
+                      />
+                    ))}
+                  </linearGradient>
+                  <linearGradient id="breathing-stroke-gradient" x1="0" y1="0" x2="1" y2="0">
+                    {breathingStrokeGradientStops.map((stop) => (
+                      <stop key={stop.offset} offset={stop.offset} stopColor={stop.color} />
+                    ))}
+                  </linearGradient>
+                </defs>
                 <CartesianGrid stroke={chartColors.grid} strokeDasharray="4 4" />
                 <XAxis
                   dataKey="timeMs"
@@ -267,11 +288,20 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                   labelFormatter={(value) => formatTimeLabel(Number(value))}
                   formatter={(_value, _name, item) => [formatBreathingValue(Number(item.payload.value)), "호흡"]}
                 />
-                <Line
-                  type="monotone"
+                <Area
+                  type={breathingCurveStyle.type}
                   dataKey="displayValue"
-                  stroke={chartColors.breathingLine}
-                  strokeWidth={3}
+                  fill="url(#breathing-area-gradient)"
+                  stroke="none"
+                  dot={false}
+                  activeDot={false}
+                  isAnimationActive={false}
+                />
+                <Line
+                  type={breathingCurveStyle.type}
+                  dataKey="displayValue"
+                  stroke="url(#breathing-stroke-gradient)"
+                  strokeWidth={breathingCurveStyle.strokeWidth}
                   dot={<BreathingDot />}
                   isAnimationActive={false}
                 />
@@ -283,7 +313,7 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                     }
                   />
                 ) : null}
-              </LineChart>
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
