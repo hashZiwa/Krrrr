@@ -17,13 +17,12 @@ export const sleepStageLabels: Record<number, string> = {
 export type SleepStageLineStyle = {
   color: string;
   strokeWidth: number;
-  yOffsetPx: number;
 };
 
 export const sleepStageLineStyles: Record<number, SleepStageLineStyle> = {
-  0: { color: "#f8c302ff", strokeWidth: 4, yOffsetPx: 0 },
-  1: { color: "#239bf1", strokeWidth: 10, yOffsetPx: 0 },
-  2: { color: "#5541e6", strokeWidth: 16, yOffsetPx: 0 },
+  0: { color: "#f8c302ff", strokeWidth: 4 },
+  1: { color: "#239bf1", strokeWidth: 12 },
+  2: { color: "#5541e6", strokeWidth: 16 },
 };
 
 export const sleepStageTransitionLineStyle = {
@@ -46,8 +45,8 @@ export function getSleepStageTransitionLineCoordinates(
   fromStrokeWidth: number,
   toStrokeWidth: number,
 ): { y1: number; y2: number; gradientY1: number; gradientY2: number } {
-  const fromExtension = fromStrokeWidth / 2;
-  const toExtension = toStrokeWidth / 2;
+  const fromExtension = fromStrokeWidth / 2 - 2;
+  const toExtension = toStrokeWidth / 2 - 2;
   const fromIsTop = fromY <= toY;
   const topY = fromIsTop ? fromY - fromExtension : toY - toExtension;
   const bottomY = fromIsTop ? toY + toExtension : fromY + fromExtension;

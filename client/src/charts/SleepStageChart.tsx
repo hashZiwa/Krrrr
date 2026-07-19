@@ -160,7 +160,7 @@ function SleepStageSegmentsLayer({
           const [start, end] = segment.points;
           const x1 = xScale(start.timeMs);
           const x2 = xScale(end.timeMs);
-          const y = yScale(getSleepStageDisplayValue(segment.value)) + style.yOffsetPx;
+          const y = yScale(getSleepStageDisplayValue(segment.value));
           const key = `${start.timeMs}-${index}`;
 
           return (

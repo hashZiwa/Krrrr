@@ -39,8 +39,8 @@ describe("chartConfig", () => {
     expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.strokeWidth)).size).toBe(3);
   });
 
-  it("keeps a configurable pixel y offset for each horizontal sleep stage segment", () => {
-    expect(Object.values(sleepStageLineStyles).every((style) => typeof style.yOffsetPx === "number")).toBe(true);
+  it("keeps horizontal sleep stage segment styles focused on color and stroke width", () => {
+    expect(Object.values(sleepStageLineStyles).every((style) => "yOffsetPx" in style)).toBe(false);
   });
 
   it("uses the awake stroke width as the default sleep transition line width", () => {
@@ -49,16 +49,16 @@ describe("chartConfig", () => {
 
   it("extends sleep transition lines by the connected horizontal segment stroke widths", () => {
     expect(getSleepStageTransitionLineCoordinates(20, 80, 10, 16)).toEqual({
-      y1: 15,
-      y2: 88,
-      gradientY1: 15,
-      gradientY2: 88,
+      y1: 17,
+      y2: 86,
+      gradientY1: 17,
+      gradientY2: 86,
     });
     expect(getSleepStageTransitionLineCoordinates(80, 20, 10, 16)).toEqual({
-      y1: 85,
-      y2: 12,
-      gradientY1: 12,
-      gradientY2: 85,
+      y1: 83,
+      y2: 14,
+      gradientY1: 14,
+      gradientY2: 83,
     });
   });
 
