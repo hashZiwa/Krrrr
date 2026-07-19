@@ -13,13 +13,12 @@ import type { TimeWindow } from "../data/timeWindow";
 import type { ChartSample } from "../types/sleep";
 import {
   chartColors,
+  getSleepStageDisplayValue,
   getSleepStageTooltipValue,
   getSleepStageScrollableWidth,
   getSleepStageSegmentClipPadding,
-  shouldRenderSleepStageGlow,
   sleepStageLabels,
   sleepStageLineStyles,
-  sleepStageSegmentGlow,
   type SleepStageTooltipPayloadItem,
 } from "./chartConfig";
 
@@ -69,7 +68,6 @@ function SleepStageSegmentsLayer({
   }
 
   const clipPathId = "sleep-stage-segment-clip";
-  const glowGradientId = (value: number) => `sleep-stage-glow-${value}`;
   const clipPadding = getSleepStageSegmentClipPadding();
 
   return (
@@ -83,16 +81,6 @@ function SleepStageSegmentsLayer({
             height={offset.height + clipPadding * 2}
           />
         </clipPath>
-        {sleepStageSegmentGlow.stages.map((value) => {
-          const style = sleepStageLineStyles[value];
-
-          return (
-            <linearGradient key={value} id={glowGradientId(value)} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={style.color} stopOpacity={sleepStageSegmentGlow.opacity} />
-              <stop offset="100%" stopColor={style.color} stopOpacity={0} />
-            </linearGradient>
-          );
-        })}
       </defs>
       <g clipPath={`url(#${clipPathId})`}>
         {segments.map((segment, index) => {
@@ -100,32 +88,20 @@ function SleepStageSegmentsLayer({
           const [start, end] = segment.points;
           const x1 = xScale(start.timeMs);
           const x2 = xScale(end.timeMs);
-          const y = yScale(segment.value);
+          const y = yScale(getSleepStageDisplayValue(segment.value));
           const key = `${start.timeMs}-${index}`;
-          const strokeOffset = style.strokeWidth / 2;
 
           return (
-            <g key={key}>
-              {shouldRenderSleepStageGlow(segment.value) ? (
-                <rect
-                  x={Math.min(x1, x2)}
-                  y={y + strokeOffset}
-                  width={Math.abs(x2 - x1)}
-                  height={sleepStageSegmentGlow.height}
-                  rx={strokeOffset}
-                  fill={`url(#${glowGradientId(segment.value)})`}
-                />
-              ) : null}
-              <line
-                x1={x1}
-                x2={x2}
-                y1={y}
-                y2={y}
-                stroke={style.color}
-                strokeWidth={style.strokeWidth}
-                strokeLinecap="round"
-              />
-            </g>
+            <line
+              key={key}
+              x1={x1}
+              x2={x2}
+              y1={y}
+              y2={y}
+              stroke={style.color}
+              strokeWidth={style.strokeWidth}
+              strokeLinecap="round"
+            />
           );
         })}
       </g>
@@ -151,7 +127,7 @@ function SleepStageTooltip({ active, label, payload }: SleepStageTooltipProps) {
 function FixedSleepStageYAxis() {
   return (
     <div className="fixed-y-axis fixed-y-axis--sleep" aria-hidden="true">
-      {[2, 1, 0].map((value) => (
+      {[0, 1, 2].map((value) => (
         <span key={value}>{sleepStageLabels[value]}</span>
       ))}
     </div>

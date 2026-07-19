@@ -21,7 +21,7 @@ export const sleepStageLineStyles: Record<number, { color: string; strokeWidth: 
 };
 
 export const sleepStageSegmentGlow = {
-  stages: [1, 2],
+  stages: [] as number[],
   height: 70,
   opacity: 0.28,
 } as const;
@@ -151,8 +151,12 @@ export function getSleepStageSegmentClipPadding(): number {
   return maxStrokeWidth / 2 + sleepStageSegmentClipPaddingBuffer;
 }
 
+export function getSleepStageDisplayValue(value: number): number {
+  return 2 - value;
+}
+
 export function shouldRenderSleepStageGlow(value: number): boolean {
-  return sleepStageSegmentGlow.stages.includes(value as 1 | 2);
+  return sleepStageSegmentGlow.stages.includes(value);
 }
 
 export type SleepStageTooltipPayloadItem = {

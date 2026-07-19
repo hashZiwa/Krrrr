@@ -10,6 +10,7 @@ import {
   getBreathingEventDotOpacity,
   getBreathingScrollableWidth,
   getBreathingYAxisConfig,
+  getSleepStageDisplayValue,
   getSleepStageTooltipValue,
   getSleepStageSegmentClipPadding,
   getSleepStageScrollableWidth,
@@ -49,17 +50,20 @@ describe("chartConfig", () => {
     expect(getSleepStageTooltipValue([{ value: undefined }, { value: "bad" }])).toBeNull();
   });
 
-  it("adds glow only for light and deep sleep segments", () => {
+  it("maps sleep stages to reversed y-axis display positions", () => {
+    expect(getSleepStageDisplayValue(0)).toBe(2);
+    expect(getSleepStageDisplayValue(1)).toBe(1);
+    expect(getSleepStageDisplayValue(2)).toBe(0);
+  });
+
+  it("does not add glow overlays to sleep stage segments", () => {
     expect(shouldRenderSleepStageGlow(0)).toBe(false);
-    expect(shouldRenderSleepStageGlow(1)).toBe(true);
-    expect(shouldRenderSleepStageGlow(2)).toBe(true);
+    expect(shouldRenderSleepStageGlow(1)).toBe(false);
+    expect(shouldRenderSleepStageGlow(2)).toBe(false);
   });
 
   it("keeps sleep stage glow tuning in chart config", () => {
-    expect(sleepStageSegmentGlow.height).toBeGreaterThan(0);
-    expect(sleepStageSegmentGlow.opacity).toBeGreaterThan(0);
-    expect(sleepStageSegmentGlow.opacity).toBeLessThanOrEqual(1);
-    expect(sleepStageSegmentGlow.stages).toEqual([1, 2]);
+    expect(sleepStageSegmentGlow.stages).toEqual([]);
   });
 
   it("expands the sleep stage clip area beyond the thickest segment stroke", () => {
