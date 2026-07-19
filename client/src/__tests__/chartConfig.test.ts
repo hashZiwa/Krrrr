@@ -118,14 +118,14 @@ describe("chartConfig", () => {
     const oneHourMs = 60 * 60 * 1000;
 
     expect(getSleepStageScrollableWidth(0, oneHourMs)).toBe(360);
-    expect(getSleepStageScrollableWidth(0, 10 * oneHourMs)).toBe(1800);
+    expect(getSleepStageScrollableWidth(0, 10 * oneHourMs)).toBe(3000);
   });
 
   it("uses the same scroll width rule for breathing charts", () => {
     const oneHourMs = 60 * 60 * 1000;
 
     expect(getBreathingScrollableWidth(0, oneHourMs)).toBe(360);
-    expect(getBreathingScrollableWidth(0, 10 * oneHourMs)).toBe(1800);
+    expect(getBreathingScrollableWidth(0, 10 * oneHourMs)).toBe(3000);
   });
 
   it("keeps breathing y-axis ticks in config", () => {

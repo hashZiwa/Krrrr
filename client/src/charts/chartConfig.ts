@@ -77,7 +77,7 @@ export const breathingSleepStageOverlayStyle = {
 } as const;
 
 const sleepStageMinScrollableWidth = 360;
-const sleepStagePixelsPerHour = 180;
+const sleepStagePixelsPerHour = 300;
 
 function getScrollableChartWidth(startMs: number, endMs: number): number {
   const durationHours = Math.max(0, endMs - startMs) / (60 * 60 * 1000);
