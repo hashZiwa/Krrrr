@@ -77,13 +77,30 @@ export const sleepStageSegmentClipPaddingBuffer = 12;
 
 export const breathingSleepStageOverlayStyle = {
   opacity: 0.34,
-  strokeWidth: 20,
+  strokeWidthByStage: {
+    0: sleepStageLineStyles[0].strokeWidth,
+    1: sleepStageLineStyles[1].strokeWidth,
+    2: sleepStageLineStyles[2].strokeWidth,
+    3: sleepStageLineStyles[3].strokeWidth,
+  },
 } as const;
 
 export const breathingSleepStageOverlayTransitionStyle = {
-  strokeWidth: 4,
+  strokeWidth: sleepStageTransitionLineStyle.strokeWidth,
   strokeLinecap: "butt",
 } as const;
+
+export function getBreathingSleepStageOverlayStrokeWidth(value: number): number {
+  return (
+    breathingSleepStageOverlayStyle.strokeWidthByStage[
+      value as keyof typeof breathingSleepStageOverlayStyle.strokeWidthByStage
+    ] ?? sleepStageLineStyles[0].strokeWidth
+  );
+}
+
+export function getBreathingSleepStageOverlayTransitionStrokeWidth(): number {
+  return breathingSleepStageOverlayTransitionStyle.strokeWidth;
+}
 
 export const breathingCurveStyle = {
   type: "natural",

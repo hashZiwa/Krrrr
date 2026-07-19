@@ -36,6 +36,8 @@ import {
   getBreathingEventOverlayOpacity,
   getBreathingEventOverlayLegendItems,
   getBreathingEventOverlayRenderItems,
+  getBreathingSleepStageOverlayStrokeWidth,
+  getBreathingSleepStageOverlayTransitionStrokeWidth,
   getBreathingScrollableWidth,
   getBreathingYAxisConfig,
   getSleepStageTransitionLineCoordinates,
@@ -176,8 +178,8 @@ function SleepStageOverlayLayer({
           const lineCoordinates = getSleepStageTransitionLineCoordinates(
             fromY,
             toY,
-            breathingSleepStageOverlayStyle.strokeWidth,
-            breathingSleepStageOverlayStyle.strokeWidth,
+            getBreathingSleepStageOverlayStrokeWidth(transition.fromValue),
+            getBreathingSleepStageOverlayStrokeWidth(transition.toValue),
           );
           const topColor = fromY <= toY ? fromStyle.color : toStyle.color;
           const bottomColor = fromY <= toY ? toStyle.color : fromStyle.color;
@@ -211,8 +213,8 @@ function SleepStageOverlayLayer({
           const lineCoordinates = getSleepStageTransitionLineCoordinates(
             fromY,
             toY,
-            breathingSleepStageOverlayStyle.strokeWidth,
-            breathingSleepStageOverlayStyle.strokeWidth,
+            getBreathingSleepStageOverlayStrokeWidth(transition.fromValue),
+            getBreathingSleepStageOverlayStrokeWidth(transition.toValue),
           );
 
           return (
@@ -224,7 +226,7 @@ function SleepStageOverlayLayer({
               y1={lineCoordinates.y1}
               y2={lineCoordinates.y2}
               stroke={`url(#${transitionGradientId(index)})`}
-              strokeWidth={breathingSleepStageOverlayTransitionStyle.strokeWidth}
+              strokeWidth={getBreathingSleepStageOverlayTransitionStrokeWidth()}
               strokeLinecap={breathingSleepStageOverlayTransitionStyle.strokeLinecap}
             />
           );
@@ -245,7 +247,7 @@ function SleepStageOverlayLayer({
               stroke={style.color}
               strokeDasharray={(breathingSleepStageOverlayStyle as { strokeDasharray?: string }).strokeDasharray}
               strokeLinecap="butt"
-              strokeWidth={breathingSleepStageOverlayStyle.strokeWidth}
+              strokeWidth={getBreathingSleepStageOverlayStrokeWidth(segment.value)}
             />
           );
         })}

@@ -15,6 +15,8 @@ import {
   getBreathingEventDotOpacity,
   getBreathingScrollableWidth,
   getBreathingYAxisConfig,
+  getBreathingSleepStageOverlayStrokeWidth,
+  getBreathingSleepStageOverlayTransitionStrokeWidth,
   getSleepStageDisplayValue,
   getSleepStageTransitionLineCoordinates,
   getSleepStageTooltipValue,
@@ -190,8 +192,13 @@ describe("chartConfig", () => {
 
   it("keeps breathing sleep stage overlay transition styling configurable", () => {
     expect(breathingSleepStageOverlayStyle.opacity).toBeGreaterThan(0);
-    expect(breathingSleepStageOverlayTransitionStyle.strokeWidth).toBeGreaterThan(0);
     expect(["butt", "round", "square"]).toContain(breathingSleepStageOverlayTransitionStyle.strokeLinecap);
+  });
+
+  it("derives breathing sleep stage overlay widths from original sleep stage widths", () => {
+    expect(getBreathingSleepStageOverlayStrokeWidth(0)).toBe(sleepStageLineStyles[0].strokeWidth);
+    expect(getBreathingSleepStageOverlayStrokeWidth(3)).toBe(sleepStageLineStyles[3].strokeWidth);
+    expect(getBreathingSleepStageOverlayTransitionStrokeWidth()).toBe(sleepStageTransitionLineStyle.strokeWidth);
   });
 });
 
