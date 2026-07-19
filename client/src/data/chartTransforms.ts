@@ -96,18 +96,23 @@ export type SleepStageOverlaySegment = {
   }>;
 };
 
-export function toSleepStageOverlaySegments(
-  samples: ChartSample[],
-  breathingDomain: [number, number],
-): SleepStageOverlaySegment[] {
+function getSleepStageOverlayPositions(breathingDomain: [number, number]): Record<number, number> {
   const [min, max] = breathingDomain;
   const range = max - min;
-  const stagePositions: Record<number, number> = {
+
+  return {
     0: min + range * 0.85,
     1: min + range * (0.15 + (0.7 * 2) / 3),
     2: min + range * (0.15 + 0.7 / 3),
     3: min + range * 0.15,
   };
+}
+
+export function toSleepStageOverlaySegments(
+  samples: ChartSample[],
+  breathingDomain: [number, number],
+): SleepStageOverlaySegment[] {
+  const stagePositions = getSleepStageOverlayPositions(breathingDomain);
 
   return samples.slice(0, -1).map((sample, index) => {
     const overlayValue = stagePositions[sample.value] ?? stagePositions[0];
@@ -119,6 +124,39 @@ export function toSleepStageOverlaySegments(
         { timeMs: samples[index + 1].timeMs, overlayValue },
       ],
     };
+  });
+}
+
+export type SleepStageOverlayTransitionSegment = {
+  fromValue: number;
+  toValue: number;
+  timeMs: number;
+  fromOverlayValue: number;
+  toOverlayValue: number;
+};
+
+export function toSleepStageOverlayTransitionSegments(
+  samples: ChartSample[],
+  breathingDomain: [number, number],
+): SleepStageOverlayTransitionSegment[] {
+  const stagePositions = getSleepStageOverlayPositions(breathingDomain);
+
+  return samples.slice(1).flatMap((sample, index) => {
+    const previous = samples[index];
+
+    if (previous.value === sample.value) {
+      return [];
+    }
+
+    return [
+      {
+        fromValue: previous.value,
+        toValue: sample.value,
+        timeMs: sample.timeMs,
+        fromOverlayValue: stagePositions[previous.value] ?? stagePositions[0],
+        toOverlayValue: stagePositions[sample.value] ?? stagePositions[0],
+      },
+    ];
   });
 }
 

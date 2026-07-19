@@ -6,6 +6,7 @@ import {
   toBreathingDisplaySamples,
   toChartSamples,
   toSleepStageOverlaySegments,
+  toSleepStageOverlayTransitionSegments,
   toSleepStageSegments,
   toSleepStageTransitionSegments,
 } from "../data/chartTransforms";
@@ -184,6 +185,34 @@ describe("chartTransforms", () => {
           { timeMs: samples[3].timeMs, overlayValue: 11.5 },
           { timeMs: samples[4].timeMs, overlayValue: 11.5 },
         ],
+      },
+    ]);
+  });
+
+  it("maps sleep stage overlay transition segments into the breathing y-axis range", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: 0 },
+      { measuredAt: "20260714230500", value: 1 },
+      { measuredAt: "20260714231000", value: 1 },
+      { measuredAt: "20260714231500", value: 3 },
+    ]);
+
+    const transitions = toSleepStageOverlayTransitionSegments(samples, [10, 20]);
+
+    expect(transitions).toEqual([
+      {
+        fromValue: 0,
+        toValue: 1,
+        timeMs: samples[1].timeMs,
+        fromOverlayValue: 18.5,
+        toOverlayValue: 16.166666666666664,
+      },
+      {
+        fromValue: 1,
+        toValue: 3,
+        timeMs: samples[3].timeMs,
+        fromOverlayValue: 16.166666666666664,
+        toOverlayValue: 11.5,
       },
     ]);
   });

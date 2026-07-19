@@ -16,6 +16,7 @@ import {
   toBreathingDisplaySamples,
   toBreathingEventOverlays,
   toSleepStageOverlaySegments,
+  toSleepStageOverlayTransitionSegments,
 } from "../data/chartTransforms";
 import type { TimeWindow } from "../data/timeWindow";
 import type { ChartSample } from "../types/sleep";
@@ -24,6 +25,7 @@ import {
   breathingCurveStyle,
   breathingFillGradientStops,
   breathingSleepStageOverlayStyle,
+  breathingSleepStageOverlayTransitionStyle,
   breathingStrokeGradientStops,
   breathingYAxisTicks,
   type BreathingEventOverlayLayerKey,
@@ -36,7 +38,10 @@ import {
   getBreathingEventOverlayRenderItems,
   getBreathingScrollableWidth,
   getBreathingYAxisConfig,
+  getSleepStageTransitionLineCoordinates,
   sleepStageLineStyles,
+  sleepStageTransitionGradientStops,
+  sleepStageTransitionGradientUnits,
 } from "./chartConfig";
 
 type BreathingChartProps = {
@@ -147,12 +152,14 @@ function SleepStageOverlayLayer({
   const xScale = getPrimaryScale(xAxisMap);
   const yScale = getPrimaryScale(yAxisMap);
   const segments = toSleepStageOverlaySegments(sleepStageData, breathingDomain);
+  const transitions = toSleepStageOverlayTransitionSegments(sleepStageData, breathingDomain);
 
   if (!xScale || !yScale || !offset) {
     return null;
   }
 
   const clipPathId = "sleep-stage-overlay-clip";
+  const transitionGradientId = (transitionIndex: number) => `breathing-sleep-stage-transition-gradient-${transitionIndex}`;
 
   return (
     <g data-testid="sleep-stage-breathing-overlay">
@@ -160,8 +167,68 @@ function SleepStageOverlayLayer({
         <clipPath id={clipPathId}>
           <rect x={offset.left} y={offset.top} width={offset.width} height={offset.height} />
         </clipPath>
+        {transitions.map((transition, index) => {
+          const fromStyle = sleepStageLineStyles[transition.fromValue] ?? sleepStageLineStyles[0];
+          const toStyle = sleepStageLineStyles[transition.toValue] ?? sleepStageLineStyles[0];
+          const x = xScale(transition.timeMs);
+          const fromY = yScale(transition.fromOverlayValue);
+          const toY = yScale(transition.toOverlayValue);
+          const lineCoordinates = getSleepStageTransitionLineCoordinates(
+            fromY,
+            toY,
+            breathingSleepStageOverlayStyle.strokeWidth,
+            breathingSleepStageOverlayStyle.strokeWidth,
+          );
+          const topColor = fromY <= toY ? fromStyle.color : toStyle.color;
+          const bottomColor = fromY <= toY ? toStyle.color : fromStyle.color;
+
+          return (
+            <linearGradient
+              key={index}
+              id={transitionGradientId(index)}
+              gradientUnits={sleepStageTransitionGradientUnits}
+              x1={x}
+              x2={x}
+              y1={lineCoordinates.gradientY1}
+              y2={lineCoordinates.gradientY2}
+            >
+              {sleepStageTransitionGradientStops.map((stop) => (
+                <stop
+                  key={`${stop.offset}-${stop.color}`}
+                  offset={stop.offset}
+                  stopColor={stop.color === "from" ? topColor : bottomColor}
+                />
+              ))}
+            </linearGradient>
+          );
+        })}
       </defs>
       <g clipPath={`url(#${clipPathId})`} opacity={breathingSleepStageOverlayStyle.opacity}>
+        {transitions.map((transition, index) => {
+          const x = xScale(transition.timeMs);
+          const fromY = yScale(transition.fromOverlayValue);
+          const toY = yScale(transition.toOverlayValue);
+          const lineCoordinates = getSleepStageTransitionLineCoordinates(
+            fromY,
+            toY,
+            breathingSleepStageOverlayStyle.strokeWidth,
+            breathingSleepStageOverlayStyle.strokeWidth,
+          );
+
+          return (
+            <line
+              key={`${transition.timeMs}-${transition.fromValue}-${transition.toValue}`}
+              data-sleep-stage-overlay-transition-line
+              x1={x}
+              x2={x}
+              y1={lineCoordinates.y1}
+              y2={lineCoordinates.y2}
+              stroke={`url(#${transitionGradientId(index)})`}
+              strokeWidth={breathingSleepStageOverlayTransitionStyle.strokeWidth}
+              strokeLinecap={breathingSleepStageOverlayTransitionStyle.strokeLinecap}
+            />
+          );
+        })}
         {segments.map((segment) => {
           const [start, end] = segment.points;
           const style = sleepStageLineStyles[segment.value] ?? sleepStageLineStyles[0];

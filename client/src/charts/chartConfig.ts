@@ -34,6 +34,10 @@ export const sleepStageTransitionLineStyle = {
   strokeLinecap: "round",
 } as const;
 
+export const sleepStageChartStyle = {
+  opacity: 1,
+} as const;
+
 export const sleepStageTransitionGradientUnits = "userSpaceOnUse";
 
 export const sleepStageTransitionGradientStops: Array<{ offset: string; color: "from" | "to" }> = [
@@ -74,6 +78,11 @@ export const sleepStageSegmentClipPaddingBuffer = 12;
 export const breathingSleepStageOverlayStyle = {
   opacity: 0.34,
   strokeWidth: 20,
+} as const;
+
+export const breathingSleepStageOverlayTransitionStyle = {
+  strokeWidth: 10,
+  strokeLinecap: "round",
 } as const;
 
 export const breathingCurveStyle = {

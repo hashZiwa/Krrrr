@@ -3,6 +3,8 @@ import {
   breathingCurveStyle,
   breathingEventOverlayLayers,
   breathingFillGradientStops,
+  breathingSleepStageOverlayStyle,
+  breathingSleepStageOverlayTransitionStyle,
   breathingStrokeGradientStops,
   breathingYAxisTicks,
   chartColors,
@@ -20,6 +22,7 @@ import {
   getSleepStageScrollableWidth,
   shouldRenderSleepStageGlow,
   sleepStageLabels,
+  sleepStageChartStyle,
   sleepStageLineStyles,
   sleepStageTransitionGradientStops,
   sleepStageSegmentGlow,
@@ -107,6 +110,11 @@ describe("chartConfig", () => {
     expect(shouldRenderSleepStageGlow(2)).toBe(false);
   });
 
+  it("keeps whole sleep stage chart opacity configurable", () => {
+    expect(sleepStageChartStyle.opacity).toBeGreaterThan(0);
+    expect(sleepStageChartStyle.opacity).toBeLessThanOrEqual(1);
+  });
+
   it("keeps sleep stage glow tuning in chart config", () => {
     expect(sleepStageSegmentGlow.stages).toEqual([]);
   });
@@ -178,6 +186,12 @@ describe("chartConfig", () => {
     expect(breathingCurveStyle.showDots).toBe(false);
     expect(breathingFillGradientStops.length).toBeGreaterThanOrEqual(3);
     expect(breathingStrokeGradientStops.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("keeps breathing sleep stage overlay transition styling configurable", () => {
+    expect(breathingSleepStageOverlayStyle.opacity).toBeGreaterThan(0);
+    expect(breathingSleepStageOverlayTransitionStyle.strokeWidth).toBeGreaterThan(0);
+    expect(breathingSleepStageOverlayTransitionStyle.strokeLinecap).toBe("round");
   });
 });
 

@@ -23,6 +23,7 @@ import {
   getSleepStageTooltipValue,
   getSleepStageScrollableWidth,
   getSleepStageSegmentClipPadding,
+  sleepStageChartStyle,
   sleepStageLabels,
   sleepStageLineStyles,
   sleepStageTransitionGradientStops,
@@ -129,7 +130,7 @@ function SleepStageSegmentsLayer({
           );
         })}
       </defs>
-      <g clipPath={`url(#${clipPathId})`}>
+      <g clipPath={`url(#${clipPathId})`} opacity={sleepStageChartStyle.opacity}>
         {transitions.map((transition, index) => {
           const x = xScale(transition.timeMs);
           const fromY = yScale(getSleepStageDisplayValue(transition.fromValue));
