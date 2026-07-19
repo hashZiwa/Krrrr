@@ -31,11 +31,11 @@ export const sleepStageLineStyles: Record<number, SleepStageLineStyle> = {
 
 export const sleepStageTransitionLineStyle = {
   strokeWidth: sleepStageLineStyles[0].strokeWidth,
-  strokeLinecap: "round",
+  strokeLinecap: "butt",
 } as const;
 
 export const sleepStageChartStyle = {
-  opacity: 1,
+  opacity: 0.5,
 } as const;
 
 export const sleepStageTransitionGradientUnits = "userSpaceOnUse";
@@ -81,8 +81,8 @@ export const breathingSleepStageOverlayStyle = {
 } as const;
 
 export const breathingSleepStageOverlayTransitionStyle = {
-  strokeWidth: 10,
-  strokeLinecap: "round",
+  strokeWidth: 4,
+  strokeLinecap: "butt",
 } as const;
 
 export const breathingCurveStyle = {
