@@ -4,6 +4,7 @@ import { BreathingChart } from "./charts/BreathingChart";
 import { SleepStageChart } from "./charts/SleepStageChart";
 import { AlarmControlPanel } from "./components/AlarmControlPanel";
 import { SummaryMetric } from "./components/SummaryMetric";
+import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
 import { formatTimeLabel, parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
 import type { SleepSessionResponse } from "./types/sleep";
 
@@ -71,6 +72,8 @@ export default function App() {
         <BreathingChart data={chartData.breathing} sleepStageData={chartData.sleepStages} window={sessionWindow} />
         <SleepStageChart data={chartData.sleepStages} window={sessionWindow} />
       </div>
+
+      <TrainingInfoPanel />
 
       <section className="device-panel-grid" aria-label="기기 설정 업로드">
         <AlarmControlPanel />

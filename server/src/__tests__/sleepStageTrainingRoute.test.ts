@@ -30,6 +30,7 @@ describe("createSleepStageTrainingRouter", () => {
     const baseUrl = await createTestServer({
       getModelStatus: vi.fn().mockReturnValue({ trained: false }),
       trainFromRawData: vi.fn(),
+      incrementalTrainFromRawData: vi.fn(),
     });
 
     const response = await fetch(`${baseUrl}/api/sleep-stage-training/status`);
@@ -43,6 +44,8 @@ describe("createSleepStageTrainingRouter", () => {
       getModelStatus: vi.fn(),
       trainFromRawData: vi.fn().mockResolvedValue({
         rawDataDir: "rawdata",
+        version: 2,
+        trainingMode: "full",
         files: ["sleep.csv"],
         datasetRows: 10,
         trainingExamples: 5,
@@ -61,6 +64,7 @@ describe("createSleepStageTrainingRouter", () => {
           stages: {},
         },
       }),
+      incrementalTrainFromRawData: vi.fn(),
     };
     const baseUrl = await createTestServer(service);
 
@@ -69,6 +73,8 @@ describe("createSleepStageTrainingRouter", () => {
     expect(response.status).toBe(201);
     await expect(response.json()).resolves.toEqual({
       rawDataDir: "rawdata",
+      version: 2,
+      trainingMode: "full",
       files: ["sleep.csv"],
       datasetRows: 10,
       trainingExamples: 5,
@@ -84,5 +90,41 @@ describe("createSleepStageTrainingRouter", () => {
         stages: {},
       },
     });
+  });
+
+  it("runs incremental training from rawdata", async () => {
+    const service = {
+      getModelStatus: vi.fn(),
+      trainFromRawData: vi.fn(),
+      incrementalTrainFromRawData: vi.fn().mockResolvedValue({
+        rawDataDir: "rawdata",
+        version: 3,
+        trainingMode: "incremental",
+        files: ["a.csv", "b.csv"],
+        datasetRows: 20,
+        trainingExamples: 14,
+        model: {
+          metadata: {
+            trainedAt: "2026-07-20T00:00:00.000Z",
+            trainingExamples: 14,
+            featureCount: 10,
+            stageCounts: { 0: 2, 1: 3, 2: 6, 3: 3 },
+          },
+        },
+        evaluation: {
+          total: 14,
+          correct: 10,
+          accuracy: 0.71,
+          stages: {},
+        },
+      }),
+    };
+    const baseUrl = await createTestServer(service);
+
+    const response = await fetch(`${baseUrl}/api/sleep-stage-training/incremental-train`, { method: "POST" });
+
+    expect(response.status).toBe(201);
+    expect(service.incrementalTrainFromRawData).toHaveBeenCalledOnce();
+    await expect(response.json()).resolves.toMatchObject({ version: 3, trainingMode: "incremental" });
   });
 });

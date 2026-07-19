@@ -19,6 +19,7 @@ const mobiusConfig = getMobiusConfig();
 const provider = createSleepDataProvider(env);
 const service = createSleepSessionService(provider);
 const sleepStageTrainingService = createSleepStageTrainingService();
+void sleepStageTrainingService.loadLatestModel();
 const uploadService = mobiusConfig
   ? createPlatformUploadService(createMobiusClient(mobiusConfig), mobiusConfig.uploadContainers)
   : null;

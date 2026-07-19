@@ -280,6 +280,10 @@ h1 {
   padding: 18px;
 }
 
+.training-panel {
+  margin-top: 16px;
+}
+
 .device-panel__header {
   display: flex;
   align-items: center;
@@ -299,6 +303,82 @@ h1 {
 .device-panel h2 {
   margin: 0;
   font-size: 20px;
+}
+
+.training-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.training-panel__actions button {
+  border: 1px solid #276b7a;
+  border-radius: 6px;
+  background: #276b7a;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 8px 12px;
+}
+
+.training-panel__actions button:disabled {
+  cursor: wait;
+  opacity: 0.58;
+}
+
+.training-panel__summary,
+.training-panel__stage-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.training-panel__summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.training-panel__stage-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.training-panel__summary div,
+.training-panel__stage-grid div {
+  min-height: 64px;
+  border: 1px solid #e2eaeb;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.training-panel__summary span,
+.training-panel__stage-grid span {
+  display: block;
+  color: #607276;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.training-panel__summary strong,
+.training-panel__stage-grid strong {
+  color: #172326;
+  font-size: 18px;
+}
+
+.training-panel__message {
+  min-height: 18px;
+  margin: 12px 0 0;
+  color: transparent;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.training-panel__message--training {
+  color: #d78318;
+}
+
+.training-panel__message--error {
+  color: #d9473f;
 }
 
 .alarm-control-grid {
@@ -514,6 +594,11 @@ h1 {
   .alarm-control-grid {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .training-panel__summary,
+  .training-panel__stage-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   h1 {
