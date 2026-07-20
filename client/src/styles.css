@@ -1055,7 +1055,7 @@ h1 {
 }
 
 .alarm-control-field--status {
-  grid-template-rows: 18px auto;
+  grid-template-rows: 18px minmax(58px, 1fr) 18px;
 }
 
 .alarm-control-field__label {
