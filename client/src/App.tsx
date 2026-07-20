@@ -17,6 +17,10 @@ import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
 import { parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
 import type { SleepSessionResponse } from "./types/sleep";
 
+export function shouldShowObservedDataSelector(isRealtime: boolean): boolean {
+  return !isRealtime;
+}
+
 export default function App() {
   const [displayFiles, setDisplayFiles] = useState<DisplayDataFile[]>([]);
   const [selectedDisplayFile, setSelectedDisplayFile] = useState("");
@@ -241,12 +245,14 @@ export default function App() {
         </div>
       ) : null}
 
-      <ObservedDataSelector
-        files={displayFiles}
-        selectedFile={selectedDisplayFile}
-        isLoading={isLoading}
-        onSelectFile={handleSelectDisplayFile}
-      />
+      {shouldShowObservedDataSelector(isRealtime) ? (
+        <ObservedDataSelector
+          files={displayFiles}
+          selectedFile={selectedDisplayFile}
+          isLoading={isLoading}
+          onSelectFile={handleSelectDisplayFile}
+        />
+      ) : null}
 
       <div className="chart-grid">
         <BreathingChart data={chartData.breathing} sleepStageData={chartData.sleepStages} window={sessionWindow} />

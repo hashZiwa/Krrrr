@@ -40,6 +40,10 @@ export function isCsvFile(file: File): boolean {
   return file.name.toLowerCase().endsWith(".csv");
 }
 
+export function getTrainingUploadDropzoneText(_file?: File | null): string {
+  return "CSV 파일 드래그 혹은 선택";
+}
+
 export function TrainingInfoPanel() {
   const [status, setStatus] = useState<SleepStageTrainingStatus>({ trained: false });
   const [isLoading, setIsLoading] = useState(true);
@@ -97,6 +101,13 @@ export function TrainingInfoPanel() {
     setSelectedUploadFile(file);
     setUploadState("ready");
     setUploadMessage(`${file.name} 선택됨`);
+  }
+
+  function clearSelectedUploadFile() {
+    setSelectedUploadFile(null);
+    setUploadState("idle");
+    setUploadMessage("");
+    if (uploadInputRef.current) uploadInputRef.current.value = "";
   }
 
   async function uploadTrainingFile() {
@@ -173,10 +184,7 @@ export function TrainingInfoPanel() {
             selectUploadFile(event.dataTransfer.files[0]);
           }}
         >
-          <span className="training-upload__title">
-            {selectedUploadFile ? selectedUploadFile.name : "CSV 파일을 드래그하거나 클릭해서 선택"}
-          </span>
-          <span className="training-upload__hint">학습용 rawdata에 저장됩니다.</span>
+          <span className="training-upload__title">{getTrainingUploadDropzoneText(selectedUploadFile)}</span>
         </button>
         <button
           type="button"
@@ -189,7 +197,17 @@ export function TrainingInfoPanel() {
       </div>
 
       <p className={`training-panel__message training-panel__message--${uploadState}`} aria-live="polite">
-        {uploadMessage}
+        <span className="training-panel__message-text">{uploadMessage}</span>
+        {selectedUploadFile && uploadState === "ready" ? (
+          <button
+            type="button"
+            className="training-panel__clear-upload"
+            aria-label="선택한 학습 데이터 취소"
+            onClick={clearSelectedUploadFile}
+          >
+            X
+          </button>
+        ) : null}
       </p>
 
       <p className={`training-panel__message training-panel__message--${actionState}`} aria-live="polite">

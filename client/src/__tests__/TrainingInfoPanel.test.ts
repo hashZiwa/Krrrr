@@ -3,6 +3,7 @@ import {
   formatAccuracy,
   getPrimaryEvaluation,
   getTrainingFileCount,
+  getTrainingUploadDropzoneText,
   getTrainingModeText,
   getTrainingStatusText,
   isCsvFile,
@@ -51,5 +52,10 @@ describe("TrainingInfoPanel helpers", () => {
     ).toBe(2);
     expect(isCsvFile({ name: "sleep.csv" } as File)).toBe(true);
     expect(isCsvFile({ name: "sleep.txt" } as File)).toBe(false);
+  });
+
+  it("keeps the upload dropzone prompt stable after file selection", () => {
+    expect(getTrainingUploadDropzoneText()).toBe("CSV 파일 드래그 혹은 선택");
+    expect(getTrainingUploadDropzoneText({ name: "sleep.csv" } as File)).toBe("CSV 파일 드래그 혹은 선택");
   });
 });
