@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchDisplayDataFiles, fetchDisplayDataSession, type DisplayDataFile } from "./api/displayDataApi";
+import { fetchDisplayDataFiles, fetchDisplayDataSession } from "./api/displayDataApi";
 import {
   fetchRealtimePlatformSession,
   startRealtimePlatformMonitoring,
@@ -10,6 +10,7 @@ import { BreathingChart } from "./charts/BreathingChart";
 import { SleepStageChart } from "./charts/SleepStageChart";
 import { AlarmControlPanel } from "./components/AlarmControlPanel";
 import { DisplayDataSelector } from "./components/DisplayDataSelector";
+import { getRealtimeTrackingConfirmation } from "./components/DisplayDataSelector";
 import { PlatformDataPanel } from "./components/PlatformDataPanel";
 import { SummaryMetric } from "./components/SummaryMetric";
 import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
@@ -17,13 +18,13 @@ import { parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
 import type { SleepSessionResponse } from "./types/sleep";
 
 export default function App() {
-  const [displayFiles, setDisplayFiles] = useState<DisplayDataFile[]>([]);
   const [selectedDisplayFile, setSelectedDisplayFile] = useState("");
   const [session, setSession] = useState<SleepSessionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRealtime, setIsRealtime] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState("실시간 모니터링 대기 중");
+  const [isRealtimeConfirmOpen, setIsRealtimeConfirmOpen] = useState(false);
 
   const applyRealtimeSession = useCallback((result: RealtimePlatformSessionResponse) => {
     const state = result.state;
@@ -72,8 +73,6 @@ export default function App() {
 
         if (!isMounted) return;
 
-        setDisplayFiles(nextFiles);
-
         const firstFile = nextFiles[0]?.name ?? "";
         setSelectedDisplayFile(firstFile);
 
@@ -103,20 +102,8 @@ export default function App() {
     };
   }, []);
 
-  const handleSelectDisplayFile = useCallback(
-    (fileName: string) => {
-      setIsRealtime(false);
-      setSelectedDisplayFile(fileName);
-      void loadDisplaySession(fileName);
-    },
-    [loadDisplaySession],
-  );
-
   const handlePlatformDataSaved = useCallback(
     async (fileName: string) => {
-      const nextFiles = await fetchDisplayDataFiles();
-
-      setDisplayFiles(nextFiles);
       setSelectedDisplayFile(fileName);
       await loadDisplaySession(fileName);
     },
@@ -138,6 +125,8 @@ export default function App() {
     setIsRealtime(true);
     applyRealtimeSession(await fetchRealtimePlatformSession());
   }, [applyRealtimeSession, isRealtime, loadDisplaySession, selectedDisplayFile]);
+
+  const realtimeConfirmation = getRealtimeTrackingConfirmation(isRealtime);
 
   useEffect(() => {
     if (!isRealtime) return;
@@ -190,15 +179,35 @@ export default function App() {
       </header>
 
       <DisplayDataSelector
-        files={displayFiles}
-        selectedFile={selectedDisplayFile}
-        isLoading={isLoading}
         error={error}
         isRealtime={isRealtime}
         realtimeStatus={realtimeStatus}
-        onSelectFile={handleSelectDisplayFile}
-        onToggleRealtime={() => void handleToggleRealtime()}
+        onRequestToggleRealtime={() => setIsRealtimeConfirmOpen(true)}
       />
+
+      {isRealtimeConfirmOpen ? (
+        <div className="tracking-modal" role="presentation">
+          <div className="tracking-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tracking-modal-title">
+            <h2 id="tracking-modal-title">{realtimeConfirmation.title}</h2>
+            {realtimeConfirmation.body ? <p>{realtimeConfirmation.body}</p> : null}
+            <div className="tracking-modal__actions">
+              <button type="button" onClick={() => setIsRealtimeConfirmOpen(false)}>
+                취소
+              </button>
+              <button
+                type="button"
+                className="tracking-modal__confirm"
+                onClick={() => {
+                  setIsRealtimeConfirmOpen(false);
+                  void handleToggleRealtime();
+                }}
+              >
+                {realtimeConfirmation.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <section className="summary-grid" aria-label="수면 요약">
         <SummaryMetric
