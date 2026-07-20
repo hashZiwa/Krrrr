@@ -17,6 +17,10 @@ export function getObservedDataFileLabel(fileName: string): string {
   return `${match[1].slice(2, 4)}년 ${match[2]}월 ${match[3]}일`;
 }
 
+export function getObservedDataSelectedLabel(fileName: string): string {
+  return fileName ? getObservedDataFileLabel(fileName) : "없음";
+}
+
 export function isObservedDataFileSelected(fileName: string, selectedFile: string): boolean {
   return fileName === selectedFile;
 }
@@ -29,7 +33,7 @@ export function ObservedDataSelector({
 }: ObservedDataSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const selectedLabel = selectedFile ? getObservedDataFileLabel(selectedFile) : "선택 가능한 데이터 없음";
+  const selectedLabel = getObservedDataSelectedLabel(selectedFile);
   const isDisabled = isLoading || files.length === 0;
 
   useEffect(() => {
@@ -70,11 +74,27 @@ export function ObservedDataSelector({
             disabled={isDisabled}
             onClick={() => setIsOpen((current) => !current)}
           >
-            <span>{selectedLabel}</span>
+            <span className={selectedFile ? "" : "observed-data-select__none-label"}>{selectedLabel}</span>
             <i aria-hidden="true" />
           </button>
           {isOpen ? (
             <ul className="observed-data-select__list" role="listbox" aria-label="관찰할 데이터 파일">
+              <li role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={!selectedFile}
+                  className={`observed-data-select__none-option${
+                    !selectedFile ? " observed-data-select__option--selected" : ""
+                  }`}
+                  onClick={() => {
+                    onSelectFile("");
+                    setIsOpen(false);
+                  }}
+                >
+                  <span className="observed-data-select__none-label">없음</span>
+                </button>
+              </li>
               {files.map((file) => {
                 const isSelected = isObservedDataFileSelected(file.name, selectedFile);
 

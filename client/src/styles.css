@@ -247,6 +247,14 @@ h1 {
   outline: 0;
 }
 
+.observed-data-select__none-label {
+  color: #ada9a1;
+}
+
+.observed-data-select__list .observed-data-select__none-option {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .observed-data-select__list button img {
   inline-size: 18px;
   block-size: 18px;

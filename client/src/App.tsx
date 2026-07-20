@@ -21,9 +21,13 @@ export function shouldShowObservedDataSelector(isRealtime: boolean): boolean {
   return !isRealtime;
 }
 
+export function getInitialObservedDataSelection(): string {
+  return "";
+}
+
 export default function App() {
   const [displayFiles, setDisplayFiles] = useState<DisplayDataFile[]>([]);
-  const [selectedDisplayFile, setSelectedDisplayFile] = useState("");
+  const [selectedDisplayFile, setSelectedDisplayFile] = useState(getInitialObservedDataSelection());
   const [session, setSession] = useState<SleepSessionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,8 +86,6 @@ export default function App() {
         setDisplayFiles(nextFiles);
 
         const firstFile = nextFiles[0]?.name ?? "";
-        setSelectedDisplayFile(firstFile);
-
         if (!firstFile) {
           setSession(null);
           setError("displaydata 폴더에 CSV 파일이 없습니다.");
@@ -124,6 +126,7 @@ export default function App() {
   const handleSelectDisplayFile = useCallback(
     (fileName: string) => {
       setSelectedDisplayFile(fileName);
+      if (!fileName) return;
       void loadDisplaySession(fileName);
     },
     [loadDisplaySession],
