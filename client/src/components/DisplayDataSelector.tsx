@@ -1,8 +1,11 @@
 type DisplayDataSelectorProps = {
   error: string | null;
   isRealtime: boolean;
+  realtimeStatus: string;
   onRequestToggleRealtime: () => void;
 };
+
+type RealtimeStatusTone = "idle" | "uploading" | "success" | "error";
 
 export function getRealtimeTrackingSwitchText(isRealtime: boolean): { state: "ON" | "OFF"; action: string } {
   return isRealtime
@@ -28,12 +31,22 @@ export function getRealtimeTrackingConfirmation(isRealtime: boolean): {
       };
 }
 
+export function getRealtimeStatusTone(status: string): RealtimeStatusTone {
+  if (!status) return "idle";
+  if (status.includes("오류")) return "error";
+  if (status.includes("시작") || status.includes("확인 중")) return "uploading";
+  return "success";
+}
+
 export function DisplayDataSelector({
   error,
   isRealtime,
+  realtimeStatus,
   onRequestToggleRealtime,
 }: DisplayDataSelectorProps) {
   const switchText = getRealtimeTrackingSwitchText(isRealtime);
+  const statusText = error ?? (isRealtime ? realtimeStatus : "");
+  const statusTone = error ? "error" : getRealtimeStatusTone(statusText);
 
   return (
     <section className="display-data-panel" aria-label="실시간 데이터 트래킹">
@@ -41,6 +54,9 @@ export function DisplayDataSelector({
         <h2>실시간 데이터 트래킹</h2>
       </div>
       <div className="display-data-panel__control">
+        <span className={`display-data-panel__status display-data-panel__status--${statusTone}`} aria-live="polite">
+          {statusText}
+        </span>
         <button
           type="button"
           className={`tracking-switch${isRealtime ? " tracking-switch--on" : ""}`}
@@ -50,7 +66,6 @@ export function DisplayDataSelector({
         >
           <span>{switchText.state}</span>
         </button>
-        {error ? <span className="display-data-panel__status display-data-panel__status--error">{error}</span> : null}
       </div>
     </section>
   );

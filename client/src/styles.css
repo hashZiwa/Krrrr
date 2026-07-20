@@ -102,21 +102,36 @@ h1 {
 }
 
 .display-data-panel__control {
-  display: grid;
-  gap: 6px;
-  justify-items: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
   min-width: min(120px, 100%);
 }
 
 .display-data-panel__status {
   min-height: 18px;
-  color: var(--color-muted);
+  color: transparent;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
+  line-height: 18px;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.display-data-panel__status--uploading {
+  color: #d78318;
+  opacity: 1;
+}
+
+.display-data-panel__status--success {
+  animation: upload-status-fade 2.6s ease forwards;
+  color: #67c95b;
 }
 
 .display-data-panel__status--error {
-  color: #b64038;
+  animation: upload-status-fade 2.6s ease forwards;
+  color: #d9473f;
 }
 
 .observed-data-panel {
@@ -1030,7 +1045,7 @@ h1 {
 }
 
 .alarm-control-field--enabled {
-  min-width: 86px;
+  min-width: 92px;
   width: max-content;
   padding-inline: 12px;
 }

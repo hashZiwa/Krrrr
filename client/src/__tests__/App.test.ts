@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getInitialObservedDataSelection, shouldShowMonitorCharts, shouldShowObservedDataSelector } from "../App";
+import {
+  getInitialObservedDataSelection,
+  shouldUseEmptyMonitorGraph,
+  shouldShowMonitorCharts,
+  shouldShowObservedDataSelector,
+} from "../App";
 
 describe("App helpers", () => {
   it("shows the observed data selector only when realtime tracking is off", () => {
@@ -11,10 +16,14 @@ describe("App helpers", () => {
     expect(getInitialObservedDataSelection()).toBe("");
   });
 
-  it("hides monitor charts when no observed data is selected outside realtime tracking", () => {
-    expect(shouldShowMonitorCharts({ selectedDisplayFile: "", isRealtime: false, hasChartData: true })).toBe(false);
-    expect(shouldShowMonitorCharts({ selectedDisplayFile: "sleep.csv", isRealtime: false, hasChartData: true })).toBe(true);
-    expect(shouldShowMonitorCharts({ selectedDisplayFile: "", isRealtime: true, hasChartData: true })).toBe(true);
-    expect(shouldShowMonitorCharts({ selectedDisplayFile: "sleep.csv", isRealtime: false, hasChartData: false })).toBe(false);
+  it("keeps monitor charts visible when chart data exists", () => {
+    expect(shouldShowMonitorCharts({ hasChartData: true })).toBe(true);
+    expect(shouldShowMonitorCharts({ hasChartData: false })).toBe(false);
+  });
+
+  it("uses empty monitor graphs when no observed data is selected outside realtime tracking", () => {
+    expect(shouldUseEmptyMonitorGraph({ selectedDisplayFile: "", isRealtime: false })).toBe(true);
+    expect(shouldUseEmptyMonitorGraph({ selectedDisplayFile: "sleep.csv", isRealtime: false })).toBe(false);
+    expect(shouldUseEmptyMonitorGraph({ selectedDisplayFile: "", isRealtime: true })).toBe(false);
   });
 });

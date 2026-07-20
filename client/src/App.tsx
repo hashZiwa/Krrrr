@@ -26,15 +26,21 @@ export function getInitialObservedDataSelection(): string {
 }
 
 export function shouldShowMonitorCharts({
+  hasChartData,
+}: {
+  hasChartData: boolean;
+}): boolean {
+  return hasChartData;
+}
+
+export function shouldUseEmptyMonitorGraph({
   selectedDisplayFile,
   isRealtime,
-  hasChartData,
 }: {
   selectedDisplayFile: string;
   isRealtime: boolean;
-  hasChartData: boolean;
 }): boolean {
-  return hasChartData && (isRealtime || selectedDisplayFile.length > 0);
+  return !isRealtime && selectedDisplayFile.length === 0;
 }
 
 export default function App() {
@@ -97,10 +103,18 @@ export default function App() {
 
         setDisplayFiles(nextFiles);
 
-        if (nextFiles.length === 0) {
+        const firstFile = nextFiles[0]?.name ?? "";
+        if (!firstFile) {
           setSession(null);
           setError("displaydata 폴더에 CSV 파일이 없습니다.");
+          return;
         }
+
+        const nextSession = await fetchDisplayDataSession(firstFile);
+
+        if (!isMounted) return;
+
+        setSession(nextSession);
       } catch (nextError: unknown) {
         if (!isMounted) return;
         setError(nextError instanceof Error ? nextError.message : "표시 데이터를 불러오지 못했습니다.");
@@ -131,7 +145,6 @@ export default function App() {
     (fileName: string) => {
       setSelectedDisplayFile(fileName);
       if (!fileName) {
-        setSession(null);
         setError(null);
         return;
       }
@@ -147,8 +160,6 @@ export default function App() {
       setRealtimeStatus("실시간 모니터링 대기 중");
       if (selectedDisplayFile) {
         void loadDisplaySession(selectedDisplayFile);
-      } else {
-        setSession(null);
       }
       return;
     }
@@ -204,10 +215,16 @@ export default function App() {
   }
 
   const shouldRenderCharts = shouldShowMonitorCharts({
-    selectedDisplayFile,
-    isRealtime,
     hasChartData: Boolean(session && chartData),
   });
+  const shouldRenderEmptyGraph = shouldUseEmptyMonitorGraph({ selectedDisplayFile, isRealtime });
+  const renderedChartData =
+    chartData && shouldRenderEmptyGraph
+      ? {
+          sleepStages: [],
+          breathing: [],
+        }
+      : chartData;
   const sessionWindow =
     session && shouldRenderCharts
       ? {
@@ -228,6 +245,7 @@ export default function App() {
       <DisplayDataSelector
         error={error}
         isRealtime={isRealtime}
+        realtimeStatus={realtimeStatus}
         onRequestToggleRealtime={() => setIsRealtimeConfirmOpen(true)}
       />
 
@@ -274,10 +292,14 @@ export default function App() {
         />
       ) : null}
 
-      {shouldRenderCharts && chartData && sessionWindow ? (
+      {shouldRenderCharts && renderedChartData && sessionWindow ? (
         <div className="chart-grid">
-          <BreathingChart data={chartData.breathing} sleepStageData={chartData.sleepStages} window={sessionWindow} />
-          <SleepStageChart data={chartData.sleepStages} window={sessionWindow} />
+          <BreathingChart
+            data={renderedChartData.breathing}
+            sleepStageData={renderedChartData.sleepStages}
+            window={sessionWindow}
+          />
+          <SleepStageChart data={renderedChartData.sleepStages} window={sessionWindow} />
         </div>
       ) : null}
 
