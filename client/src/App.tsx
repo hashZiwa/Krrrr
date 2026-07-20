@@ -237,8 +237,7 @@ export default function App() {
     <main className="app-shell">
       <header className="dashboard-header">
         <div>
-          <p className="eyebrow">수면 관리 IoT 시스템</p>
-          <h1>슬립모니터</h1>
+          <h1>수면 관리 IoT 시스템 : 슬립모니터</h1>
         </div>
       </header>
 

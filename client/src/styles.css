@@ -1055,7 +1055,7 @@ h1 {
 }
 
 .alarm-control-field--status {
-  grid-template-rows: 18px auto auto 18px;
+  grid-template-rows: 18px auto;
 }
 
 .alarm-control-field__label {
@@ -1234,10 +1234,6 @@ h1 {
   background: #d9473f;
   box-shadow: inset 0 1px 2px rgba(36, 27, 19, 0.2), 0 0 0 3px rgba(217, 71, 63, 0.16),
     0 0 14px rgba(217, 71, 63, 0.42);
-}
-
-.alarm-status-test-toggle {
-  justify-content: center;
 }
 
 @media (max-width: 760px) {

@@ -51,6 +51,7 @@ export function DisplayDataSelector({
   return (
     <section className="display-data-panel" aria-label="실시간 데이터 트래킹">
       <div>
+        <p className="device-panel__eyebrow">Live Tracking</p>
         <h2>실시간 데이터 트래킹</h2>
       </div>
       <div className="display-data-panel__control">

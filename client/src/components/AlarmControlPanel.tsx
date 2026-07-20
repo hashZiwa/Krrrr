@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { fetchAlarmSettings, updateAlarmSetting } from "../api/alarmApi";
 
 export type UploadState = "idle" | "uploading" | "success" | "error";
-type AlarmFieldKey = "enabled" | "time" | "status";
+type AlarmFieldKey = "enabled" | "time";
 type AlarmUploadStates = Record<AlarmFieldKey, UploadState>;
 
 const initialUploadStates: AlarmUploadStates = {
   enabled: "idle",
   time: "idle",
-  status: "idle",
 };
 
 export function getUploadStatusText(status: UploadState): string {
@@ -87,11 +86,6 @@ export function AlarmControlPanel() {
     void upload("enabled", nextEnabled);
   }
 
-  function handleAlarmStatusChange(nextActive: boolean) {
-    setIsAlarmActive(nextActive);
-    void upload("status", nextActive);
-  }
-
   return (
     <section className="device-panel">
       <div className="device-panel__header">
@@ -159,18 +153,6 @@ export function AlarmControlPanel() {
             />
             <span>{alarmStatusReadout}</span>
           </div>
-          <label className="chart-toggle alarm-status-test-toggle">
-            <input
-              type="checkbox"
-              checked={isAlarmActive}
-              onChange={(event) => handleAlarmStatusChange(event.target.checked)}
-            />
-            <span className="chart-toggle__track" aria-hidden="true">
-              <span className="chart-toggle__thumb" />
-            </span>
-            <span>{isAlarmActive ? "테스트 ON" : "테스트 OFF"}</span>
-          </label>
-          <FieldUploadStatus status={uploadStates.status} onFadeEnd={() => setFieldUploadStatus("status", "idle")} />
         </div>
       </div>
     </section>
