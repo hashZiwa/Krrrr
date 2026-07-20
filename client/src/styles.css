@@ -121,7 +121,7 @@ h1 {
 
 .observed-data-panel {
   display: grid;
-  grid-template-columns: max-content minmax(200px, 320px);
+  grid-template-columns: max-content minmax(160px, 180px);
   align-items: end;
   gap: 16px;
   justify-content: space-between;
@@ -152,8 +152,12 @@ h1 {
   background: #fffdf7;
   padding: 4px 8px;
   box-shadow: 0 6px 16px var(--shadow-soft);
-  inline-size: min(320px, 100%);
+  inline-size: min(180px, 100%);
   justify-self: end;
+}
+
+.observed-data-panel__select-wrap--empty {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .observed-data-panel__select-wrap img {

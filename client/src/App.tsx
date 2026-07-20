@@ -25,6 +25,18 @@ export function getInitialObservedDataSelection(): string {
   return "";
 }
 
+export function shouldShowMonitorCharts({
+  selectedDisplayFile,
+  isRealtime,
+  hasChartData,
+}: {
+  selectedDisplayFile: string;
+  isRealtime: boolean;
+  hasChartData: boolean;
+}): boolean {
+  return hasChartData && (isRealtime || selectedDisplayFile.length > 0);
+}
+
 export default function App() {
   const [displayFiles, setDisplayFiles] = useState<DisplayDataFile[]>([]);
   const [selectedDisplayFile, setSelectedDisplayFile] = useState(getInitialObservedDataSelection());
@@ -85,18 +97,10 @@ export default function App() {
 
         setDisplayFiles(nextFiles);
 
-        const firstFile = nextFiles[0]?.name ?? "";
-        if (!firstFile) {
+        if (nextFiles.length === 0) {
           setSession(null);
           setError("displaydata 폴더에 CSV 파일이 없습니다.");
-          return;
         }
-
-        const nextSession = await fetchDisplayDataSession(firstFile);
-
-        if (!isMounted) return;
-
-        setSession(nextSession);
       } catch (nextError: unknown) {
         if (!isMounted) return;
         setError(nextError instanceof Error ? nextError.message : "표시 데이터를 불러오지 못했습니다.");
@@ -126,7 +130,11 @@ export default function App() {
   const handleSelectDisplayFile = useCallback(
     (fileName: string) => {
       setSelectedDisplayFile(fileName);
-      if (!fileName) return;
+      if (!fileName) {
+        setSession(null);
+        setError(null);
+        return;
+      }
       void loadDisplaySession(fileName);
     },
     [loadDisplaySession],
@@ -137,7 +145,11 @@ export default function App() {
       await stopRealtimePlatformMonitoring();
       setIsRealtime(false);
       setRealtimeStatus("실시간 모니터링 대기 중");
-      if (selectedDisplayFile) void loadDisplaySession(selectedDisplayFile);
+      if (selectedDisplayFile) {
+        void loadDisplaySession(selectedDisplayFile);
+      } else {
+        setSession(null);
+      }
       return;
     }
 
@@ -187,17 +199,22 @@ export default function App() {
     return <main className="app-shell">Loading sleep data</main>;
   }
 
-  if (error && !session) {
+  if (error && !session && displayFiles.length === 0) {
     return <main className="app-shell app-message">{error}</main>;
   }
 
-  if (!session || !chartData) {
-    return <main className="app-shell app-message">사용 가능한 수면 세션이 없습니다.</main>;
-  }
-
-  const domainStart = parseMeasuredAt(session.startedAt);
-  const domainEnd = parseMeasuredAt(session.endedAt);
-  const sessionWindow = { start: domainStart, end: domainEnd };
+  const shouldRenderCharts = shouldShowMonitorCharts({
+    selectedDisplayFile,
+    isRealtime,
+    hasChartData: Boolean(session && chartData),
+  });
+  const sessionWindow =
+    session && shouldRenderCharts
+      ? {
+          start: parseMeasuredAt(session.startedAt),
+          end: parseMeasuredAt(session.endedAt),
+        }
+      : null;
 
   return (
     <main className="app-shell">
@@ -257,10 +274,12 @@ export default function App() {
         />
       ) : null}
 
-      <div className="chart-grid">
-        <BreathingChart data={chartData.breathing} sleepStageData={chartData.sleepStages} window={sessionWindow} />
-        <SleepStageChart data={chartData.sleepStages} window={sessionWindow} />
-      </div>
+      {shouldRenderCharts && chartData && sessionWindow ? (
+        <div className="chart-grid">
+          <BreathingChart data={chartData.breathing} sleepStageData={chartData.sleepStages} window={sessionWindow} />
+          <SleepStageChart data={chartData.sleepStages} window={sessionWindow} />
+        </div>
+      ) : null}
 
       <section className="device-panel-grid" aria-label="기기 설정 업로드">
         <AlarmControlPanel />

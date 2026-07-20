@@ -21,6 +21,10 @@ export function getObservedDataSelectedLabel(fileName: string): string {
   return fileName ? getObservedDataFileLabel(fileName) : "없음";
 }
 
+export function shouldShowObservedDataSelectedIcon(fileName: string): boolean {
+  return fileName.length > 0;
+}
+
 export function isObservedDataFileSelected(fileName: string, selectedFile: string): boolean {
   return fileName === selectedFile;
 }
@@ -64,8 +68,12 @@ export function ObservedDataSelector({
         <p className="eyebrow">display data</p>
         <h2>관찰할 데이터 선택</h2>
       </div>
-      <div className="observed-data-panel__select-wrap">
-        <img src={csvIcon} alt="" aria-hidden="true" />
+      <div
+        className={`observed-data-panel__select-wrap${
+          shouldShowObservedDataSelectedIcon(selectedFile) ? "" : " observed-data-panel__select-wrap--empty"
+        }`}
+      >
+        {shouldShowObservedDataSelectedIcon(selectedFile) ? <img src={csvIcon} alt="" aria-hidden="true" /> : null}
         <div className="observed-data-select" ref={rootRef}>
           <button
             type="button"

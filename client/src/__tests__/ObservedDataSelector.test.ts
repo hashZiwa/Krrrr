@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getObservedDataFileLabel,
   getObservedDataSelectedLabel,
+  shouldShowObservedDataSelectedIcon,
   isObservedDataFileSelected,
 } from "../components/ObservedDataSelector";
 
@@ -24,5 +25,10 @@ describe("ObservedDataSelector helpers", () => {
   it("uses none as the default selected label", () => {
     expect(getObservedDataSelectedLabel("")).toBe("없음");
     expect(getObservedDataSelectedLabel("platform-breath-condition-2026-07-18.csv")).toBe("26년 07월 18일");
+  });
+
+  it("shows the CSV icon only when a file is selected", () => {
+    expect(shouldShowObservedDataSelectedIcon("")).toBe(false);
+    expect(shouldShowObservedDataSelectedIcon("sleep.csv")).toBe(true);
   });
 });
