@@ -245,7 +245,6 @@ export default function App() {
         files={displayFiles}
         selectedFile={selectedDisplayFile}
         isLoading={isLoading}
-        error={error}
         onSelectFile={handleSelectDisplayFile}
       />
 

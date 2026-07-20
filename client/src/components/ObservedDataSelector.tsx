@@ -6,7 +6,6 @@ type ObservedDataSelectorProps = {
   files: DisplayDataFile[];
   selectedFile: string;
   isLoading: boolean;
-  error: string | null;
   onSelectFile: (fileName: string) => void;
 };
 
@@ -26,7 +25,6 @@ export function ObservedDataSelector({
   files,
   selectedFile,
   isLoading,
-  error,
   onSelectFile,
 }: ObservedDataSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -102,9 +100,6 @@ export function ObservedDataSelector({
           ) : null}
         </div>
       </div>
-      <p className={`observed-data-panel__status${error ? " observed-data-panel__status--error" : ""}`}>
-        {error ? error : isLoading ? "불러오는 중..." : selectedLabel}
-      </p>
     </section>
   );
 }

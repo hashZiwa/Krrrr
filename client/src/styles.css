@@ -121,11 +121,11 @@ h1 {
 
 .observed-data-panel {
   display: grid;
-  grid-template-columns: minmax(180px, 0.75fr) minmax(260px, 1fr) minmax(160px, 0.7fr);
+  grid-template-columns: max-content minmax(200px, 320px);
   align-items: end;
   gap: 16px;
   margin-bottom: 16px;
-  padding: 16px 18px;
+  padding: 14px 18px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background:
@@ -135,27 +135,27 @@ h1 {
 
 .observed-data-panel h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 19px;
   line-height: 1.15;
 }
 
 .observed-data-panel__select-wrap {
   position: relative;
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-columns: 22px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
-  min-height: 46px;
+  gap: 7px;
+  min-height: 34px;
   border: 1px solid var(--color-border-strong);
   border-radius: 8px;
   background: #fffdf7;
-  padding: 6px 10px;
-  box-shadow: 0 8px 20px var(--shadow-soft);
+  padding: 4px 8px;
+  box-shadow: 0 6px 16px var(--shadow-soft);
 }
 
 .observed-data-panel__select-wrap img {
-  inline-size: 28px;
-  block-size: 28px;
+  inline-size: 20px;
+  block-size: 20px;
 }
 
 .observed-data-select {
@@ -165,17 +165,18 @@ h1 {
 
 .observed-data-select > button {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 18px;
+  grid-template-columns: minmax(0, 1fr) 12px;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
   inline-size: 100%;
-  min-height: 32px;
+  min-height: 26px;
   border: 0;
   background: transparent;
   color: var(--color-text);
   cursor: pointer;
   font: inherit;
-  font-weight: 850;
+  font-size: 12px;
+  font-weight: 800;
   padding: 0;
   text-align: left;
 }
@@ -195,42 +196,43 @@ h1 {
 .observed-data-select > button i {
   inline-size: 0;
   block-size: 0;
-  border-inline: 5px solid transparent;
-  border-block-start: 6px solid #a5a199;
+  border-inline: 4px solid transparent;
+  border-block-start: 5px solid #a5a199;
   justify-self: end;
 }
 
 .observed-data-select__list {
   position: absolute;
   z-index: 12;
-  inset-block-start: calc(100% + 12px);
-  inset-inline: -52px 0;
+  inset-block-start: calc(100% + 8px);
+  inset-inline: -36px 0;
   display: grid;
-  gap: 6px;
-  max-height: 260px;
+  gap: 4px;
+  max-height: 200px;
   overflow: auto;
   margin: 0;
   border: 1px solid var(--color-border-strong);
-  border-radius: 18px;
+  border-radius: 12px;
   background: #fffdf8;
-  box-shadow: 0 18px 40px rgb(40 36 28 / 16%);
+  box-shadow: 0 14px 32px rgb(40 36 28 / 14%);
   list-style: none;
-  padding: 12px;
+  padding: 7px;
 }
 
 .observed-data-select__list button {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-columns: 20px minmax(0, 1fr);
   align-items: center;
-  gap: 10px;
+  gap: 7px;
   inline-size: 100%;
   border: 0;
   background: transparent;
   color: var(--color-text);
   font: inherit;
-  font-weight: 850;
-  min-height: 44px;
-  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 32px;
+  padding: 5px 7px;
   text-align: left;
 }
 
@@ -243,8 +245,8 @@ h1 {
 }
 
 .observed-data-select__list button img {
-  inline-size: 24px;
-  block-size: 24px;
+  inline-size: 18px;
+  block-size: 18px;
 }
 
 .observed-data-select__list button span {
@@ -257,21 +259,8 @@ h1 {
 .observed-data-panel__select-wrap:focus-within {
   border-color: var(--color-primary);
   box-shadow:
-    0 8px 20px var(--shadow-soft),
+    0 6px 16px var(--shadow-soft),
     0 0 0 3px rgb(87 126 113 / 18%);
-}
-
-.observed-data-panel__status {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 12px;
-  font-weight: 800;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
-
-.observed-data-panel__status--error {
-  color: #b64038;
 }
 
 .tracking-switch {
@@ -1125,10 +1114,6 @@ h1 {
 
   .observed-data-panel {
     grid-template-columns: 1fr;
-  }
-
-  .observed-data-panel__status {
-    text-align: left;
   }
 
   .alarm-control-grid {
