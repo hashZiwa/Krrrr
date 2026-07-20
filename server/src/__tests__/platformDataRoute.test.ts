@@ -30,6 +30,7 @@ describe("createPlatformDataRouter", () => {
     const service = {
       discoverBreathConditionGroups: vi.fn().mockResolvedValue({ groups: [{ key: "2026-07-18", count: 2 }] }),
       exportBreathConditionCsv: vi.fn(),
+      saveBreathConditionDisplayData: vi.fn(),
     };
     const baseUrl = await createTestServer(service);
 
@@ -44,6 +45,7 @@ describe("createPlatformDataRouter", () => {
     const service = {
       discoverBreathConditionGroups: vi.fn(),
       exportBreathConditionCsv: vi.fn().mockResolvedValue("groupLabel,rn,measuredAt,con\n"),
+      saveBreathConditionDisplayData: vi.fn(),
     };
     const baseUrl = await createTestServer(service);
 
@@ -64,6 +66,43 @@ describe("createPlatformDataRouter", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/csv");
     expect(service.exportBreathConditionCsv).toHaveBeenCalledWith([
+      {
+        label: "2026-07-18 18:00 - 2026-07-19 18:00",
+        items: [{ rn: "4-20260718180000000", uri: "Mobius/ae/4-20260718180000000" }],
+      },
+    ]);
+  });
+
+  it("saves selected groups as display data", async () => {
+    const service = {
+      discoverBreathConditionGroups: vi.fn(),
+      exportBreathConditionCsv: vi.fn(),
+      saveBreathConditionDisplayData: vi.fn().mockResolvedValue({
+        fileName: "platform-breath-condition-2026-07-18.csv",
+        sampleCount: 42,
+      }),
+    };
+    const baseUrl = await createTestServer(service);
+
+    const response = await fetch(`${baseUrl}/api/platform-data/breath-condition/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        groups: [
+          {
+            label: "2026-07-18 18:00 - 2026-07-19 18:00",
+            items: [{ rn: "4-20260718180000000", uri: "Mobius/ae/4-20260718180000000" }],
+          },
+        ],
+      }),
+    });
+
+    await expect(response.json()).resolves.toEqual({
+      fileName: "platform-breath-condition-2026-07-18.csv",
+      sampleCount: 42,
+    });
+    expect(response.status).toBe(200);
+    expect(service.saveBreathConditionDisplayData).toHaveBeenCalledWith([
       {
         label: "2026-07-18 18:00 - 2026-07-19 18:00",
         items: [{ rn: "4-20260718180000000", uri: "Mobius/ae/4-20260718180000000" }],

@@ -31,6 +31,8 @@ const uploadService = mobiusConfig
 const platformDataService = mobiusConfig
   ? createPlatformDataService(createMobiusClient(mobiusConfig), {
       breathConditionContainer: mobiusConfig.statusContainers.breathCondition,
+      displayDataService,
+      sleepStageTrainingService,
     })
   : null;
 

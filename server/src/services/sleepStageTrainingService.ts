@@ -2,11 +2,13 @@ import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { existsSync } from "node:fs";
-import { createWindowedSleepStageExamples } from "../ml/sleepStageFeatures.js";
+import { createWindowedSleepStageExamples, createWindowedSleepStagePredictionInputs } from "../ml/sleepStageFeatures.js";
+import type { SleepStageBreathingRow } from "../ml/sleepStageFeatures.js";
 import type { SleepStageModel } from "../ml/sleepStageModel.js";
 import type { SleepStageModelEvaluation } from "../ml/sleepStageModel.js";
-import { evaluateSleepStageModel, trainSleepStageModel } from "../ml/sleepStageModel.js";
+import { evaluateSleepStageModel, predictSleepStage, trainSleepStageModel } from "../ml/sleepStageModel.js";
 import { parseSleepStageCsv } from "../ml/sleepStageDataset.js";
+import type { SleepStageValue } from "../ml/sleepStageDataset.js";
 import { createSleepStageModelStore } from "./sleepStageModelStore.js";
 import type { SourceFileFingerprint, SleepStageTrainingMode, StoredSleepStageModel } from "./sleepStageModelStore.js";
 
@@ -28,6 +30,12 @@ export type SleepStageTrainingResult = {
   trainingEvaluation: SleepStageModelEvaluation;
   validationEvaluation: SleepStageModelEvaluation | null;
   model: SleepStageModel;
+};
+
+export type SleepStagePredictedSample = {
+  timestampMs: number;
+  respiratoryRate: number;
+  sleepStage: SleepStageValue;
 };
 
 function findNamedDir(startDir: string, dirName: string): string {
@@ -171,6 +179,12 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
     };
   }
 
+  async function loadLatestModel() {
+    storedModel = await store.loadLatest();
+    model = storedModel?.model ?? null;
+    return storedModel;
+  }
+
   return {
     async trainFromRawData(): Promise<SleepStageTrainingResult> {
       return train("full");
@@ -199,14 +213,28 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
         : { trained: false };
     },
 
-    async loadLatestModel() {
-      storedModel = await store.loadLatest();
-      model = storedModel?.model ?? null;
-      return storedModel;
-    },
+    loadLatestModel,
 
     getModel() {
       return model;
+    },
+
+    async predictFromBreathingSamples(samples: SleepStageBreathingRow[]): Promise<SleepStagePredictedSample[]> {
+      if (!model) {
+        await loadLatestModel();
+      }
+
+      if (!model) {
+        throw new Error("No trained sleep stage model is available");
+      }
+
+      const currentModel = model;
+
+      return createWindowedSleepStagePredictionInputs(samples, { historyMinutes }).map((input) => ({
+        timestampMs: input.timestampMs,
+        respiratoryRate: input.respiratoryRate,
+        sleepStage: predictSleepStage(currentModel, input.features).stage,
+      }));
     },
   };
 }

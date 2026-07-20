@@ -61,6 +61,26 @@ describe("createDisplayDataService", () => {
     });
   });
 
+  it("saves predicted rows in a display data compatible CSV format", async () => {
+    const displayDataDir = await createTempDisplayDir();
+    const service = createDisplayDataService(displayDataDir);
+
+    await expect(
+      service.savePredictedSession("predicted.csv", [
+        { timestampMs: new Date(2026, 6, 19, 1, 20, 17).getTime(), sleepStage: 0, respiratoryRate: 16 },
+        { timestampMs: new Date(2026, 6, 19, 1, 25, 17).getTime(), sleepStage: 1, respiratoryRate: 15 },
+        { timestampMs: new Date(2026, 6, 19, 1, 30, 17).getTime(), sleepStage: 2, respiratoryRate: 0 },
+        { timestampMs: new Date(2026, 6, 19, 1, 35, 17).getTime(), sleepStage: 3, respiratoryRate: 12 },
+      ]),
+    ).resolves.toEqual({ fileName: "predicted.csv" });
+
+    const session = await service.getSession("predicted.csv");
+
+    expect(session.startedAt).toBe("20260719012017");
+    expect(session.sleepStageSamples.map((sample) => sample.value)).toEqual([0, 1, 2, 3]);
+    expect(session.breathingSamples.map((sample) => sample.value)).toEqual([16, 15, 0, 12]);
+  });
+
   it("rejects file names outside the display data directory", async () => {
     const displayDataDir = await createTempDisplayDir();
     const service = createDisplayDataService(displayDataDir);

@@ -82,6 +82,17 @@ export default function App() {
     [loadDisplaySession],
   );
 
+  const handlePlatformDataSaved = useCallback(
+    async (fileName: string) => {
+      const nextFiles = await fetchDisplayDataFiles();
+
+      setDisplayFiles(nextFiles);
+      setSelectedDisplayFile(fileName);
+      await loadDisplaySession(fileName);
+    },
+    [loadDisplaySession],
+  );
+
   const chartData = useMemo(() => {
     if (!session) return null;
 
@@ -143,7 +154,7 @@ export default function App() {
         <AlarmControlPanel />
       </section>
 
-      <PlatformDataPanel />
+      <PlatformDataPanel onSaved={(fileName) => void handlePlatformDataSaved(fileName)} />
 
       <TrainingInfoPanel />
 

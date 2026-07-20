@@ -1,11 +1,33 @@
-import { readdir, readFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { SensorSample, SleepSessionResponse, SleepSessionSummary } from "../models/sleep.js";
+import type { SleepStageValue } from "../ml/sleepStageDataset.js";
 import { parseSleepStageCsv } from "../ml/sleepStageDataset.js";
 import { formatTimestamp } from "../utils/time.js";
 
 export type DisplayDataFile = {
   name: string;
+};
+
+export type PredictedDisplayDataRow = {
+  timestampMs: number;
+  sleepStage: SleepStageValue;
+  respiratoryRate: number;
+};
+
+export type DisplayDataSaveResult = {
+  fileName: string;
+};
+
+export type DisplayDataWriter = {
+  savePredictedSession(fileName: string, rows: PredictedDisplayDataRow[]): Promise<DisplayDataSaveResult>;
+};
+
+const sleepStageLabels: Record<SleepStageValue, { label: string; code: string }> = {
+  0: { label: "Wake", code: "40001" },
+  1: { label: "REM", code: "40004" },
+  2: { label: "Light", code: "40002" },
+  3: { label: "Deep", code: "40003" },
 };
 
 function assertSafeCsvFileName(fileName: string): void {
@@ -37,6 +59,29 @@ function summarize(sleepStageSamples: SensorSample[], breathingSamples: SensorSa
 function getIntervalMinutes(timestampMs: number, nextTimestampMs: number | undefined): number {
   if (nextTimestampMs === undefined) return 0;
   return Math.max(0, Math.round((nextTimestampMs - timestampMs) / 60_000));
+}
+
+function formatCsvTimestamp(timestampMs: number): string {
+  const date = new Date(timestampMs);
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(
+    2,
+    "0",
+  )} ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(
+    date.getSeconds(),
+  ).padStart(2, "0")}`;
+}
+
+function toPredictedSessionCsv(rows: PredictedDisplayDataRow[]): string {
+  const sortedRows = [...rows].sort((left, right) => left.timestampMs - right.timestampMs);
+  const csvRows = ["timestamp,sleep_stage,sleep_stage_code,respiratory_rate_bpm"];
+
+  for (const row of sortedRows) {
+    const stage = sleepStageLabels[row.sleepStage];
+    csvRows.push(`${formatCsvTimestamp(row.timestampMs)},${stage.label},${stage.code},${row.respiratoryRate}`);
+  }
+
+  return `${csvRows.join("\n")}\n`;
 }
 
 export function createDisplayDataService(displayDataDir = path.resolve(process.cwd(), "..", "displaydata")) {
@@ -78,6 +123,19 @@ export function createDisplayDataService(displayDataDir = path.resolve(process.c
         breathingSamples,
         summary: summarize(sleepStageSamples, breathingSamples),
       };
+    },
+
+    async savePredictedSession(fileName: string, rows: PredictedDisplayDataRow[]): Promise<DisplayDataSaveResult> {
+      assertSafeCsvFileName(fileName);
+
+      if (rows.length === 0) {
+        throw new Error("Cannot save display data without samples");
+      }
+
+      await mkdir(displayDataDir, { recursive: true });
+      await writeFile(path.join(displayDataDir, fileName), toPredictedSessionCsv(rows), "utf8");
+
+      return { fileName };
     },
   };
 }

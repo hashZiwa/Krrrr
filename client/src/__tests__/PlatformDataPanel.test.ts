@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  getDownloadFileName,
   getPlatformDataGroupDisplayName,
   getPlatformDataLoadButtonText,
   getPlatformDataStatusText,
@@ -11,6 +10,8 @@ describe("PlatformDataPanel helpers", () => {
   it("formats platform data status text", () => {
     expect(getPlatformDataStatusText("idle")).toBe("대기 중");
     expect(getPlatformDataStatusText("loading")).toBe("데이터 불러오는 중...");
+    expect(getPlatformDataStatusText("saving")).toBe("데이터 저장 중...");
+    expect(getPlatformDataStatusText("saved")).toBe("데이터 저장 완료");
     expect(getPlatformDataStatusText("success")).toBe("데이터 불러오기 완료");
     expect(getPlatformDataStatusText("error")).toBe("데이터 불러오기 실패");
   });
@@ -23,13 +24,6 @@ describe("PlatformDataPanel helpers", () => {
   it("formats load button text by loaded state", () => {
     expect(getPlatformDataLoadButtonText(false)).toBe("데이터 불러오기");
     expect(getPlatformDataLoadButtonText(true)).toBe("데이터 새로고침");
-  });
-
-  it("creates a csv download file name from selected date keys", () => {
-    expect(getDownloadFileName(["2026-07-18"])).toBe("breath-condition-2026-07-18.csv");
-    expect(getDownloadFileName(["2026-07-19", "2026-07-18"])).toBe(
-      "breath-condition-2026-07-18_to_2026-07-19.csv",
-    );
   });
 
   it("formats a compact Korean label for a platform data group", () => {

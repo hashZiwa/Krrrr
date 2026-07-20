@@ -1,4 +1,6 @@
 import type { MobiusCin, MobiusClient } from "../clients/mobiusClient.js";
+import type { DisplayDataWriter, PredictedDisplayDataRow } from "./displayDataService.js";
+import type { SleepStagePredictedSample } from "./sleepStageTrainingService.js";
 
 const discoveryLimit = 500;
 
@@ -35,10 +37,22 @@ export type PlatformDataExportGroup = {
 export type PlatformDataService = {
   discoverBreathConditionGroups(options?: PlatformDataDiscoveryOptions): Promise<PlatformDataDiscovery>;
   exportBreathConditionCsv(groups: PlatformDataExportGroup[]): Promise<string>;
+  saveBreathConditionDisplayData(groups: PlatformDataExportGroup[]): Promise<PlatformDataSaveResult>;
 };
 
 type PlatformDataServiceOptions = {
   breathConditionContainer?: string;
+  displayDataService?: DisplayDataWriter;
+  sleepStageTrainingService?: {
+    predictFromBreathingSamples(
+      samples: Array<{ timestampMs: number; respiratoryRate: number }>,
+    ): Promise<SleepStagePredictedSample[]>;
+  };
+};
+
+export type PlatformDataSaveResult = {
+  fileName: string;
+  sampleCount: number;
 };
 
 function pad(value: number): string {
@@ -96,17 +110,21 @@ function getRnFromUri(uri: string): string | null {
 }
 
 function isValidBreathConditionValue(value: unknown): boolean {
+  return parseBreathConditionValue(value) !== null;
+}
+
+function parseBreathConditionValue(value: unknown): number | null {
   if (typeof value === "number") {
-    return Number.isInteger(value) && value >= -1 && value <= 60;
+    return Number.isInteger(value) && value >= -1 && value <= 60 ? value : null;
   }
 
   if (typeof value !== "string" || !/^-?\d+$/.test(value)) {
-    return false;
+    return null;
   }
 
   const parsed = Number(value);
 
-  return parsed >= -1 && parsed <= 60;
+  return parsed >= -1 && parsed <= 60 ? parsed : null;
 }
 
 function csvEscape(value: unknown): string {
@@ -124,6 +142,38 @@ function toCsvRow(group: Pick<PlatformDataExportGroup, "label">, cin: MobiusCin)
   const measuredAt = rn ? formatMeasuredAt(parseCinDateFromRn(rn) ?? new Date(0)) : "";
 
   return [group.label, rn, measuredAt, cin.con ?? ""].map(csvEscape).join(",");
+}
+
+function toSaveFileName(groups: PlatformDataExportGroup[]): string {
+  const keys = groups
+    .flatMap((group) => {
+      const dates = group.items.flatMap((item) => {
+        const measuredAt = parseCinDateFromRn(item.rn);
+        return measuredAt ? [formatDateKey(getGroupStart(measuredAt))] : [];
+      });
+
+      return dates.length > 0 ? dates : [group.label.slice(0, 10)];
+    })
+    .filter(Boolean)
+    .sort();
+
+  const uniqueKeys = [...new Set(keys)];
+  const suffix =
+    uniqueKeys.length === 0
+      ? formatDateKey(new Date())
+      : uniqueKeys.length === 1
+        ? uniqueKeys[0]
+        : `${uniqueKeys[0]}_to_${uniqueKeys[uniqueKeys.length - 1]}`;
+
+  return `platform-breath-condition-${suffix}.csv`;
+}
+
+function toPredictedDisplayRows(samples: SleepStagePredictedSample[]): PredictedDisplayDataRow[] {
+  return samples.map((sample) => ({
+    timestampMs: sample.timestampMs,
+    respiratoryRate: sample.respiratoryRate,
+    sleepStage: sample.sleepStage,
+  }));
 }
 
 export function createPlatformDataService(
@@ -205,6 +255,40 @@ export function createPlatformDataService(
       }
 
       return `${rows.join("\n")}\n`;
+    },
+
+    async saveBreathConditionDisplayData(groups) {
+      if (!options.displayDataService || !options.sleepStageTrainingService) {
+        throw new Error("Platform data display saving is not configured");
+      }
+
+      const samples: Array<{ timestampMs: number; respiratoryRate: number }> = [];
+
+      for (const group of groups) {
+        for (const item of group.items) {
+          const cin = await client.getCinByUri(item.uri);
+          const respiratoryRate = parseBreathConditionValue(cin.con);
+          const measuredAt = parseCinDateFromRn(cin.rn ?? item.rn);
+
+          if (respiratoryRate === null || !measuredAt) continue;
+
+          samples.push({ timestampMs: measuredAt.getTime(), respiratoryRate });
+        }
+      }
+
+      const sortedSamples = [...samples].sort((left, right) => left.timestampMs - right.timestampMs);
+
+      if (sortedSamples.length === 0) {
+        throw new Error("No valid breath condition samples were selected");
+      }
+
+      const predictions = await options.sleepStageTrainingService.predictFromBreathingSamples(sortedSamples);
+      const saved = await options.displayDataService.savePredictedSession(toSaveFileName(groups), toPredictedDisplayRows(predictions));
+
+      return {
+        fileName: saved.fileName,
+        sampleCount: predictions.length,
+      };
     },
   };
 }

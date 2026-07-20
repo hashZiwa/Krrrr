@@ -415,12 +415,13 @@ h1 {
 }
 
 .platform-data-panel__inline-status--loading,
-.platform-data-panel__inline-status--downloading {
+.platform-data-panel__inline-status--saving {
   color: #d78318;
   opacity: 1;
 }
 
-.platform-data-panel__inline-status--success {
+.platform-data-panel__inline-status--success,
+.platform-data-panel__inline-status--saved {
   animation: upload-status-fade 2.6s ease forwards;
   color: #67c95b;
 }

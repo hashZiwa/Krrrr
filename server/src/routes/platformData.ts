@@ -72,5 +72,32 @@ export function createPlatformDataRouter(service: PlatformDataService | null): R
     }
   });
 
+  router.post("/breath-condition/save", async (req, res) => {
+    if (!service) {
+      res.status(503).json({
+        error: "platform_data_not_configured",
+        message: "Mobius platform data is not configured on this server.",
+      });
+      return;
+    }
+
+    const groups = (req.body as { groups?: unknown }).groups;
+
+    if (!Array.isArray(groups) || groups.length === 0 || !groups.every(isExportGroup)) {
+      res.status(400).json({
+        error: "platform_data_invalid_groups",
+        message: "Request body must include at least one export group.",
+      });
+      return;
+    }
+
+    try {
+      res.status(200).json(await service.saveBreathConditionDisplayData(groups));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown platform data save failure";
+      res.status(500).json({ error: "platform_data_save_failed", message });
+    }
+  });
+
   return router;
 }

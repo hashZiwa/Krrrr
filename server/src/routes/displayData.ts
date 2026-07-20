@@ -1,7 +1,11 @@
 import { Router } from "express";
-import type { createDisplayDataService } from "../services/displayDataService.js";
+import type { DisplayDataFile } from "../services/displayDataService.js";
+import type { SleepSessionResponse } from "../models/sleep.js";
 
-type DisplayDataService = ReturnType<typeof createDisplayDataService>;
+type DisplayDataService = {
+  listFiles(): Promise<DisplayDataFile[]>;
+  getSession(fileName: string): Promise<SleepSessionResponse>;
+};
 
 export function createDisplayDataRouter(service: DisplayDataService): Router {
   const router = Router();

@@ -1,16 +1,21 @@
 import { useMemo, useState } from "react";
 import csvIcon from "../assets/csv-icon.png";
 import {
-  exportBreathConditionCsv,
   fetchBreathConditionGroups,
+  saveBreathConditionDisplayData,
   type PlatformDataGroup,
 } from "../api/platformDataApi";
 
-type PlatformDataStatus = "idle" | "loading" | "success" | "error" | "downloading";
+type PlatformDataStatus = "idle" | "loading" | "success" | "saved" | "error" | "saving";
+
+type PlatformDataPanelProps = {
+  onSaved?: (fileName: string) => void;
+};
 
 export function getPlatformDataStatusText(status: PlatformDataStatus): string {
   if (status === "loading") return "데이터 불러오는 중...";
-  if (status === "downloading") return "CSV 생성 중...";
+  if (status === "saving") return "데이터 저장 중...";
+  if (status === "saved") return "데이터 저장 완료";
   if (status === "success") return "데이터 불러오기 완료";
   if (status === "error") return "데이터 불러오기 실패";
   return "대기 중";
@@ -22,16 +27,6 @@ export function getTotalDataText(count: number): string {
 
 export function getPlatformDataLoadButtonText(hasLoaded: boolean): string {
   return hasLoaded ? "데이터 새로고침" : "데이터 불러오기";
-}
-
-export function getDownloadFileName(groupKeys: string[]): string {
-  const sortedKeys = [...groupKeys].sort();
-
-  if (sortedKeys.length === 1) {
-    return `breath-condition-${sortedKeys[0]}.csv`;
-  }
-
-  return `breath-condition-${sortedKeys[0]}_to_${sortedKeys[sortedKeys.length - 1]}.csv`;
 }
 
 export function getPlatformDataGroupDisplayName(group: PlatformDataGroup): string {
@@ -67,17 +62,7 @@ function mergeGroups(currentGroups: PlatformDataGroup[], nextGroups: PlatformDat
   return [...groups.values()].sort((left, right) => right.key.localeCompare(left.key));
 }
 
-function downloadBlob(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-
-  anchor.href = url;
-  anchor.download = fileName;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-export function PlatformDataPanel() {
+export function PlatformDataPanel({ onSaved }: PlatformDataPanelProps) {
   const [status, setStatus] = useState<PlatformDataStatus>("idle");
   const [groups, setGroups] = useState<PlatformDataGroup[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -89,7 +74,7 @@ export function PlatformDataPanel() {
   const totalCinCount = useMemo(() => groups.reduce((sum, group) => sum + group.count, 0), [groups]);
 
   function clearFinishedStatus() {
-    if (status === "success" || status === "error") setStatus("idle");
+    if (status === "success" || status === "saved" || status === "error") setStatus("idle");
   }
 
   async function loadGroups(offset = 0) {
@@ -104,7 +89,7 @@ export function PlatformDataPanel() {
       setNextOffset(result.nextOffset);
       setHasMore(result.hasMore);
       setHasLoaded(true);
-      setStatus("success");
+      setStatus("saved");
     } catch (error) {
       if (offset === 0) {
         setGroups([]);
@@ -118,20 +103,20 @@ export function PlatformDataPanel() {
     }
   }
 
-  async function downloadSelectedGroups() {
+  async function saveSelectedGroups() {
     if (selectedKeys.length === 0) return;
 
-    setStatus("downloading");
+    setStatus("saving");
     setErrorMessage("");
 
     try {
       const selectedGroups = groups.filter((group) => selectedKeys.includes(group.key));
-      const blob = await exportBreathConditionCsv(selectedGroups);
+      const result = await saveBreathConditionDisplayData(selectedGroups);
 
-      downloadBlob(blob, getDownloadFileName(selectedKeys));
+      onSaved?.(result.fileName);
       setStatus("success");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "CSV 다운로드에 실패했습니다.");
+      setErrorMessage(error instanceof Error ? error.message : "데이터 저장에 실패했습니다.");
       setStatus("error");
     }
   }
@@ -163,7 +148,7 @@ export function PlatformDataPanel() {
           {hasMore ? (
             <button
               type="button"
-              disabled={status === "loading" || status === "downloading"}
+              disabled={status === "loading" || status === "saving"}
               onClick={() => void loadGroups(nextOffset)}
             >
               더 불러오기
@@ -171,7 +156,7 @@ export function PlatformDataPanel() {
           ) : null}
           <button
             type="button"
-            disabled={status === "loading" || status === "downloading"}
+            disabled={status === "loading" || status === "saving"}
             onClick={() => void loadGroups(0)}
           >
             {getPlatformDataLoadButtonText(hasLoaded)}
@@ -209,10 +194,10 @@ export function PlatformDataPanel() {
         <span>{getTotalDataText(totalCinCount)}</span>
         <button
           type="button"
-          disabled={selectedCount === 0 || status === "loading" || status === "downloading"}
-          onClick={() => void downloadSelectedGroups()}
+          disabled={selectedCount === 0 || status === "loading" || status === "saving"}
+          onClick={() => void saveSelectedGroups()}
         >
-          CSV 다운로드
+          데이터 저장
         </button>
       </div>
     </section>

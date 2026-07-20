@@ -7,6 +7,18 @@ export type SleepStageTrainingExample = {
   features: number[];
 };
 
+export type SleepStagePredictionInput = {
+  timestampMs: number;
+  respiratoryRate: number;
+  respiratoryRates: number[];
+  features: number[];
+};
+
+export type SleepStageBreathingRow = {
+  timestampMs: number;
+  respiratoryRate: number;
+};
+
 export type SleepStageFeatureOptions = {
   historyMinutes: number;
 };
@@ -56,6 +68,26 @@ export function createWindowedSleepStageExamples(
     return {
       label: row.sleepStage,
       timestampMs: row.timestampMs,
+      respiratoryRates,
+      features: buildFeatures(respiratoryRates),
+    };
+  });
+}
+
+export function createWindowedSleepStagePredictionInputs(
+  rows: SleepStageBreathingRow[],
+  options: SleepStageFeatureOptions,
+): SleepStagePredictionInput[] {
+  const sortedRows = [...rows].sort((left, right) => left.timestampMs - right.timestampMs);
+  const windowSize = Math.max(1, options.historyMinutes + 1);
+
+  return sortedRows.map((row, index) => {
+    const windowRows = sortedRows.slice(Math.max(0, index - windowSize + 1), index + 1);
+    const respiratoryRates = windowRows.map((windowRow) => windowRow.respiratoryRate);
+
+    return {
+      timestampMs: row.timestampMs,
+      respiratoryRate: row.respiratoryRate,
       respiratoryRates,
       features: buildFeatures(respiratoryRates),
     };

@@ -19,6 +19,11 @@ export type PlatformDataDiscoveryResponse = {
   hasMore: boolean;
 };
 
+export type PlatformDataSaveResponse = {
+  fileName: string;
+  sampleCount: number;
+};
+
 export async function fetchBreathConditionGroups(offset = 0): Promise<PlatformDataDiscoveryResponse> {
   const response = await fetch(`/api/platform-data/breath-condition/discovery?offset=${offset}`);
 
@@ -46,4 +51,23 @@ export async function exportBreathConditionCsv(groups: PlatformDataGroup[]): Pro
   }
 
   return response.blob();
+}
+
+export async function saveBreathConditionDisplayData(groups: PlatformDataGroup[]): Promise<PlatformDataSaveResponse> {
+  const response = await fetch("/api/platform-data/breath-condition/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      groups: groups.map((group) => ({
+        label: group.label,
+        items: group.items,
+      })),
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to save platform data: ${response.status}`);
+  }
+
+  return response.json() as Promise<PlatformDataSaveResponse>;
 }

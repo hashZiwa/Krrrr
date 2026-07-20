@@ -144,4 +144,47 @@ describe("platformDataService", () => {
     expect(result.groups).toHaveLength(1);
     expect(result.groups[0].count).toBe(9);
   });
+
+  it("saves selected platform data as display data with predicted sleep stages", async () => {
+    const client = createClient();
+    const savePredictedSession = vi.fn().mockResolvedValue({
+      fileName: "platform-breath-condition-2026-07-18.csv",
+    });
+    const predictFromBreathingSamples = vi.fn().mockResolvedValue([
+      { timestampMs: new Date(2026, 6, 18, 18, 0, 0).getTime(), respiratoryRate: 20, sleepStage: 1 },
+      { timestampMs: new Date(2026, 6, 18, 18, 5, 0).getTime(), respiratoryRate: 12, sleepStage: 2 },
+      { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12, sleepStage: 3 },
+    ]);
+    const service = createPlatformDataService(client, {
+      breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
+      displayDataService: { savePredictedSession },
+      sleepStageTrainingService: { predictFromBreathingSamples },
+    });
+
+    const result = await service.saveBreathConditionDisplayData([
+      {
+        label: "2026-07-18 18:00 - 2026-07-19 18:00",
+        items: [
+          { rn: "4-20260719175959000", uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719175959000" },
+          { rn: "4-20260718180500000", uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180500000" },
+          { rn: "4-20260718180000000", uri: "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260718180000000" },
+        ],
+      },
+    ]);
+
+    expect(predictFromBreathingSamples).toHaveBeenCalledWith([
+      { timestampMs: new Date(2026, 6, 18, 18, 0, 0).getTime(), respiratoryRate: 20 },
+      { timestampMs: new Date(2026, 6, 18, 18, 5, 0).getTime(), respiratoryRate: 12 },
+      { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12 },
+    ]);
+    expect(savePredictedSession).toHaveBeenCalledWith("platform-breath-condition-2026-07-18.csv", [
+      { timestampMs: new Date(2026, 6, 18, 18, 0, 0).getTime(), respiratoryRate: 20, sleepStage: 1 },
+      { timestampMs: new Date(2026, 6, 18, 18, 5, 0).getTime(), respiratoryRate: 12, sleepStage: 2 },
+      { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12, sleepStage: 3 },
+    ]);
+    expect(result).toEqual({
+      fileName: "platform-breath-condition-2026-07-18.csv",
+      sampleCount: 3,
+    });
+  });
 });
