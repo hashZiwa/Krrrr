@@ -847,7 +847,7 @@ h1 {
 .training-panel__summary {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .training-panel__summary div {
@@ -870,6 +870,81 @@ h1 {
   font-size: 18px;
 }
 
+.training-upload {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) max-content;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.training-upload__input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.training-upload__dropzone {
+  display: grid;
+  gap: 4px;
+  min-height: 54px;
+  border: 1px dashed #c9d6cf;
+  border-radius: 8px;
+  background: #fbfdf9;
+  color: var(--color-text);
+  cursor: pointer;
+  padding: 10px 12px;
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.training-upload__dropzone:hover,
+.training-upload__dropzone:focus-visible,
+.training-upload__dropzone--active {
+  border-color: var(--color-primary);
+  background: #f1faf5;
+  box-shadow: 0 0 0 3px rgb(87 126 113 / 14%);
+  outline: 0;
+}
+
+.training-upload__title {
+  font-size: 13px;
+  font-weight: 850;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.training-upload__hint {
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.training-upload__submit {
+  align-self: stretch;
+  border: 1px solid var(--color-primary);
+  border-radius: 7px;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 850;
+  padding: 0 12px;
+}
+
+.training-upload__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
 .training-panel__message {
   min-height: 18px;
   margin: 12px 0 0;
@@ -880,6 +955,15 @@ h1 {
 
 .training-panel__message--training {
   color: #d78318;
+}
+
+.training-panel__message--uploading {
+  color: #d78318;
+}
+
+.training-panel__message--success,
+.training-panel__message--ready {
+  color: #2da36a;
 }
 
 .training-panel__message--error {
@@ -1132,6 +1216,10 @@ h1 {
 
   .training-panel__summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .training-upload {
+    grid-template-columns: 1fr;
   }
 
   h1 {

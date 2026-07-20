@@ -48,7 +48,7 @@ const realtimePlatformMonitorService = mobiusConfig
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use("/api/sleep-sessions", createSleepSessionRouter(service));
 app.use("/api/display-data", createDisplayDataRouter(displayDataService));
 app.use("/api/platform-data", createPlatformDataRouter(platformDataService));

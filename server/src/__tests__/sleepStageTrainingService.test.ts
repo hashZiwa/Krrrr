@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
@@ -82,5 +82,19 @@ describe("sleepStageTrainingService", () => {
     expect(second.files).toEqual(["a.csv", "b.csv"]);
     expect(second.datasetRows).toBe(6);
     expect(second.validationEvaluation).toBeNull();
+  });
+
+  it("saves uploaded CSV files into the training data directory", async () => {
+    const rawDataDir = await mkdtemp(join(tmpdir(), "sleeper-rawdata-"));
+    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-modeldata-"));
+    const service = createSleepStageTrainingService({ rawDataDir, modelDir, historyMinutes: 1 });
+
+    const result = await service.saveTrainingCsv(
+      "sleep upload.csv",
+      "timestamp,sleep_stage,sleep_stage_code,respiratory_rate_bpm\n2026-07-19 01:20:17,Wake,40001,18",
+    );
+
+    expect(result).toEqual({ file: "sleep-upload.csv", files: ["sleep-upload.csv"] });
+    await expect(readFile(join(rawDataDir, "sleep-upload.csv"), "utf8")).resolves.toContain("40001");
   });
 });

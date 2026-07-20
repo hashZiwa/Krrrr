@@ -5,7 +5,7 @@ type SleepStageTrainingService = ReturnType<typeof createSleepStageTrainingServi
 
 type TrainingService = Pick<
   SleepStageTrainingService,
-  "getModelStatus" | "trainFromRawData" | "incrementalTrainFromRawData"
+  "getModelStatus" | "trainFromRawData" | "incrementalTrainFromRawData" | "saveTrainingCsv"
 >;
 
 export function createSleepStageTrainingRouter(service: TrainingService): Router {
@@ -52,6 +52,27 @@ export function createSleepStageTrainingRouter(service: TrainingService): Router
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({ error: "sleep_stage_training_failed", message });
+    }
+  });
+
+  router.post("/upload", async (req, res) => {
+    const fileName = typeof req.body?.fileName === "string" ? req.body.fileName : "";
+    const content = typeof req.body?.content === "string" ? req.body.content : "";
+
+    if (!fileName.toLowerCase().endsWith(".csv") || !content.trim()) {
+      res.status(400).json({
+        error: "sleep_stage_training_invalid_upload",
+        message: "A non-empty CSV file is required.",
+      });
+      return;
+    }
+
+    try {
+      const result = await service.saveTrainingCsv(fileName, content);
+      res.status(201).json(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      res.status(400).json({ error: "sleep_stage_training_invalid_upload", message });
     }
   });
 

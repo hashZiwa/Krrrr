@@ -31,6 +31,7 @@ describe("createSleepStageTrainingRouter", () => {
       getModelStatus: vi.fn().mockReturnValue({ trained: false }),
       trainFromRawData: vi.fn(),
       incrementalTrainFromRawData: vi.fn(),
+      saveTrainingCsv: vi.fn(),
     });
 
     const response = await fetch(`${baseUrl}/api/sleep-stage-training/status`);
@@ -66,6 +67,7 @@ describe("createSleepStageTrainingRouter", () => {
         validationEvaluation: null,
       }),
       incrementalTrainFromRawData: vi.fn(),
+      saveTrainingCsv: vi.fn(),
     };
     const baseUrl = await createTestServer(service);
 
@@ -126,6 +128,7 @@ describe("createSleepStageTrainingRouter", () => {
           stages: {},
         },
       }),
+      saveTrainingCsv: vi.fn(),
     };
     const baseUrl = await createTestServer(service);
 
@@ -138,5 +141,57 @@ describe("createSleepStageTrainingRouter", () => {
       trainingMode: "incremental",
       validationEvaluation: { accuracy: 0.5 },
     });
+  });
+
+  it("saves an uploaded training CSV", async () => {
+    const service = {
+      getModelStatus: vi.fn(),
+      trainFromRawData: vi.fn(),
+      incrementalTrainFromRawData: vi.fn(),
+      saveTrainingCsv: vi.fn().mockResolvedValue({
+        file: "new-data.csv",
+        files: ["existing.csv", "new-data.csv"],
+      }),
+    };
+    const baseUrl = await createTestServer(service);
+
+    const response = await fetch(`${baseUrl}/api/sleep-stage-training/upload`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: "new-data.csv",
+        content: "timestamp,sleep_stage,sleep_stage_code,respiratory_rate_bpm\n2026-07-20 01:00:00,Wake,40001,18",
+      }),
+    });
+
+    expect(response.status).toBe(201);
+    expect(service.saveTrainingCsv).toHaveBeenCalledWith(
+      "new-data.csv",
+      "timestamp,sleep_stage,sleep_stage_code,respiratory_rate_bpm\n2026-07-20 01:00:00,Wake,40001,18",
+    );
+    await expect(response.json()).resolves.toEqual({
+      file: "new-data.csv",
+      files: ["existing.csv", "new-data.csv"],
+    });
+  });
+
+  it("rejects non CSV training uploads", async () => {
+    const service = {
+      getModelStatus: vi.fn(),
+      trainFromRawData: vi.fn(),
+      incrementalTrainFromRawData: vi.fn(),
+      saveTrainingCsv: vi.fn(),
+    };
+    const baseUrl = await createTestServer(service);
+
+    const response = await fetch(`${baseUrl}/api/sleep-stage-training/upload`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileName: "notes.txt", content: "hello" }),
+    });
+
+    expect(response.status).toBe(400);
+    expect(service.saveTrainingCsv).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({ error: "sleep_stage_training_invalid_upload" });
   });
 });

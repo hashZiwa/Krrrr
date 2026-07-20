@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatAccuracy, getPrimaryEvaluation, getTrainingModeText, getTrainingStatusText } from "../components/TrainingInfoPanel";
+import {
+  formatAccuracy,
+  getPrimaryEvaluation,
+  getTrainingFileCount,
+  getTrainingModeText,
+  getTrainingStatusText,
+  isCsvFile,
+} from "../components/TrainingInfoPanel";
 
 describe("TrainingInfoPanel helpers", () => {
   it("formats training status and mode text", () => {
@@ -28,5 +35,21 @@ describe("TrainingInfoPanel helpers", () => {
         validationEvaluation: { total: 4, correct: 2, accuracy: 0.5, stages: {} },
       }),
     ).toMatchObject({ label: "검증 정확도", evaluation: { accuracy: 0.5 } });
+  });
+
+  it("counts source files and accepts only CSV files", () => {
+    expect(getTrainingFileCount({ trained: false })).toBe("-");
+    expect(
+      getTrainingFileCount({
+        trained: true,
+        version: 1,
+        trainingExamples: 10,
+        trainedAt: "now",
+        stageCounts: {},
+        sourceFiles: ["a.csv", "b.csv"],
+      }),
+    ).toBe(2);
+    expect(isCsvFile({ name: "sleep.csv" } as File)).toBe(true);
+    expect(isCsvFile({ name: "sleep.txt" } as File)).toBe(false);
   });
 });

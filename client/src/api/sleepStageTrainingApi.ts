@@ -8,7 +8,7 @@ export type SleepStageEvaluation = {
 };
 
 export type SleepStageTrainingStatus =
-  | { trained: false }
+  | { trained: false; sourceFiles?: string[] }
   | {
       trained: true;
       version?: number;
@@ -37,6 +37,11 @@ export type SleepStageTrainingResponse = {
   };
 };
 
+export type SleepStageTrainingUploadResponse = {
+  file: string;
+  files: string[];
+};
+
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, init);
 
@@ -57,4 +62,15 @@ export function trainSleepStageModel(): Promise<SleepStageTrainingResponse> {
 
 export function incrementalTrainSleepStageModel(): Promise<SleepStageTrainingResponse> {
   return requestJson<SleepStageTrainingResponse>("/api/sleep-stage-training/incremental-train", { method: "POST" });
+}
+
+export function uploadSleepStageTrainingCsv(
+  fileName: string,
+  content: string,
+): Promise<SleepStageTrainingUploadResponse> {
+  return requestJson<SleepStageTrainingUploadResponse>("/api/sleep-stage-training/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ fileName, content }),
+  });
 }

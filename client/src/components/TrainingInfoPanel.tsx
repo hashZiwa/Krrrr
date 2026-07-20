@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   fetchSleepStageTrainingStatus,
   incrementalTrainSleepStageModel,
   trainSleepStageModel,
+  uploadSleepStageTrainingCsv,
   type SleepStageEvaluation,
   type SleepStageTrainingStatus,
   type TrainingMode,
@@ -31,20 +32,24 @@ export function getPrimaryEvaluation(
   return { label: "학습셋 정확도", evaluation: status.trainingEvaluation };
 }
 
-function formatDateTime(value?: string): string {
-  if (!value) return "-";
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
+export function getTrainingFileCount(status: SleepStageTrainingStatus): number | "-" {
+  return status.sourceFiles?.length ?? "-";
+}
+
+export function isCsvFile(file: File): boolean {
+  return file.name.toLowerCase().endsWith(".csv");
 }
 
 export function TrainingInfoPanel() {
   const [status, setStatus] = useState<SleepStageTrainingStatus>({ trained: false });
   const [isLoading, setIsLoading] = useState(true);
   const [actionState, setActionState] = useState<"idle" | "training" | "error">("idle");
+  const [uploadState, setUploadState] = useState<"idle" | "ready" | "uploading" | "success" | "error">("idle");
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [selectedUploadFile, setSelectedUploadFile] = useState<File | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+  const [isDraggingUpload, setIsDraggingUpload] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
 
   async function refreshStatus() {
     setStatus(await fetchSleepStageTrainingStatus());
@@ -72,13 +77,49 @@ export function TrainingInfoPanel() {
         validationEvaluation: result.validationEvaluation,
         sourceFiles: result.files,
       });
+      setUploadedFiles(result.files);
       setActionState("idle");
     } catch {
       setActionState("error");
     }
   }
 
-  const primaryEvaluation = getPrimaryEvaluation(status);
+  function selectUploadFile(file?: File) {
+    if (!file) return;
+
+    if (!isCsvFile(file)) {
+      setSelectedUploadFile(null);
+      setUploadState("error");
+      setUploadMessage("CSV 파일만 업로드할 수 있습니다.");
+      return;
+    }
+
+    setSelectedUploadFile(file);
+    setUploadState("ready");
+    setUploadMessage(`${file.name} 선택됨`);
+  }
+
+  async function uploadTrainingFile() {
+    if (!selectedUploadFile || uploadState === "uploading") return;
+
+    setUploadState("uploading");
+    setUploadMessage("업로드 중...");
+
+    try {
+      const result = await uploadSleepStageTrainingCsv(selectedUploadFile.name, await selectedUploadFile.text());
+      setUploadedFiles(result.files);
+      setStatus((current) => (current.trained ? { ...current, sourceFiles: result.files } : { ...current, sourceFiles: result.files }));
+      setSelectedUploadFile(null);
+      setUploadState("success");
+      setUploadMessage(`${result.file} 저장 완료`);
+      if (uploadInputRef.current) uploadInputRef.current.value = "";
+    } catch {
+      setUploadState("error");
+      setUploadMessage("학습 데이터 저장 실패");
+    }
+  }
+
+  const dataFileCount = uploadedFiles.length > 0 ? uploadedFiles.length : getTrainingFileCount(status);
 
   return (
     <section className="device-panel training-panel">
@@ -99,30 +140,57 @@ export function TrainingInfoPanel() {
 
       <div className="training-panel__summary">
         <div>
-          <span>상태</span>
-          <strong>{isLoading ? "확인 중" : getTrainingStatusText(status)}</strong>
-        </div>
-        <div>
-          <span>학습 방식</span>
-          <strong>{status.trained ? getTrainingModeText(status.trainingMode) : "-"}</strong>
-        </div>
-        <div>
-          <span>학습 예제</span>
-          <strong>{status.trained ? status.trainingExamples : "-"}</strong>
-        </div>
-        <div>
-          <span>{primaryEvaluation.label}</span>
-          <strong>{formatAccuracy(primaryEvaluation.evaluation?.accuracy)}</strong>
-        </div>
-        <div>
-          <span>학습 시각</span>
-          <strong>{status.trained ? formatDateTime(status.trainedAt) : "-"}</strong>
+          <span>학습 데이터</span>
+          <strong>{isLoading ? "확인 중" : status.trained ? status.trainingExamples : "-"}</strong>
         </div>
         <div>
           <span>데이터 파일</span>
-          <strong>{status.trained ? status.sourceFiles?.length ?? 0 : "-"}</strong>
+          <strong>{isLoading ? "확인 중" : dataFileCount}</strong>
         </div>
       </div>
+
+      <div className="training-upload">
+        <input
+          ref={uploadInputRef}
+          className="training-upload__input"
+          type="file"
+          accept=".csv,text/csv"
+          onChange={(event) => selectUploadFile(event.currentTarget.files?.[0])}
+        />
+        <button
+          type="button"
+          className={`training-upload__dropzone${isDraggingUpload ? " training-upload__dropzone--active" : ""}`}
+          onClick={() => uploadInputRef.current?.click()}
+          onDragEnter={(event) => {
+            event.preventDefault();
+            setIsDraggingUpload(true);
+          }}
+          onDragOver={(event) => event.preventDefault()}
+          onDragLeave={() => setIsDraggingUpload(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDraggingUpload(false);
+            selectUploadFile(event.dataTransfer.files[0]);
+          }}
+        >
+          <span className="training-upload__title">
+            {selectedUploadFile ? selectedUploadFile.name : "CSV 파일을 드래그하거나 클릭해서 선택"}
+          </span>
+          <span className="training-upload__hint">학습용 rawdata에 저장됩니다.</span>
+        </button>
+        <button
+          type="button"
+          className="training-upload__submit"
+          disabled={!selectedUploadFile || uploadState === "uploading"}
+          onClick={() => void uploadTrainingFile()}
+        >
+          학습 데이터 추가
+        </button>
+      </div>
+
+      <p className={`training-panel__message training-panel__message--${uploadState}`} aria-live="polite">
+        {uploadMessage}
+      </p>
 
       <p className={`training-panel__message training-panel__message--${actionState}`} aria-live="polite">
         {actionState === "training" ? "학습 중..." : actionState === "error" ? "학습 실패" : ""}

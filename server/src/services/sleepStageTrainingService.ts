@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readdir, readFile, stat } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { existsSync } from "node:fs";
 import { createWindowedSleepStageExamples, createWindowedSleepStagePredictionInputs } from "../ml/sleepStageFeatures.js";
@@ -36,6 +36,11 @@ export type SleepStagePredictedSample = {
   timestampMs: number;
   respiratoryRate: number;
   sleepStage: SleepStageValue;
+};
+
+export type SleepStageTrainingCsvUploadResult = {
+  file: string;
+  files: string[];
 };
 
 function findNamedDir(startDir: string, dirName: string): string {
@@ -118,6 +123,23 @@ async function fingerprintFile(rawDataDir: string, file: string): Promise<Source
   };
 }
 
+function sanitizeCsvFileName(fileName: string): string {
+  const baseName = fileName
+    .trim()
+    .replace(/\\/g, "/")
+    .split("/")
+    .pop()
+    ?.replace(/[^a-zA-Z0-9._ -]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+
+  if (!baseName || !baseName.toLowerCase().endsWith(".csv")) {
+    throw new Error("Training upload must be a CSV file");
+  }
+
+  return baseName;
+}
+
 export function createSleepStageTrainingService(options: SleepStageTrainingServiceOptions = {}) {
   const rawDataDir = options.rawDataDir ?? process.env.SLEEP_STAGE_RAWDATA_DIR ?? findRawDataDir(process.cwd());
   const validationDataDir =
@@ -192,6 +214,23 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
 
     async incrementalTrainFromRawData(): Promise<SleepStageTrainingResult> {
       return train("incremental");
+    },
+
+    async saveTrainingCsv(fileName: string, content: string): Promise<SleepStageTrainingCsvUploadResult> {
+      const safeFileName = sanitizeCsvFileName(fileName);
+
+      if (!content.trim()) {
+        throw new Error("Training upload content is empty");
+      }
+
+      parseSleepStageCsv(content);
+      await mkdir(rawDataDir, { recursive: true });
+      await writeFile(join(rawDataDir, safeFileName), content, "utf8");
+
+      return {
+        file: safeFileName,
+        files: await getCsvFiles(rawDataDir),
+      };
     },
 
     getModelStatus() {
