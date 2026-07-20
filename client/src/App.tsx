@@ -25,6 +25,7 @@ export default function App() {
   const [isRealtime, setIsRealtime] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState("실시간 모니터링 대기 중");
   const [isRealtimeConfirmOpen, setIsRealtimeConfirmOpen] = useState(false);
+  const [isRealtimeConfirmClosing, setIsRealtimeConfirmClosing] = useState(false);
 
   const applyRealtimeSession = useCallback((result: RealtimePlatformSessionResponse) => {
     const state = result.state;
@@ -128,6 +129,14 @@ export default function App() {
 
   const realtimeConfirmation = getRealtimeTrackingConfirmation(isRealtime);
 
+  const closeRealtimeConfirm = useCallback(() => {
+    setIsRealtimeConfirmClosing(true);
+    window.setTimeout(() => {
+      setIsRealtimeConfirmOpen(false);
+      setIsRealtimeConfirmClosing(false);
+    }, 180);
+  }, []);
+
   useEffect(() => {
     if (!isRealtime) return;
 
@@ -181,24 +190,33 @@ export default function App() {
       <DisplayDataSelector
         error={error}
         isRealtime={isRealtime}
-        realtimeStatus={realtimeStatus}
         onRequestToggleRealtime={() => setIsRealtimeConfirmOpen(true)}
       />
 
       {isRealtimeConfirmOpen ? (
-        <div className="tracking-modal" role="presentation">
-          <div className="tracking-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tracking-modal-title">
+        <div
+          className={`tracking-modal${isRealtimeConfirmClosing ? " tracking-modal--closing" : ""}`}
+          role="presentation"
+          onClick={closeRealtimeConfirm}
+        >
+          <div
+            className="tracking-modal__dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tracking-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
             <h2 id="tracking-modal-title">{realtimeConfirmation.title}</h2>
             {realtimeConfirmation.body ? <p>{realtimeConfirmation.body}</p> : null}
             <div className="tracking-modal__actions">
-              <button type="button" onClick={() => setIsRealtimeConfirmOpen(false)}>
+              <button type="button" onClick={closeRealtimeConfirm}>
                 취소
               </button>
               <button
                 type="button"
                 className="tracking-modal__confirm"
                 onClick={() => {
-                  setIsRealtimeConfirmOpen(false);
+                  closeRealtimeConfirm();
                   void handleToggleRealtime();
                 }}
               >

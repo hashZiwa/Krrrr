@@ -11,7 +11,7 @@ describe("DisplayDataSelector realtime tracking helpers", () => {
     expect(getRealtimeTrackingConfirmation(false)).toEqual({
       title: "실시간 트래킹을 켜시겠습니까?",
       body: "",
-      confirmLabel: "켜기",
+      confirmLabel: "확인",
     });
     expect(getRealtimeTrackingConfirmation(true)).toEqual({
       title: "실시간 트래킹을 끄시겠습니까?",

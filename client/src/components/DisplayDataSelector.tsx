@@ -1,7 +1,6 @@
 type DisplayDataSelectorProps = {
   error: string | null;
   isRealtime: boolean;
-  realtimeStatus: string;
   onRequestToggleRealtime: () => void;
 };
 
@@ -25,14 +24,13 @@ export function getRealtimeTrackingConfirmation(isRealtime: boolean): {
     : {
         title: "실시간 트래킹을 켜시겠습니까?",
         body: "",
-        confirmLabel: "켜기",
+        confirmLabel: "확인",
       };
 }
 
 export function DisplayDataSelector({
   error,
   isRealtime,
-  realtimeStatus,
   onRequestToggleRealtime,
 }: DisplayDataSelectorProps) {
   const switchText = getRealtimeTrackingSwitchText(isRealtime);
@@ -40,7 +38,6 @@ export function DisplayDataSelector({
   return (
     <section className="display-data-panel" aria-label="실시간 데이터 트래킹">
       <div>
-        <p className="eyebrow">realtime tracking</p>
         <h2>실시간 데이터 트래킹</h2>
       </div>
       <div className="display-data-panel__control">
@@ -53,9 +50,7 @@ export function DisplayDataSelector({
         >
           <span>{switchText.state}</span>
         </button>
-        <span className={`display-data-panel__status${error ? " display-data-panel__status--error" : ""}`}>
-          {error ? error : realtimeStatus}
-        </span>
+        {error ? <span className="display-data-panel__status display-data-panel__status--error">{error}</span> : null}
       </div>
     </section>
   );

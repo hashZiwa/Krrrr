@@ -105,7 +105,7 @@ h1 {
   display: grid;
   gap: 6px;
   justify-items: end;
-  min-width: min(320px, 100%);
+  min-width: min(120px, 100%);
 }
 
 .display-data-panel__status {
@@ -159,15 +159,28 @@ h1 {
   place-items: center;
   padding: 20px;
   background: rgb(32 30 25 / 42%);
+  animation: tracking-modal-fade-in 180ms ease forwards;
+  opacity: 0;
+}
+
+.tracking-modal--closing {
+  animation: tracking-modal-fade-out 180ms ease forwards;
 }
 
 .tracking-modal__dialog {
   inline-size: min(420px, 100%);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 18px;
   background: var(--color-surface);
   box-shadow: 0 18px 48px rgb(32 30 25 / 24%);
   padding: 20px;
+  animation: tracking-dialog-slide-in 180ms ease forwards;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+
+.tracking-modal--closing .tracking-modal__dialog {
+  animation: tracking-dialog-slide-out 180ms ease forwards;
 }
 
 .tracking-modal__dialog h2 {
@@ -192,13 +205,58 @@ h1 {
 
 .tracking-modal__actions button {
   min-height: 34px;
-  padding: 6px 12px;
+  border-radius: 12px;
+  padding: 6px 14px;
 }
 
 .tracking-modal__confirm {
   border-color: #1ea875;
   background: #dff4ee;
   color: #146c52;
+}
+
+@keyframes tracking-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tracking-modal-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes tracking-dialog-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tracking-dialog-slide-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
 }
 
 .summary-metric {
