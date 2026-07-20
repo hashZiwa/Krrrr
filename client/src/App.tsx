@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchDisplayDataFiles, fetchDisplayDataSession } from "./api/displayDataApi";
+import { fetchDisplayDataFiles, fetchDisplayDataSession, type DisplayDataFile } from "./api/displayDataApi";
 import {
   fetchRealtimePlatformSession,
   startRealtimePlatformMonitoring,
@@ -11,13 +11,14 @@ import { SleepStageChart } from "./charts/SleepStageChart";
 import { AlarmControlPanel } from "./components/AlarmControlPanel";
 import { DisplayDataSelector } from "./components/DisplayDataSelector";
 import { getRealtimeTrackingConfirmation } from "./components/DisplayDataSelector";
+import { ObservedDataSelector } from "./components/ObservedDataSelector";
 import { PlatformDataPanel } from "./components/PlatformDataPanel";
-import { SummaryMetric } from "./components/SummaryMetric";
 import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
 import { parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
 import type { SleepSessionResponse } from "./types/sleep";
 
 export default function App() {
+  const [displayFiles, setDisplayFiles] = useState<DisplayDataFile[]>([]);
   const [selectedDisplayFile, setSelectedDisplayFile] = useState("");
   const [session, setSession] = useState<SleepSessionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +75,8 @@ export default function App() {
 
         if (!isMounted) return;
 
+        setDisplayFiles(nextFiles);
+
         const firstFile = nextFiles[0]?.name ?? "";
         setSelectedDisplayFile(firstFile);
 
@@ -105,8 +108,19 @@ export default function App() {
 
   const handlePlatformDataSaved = useCallback(
     async (fileName: string) => {
+      const nextFiles = await fetchDisplayDataFiles();
+
+      setDisplayFiles(nextFiles);
       setSelectedDisplayFile(fileName);
       await loadDisplaySession(fileName);
+    },
+    [loadDisplaySession],
+  );
+
+  const handleSelectDisplayFile = useCallback(
+    (fileName: string) => {
+      setSelectedDisplayFile(fileName);
+      void loadDisplaySession(fileName);
     },
     [loadDisplaySession],
   );
@@ -227,15 +241,13 @@ export default function App() {
         </div>
       ) : null}
 
-      <section className="summary-grid" aria-label="수면 요약">
-        <SummaryMetric
-          label="평균 호흡"
-          value={session.summary.averageBreathingRate === null ? "-" : `${session.summary.averageBreathingRate}/분`}
-        />
-        <SummaryMetric label="뒤척임" value={`${session.summary.movementCount}회`} tone="alert" />
-        <SummaryMetric label="무호흡 인식 실패" value={`${session.summary.apneaRecognitionFailureCount}회`} tone="alert" />
-        <SummaryMetric label="깊은 수면 비율" value={`${Math.round(session.summary.deepSleepRatio * 100)}%`} />
-      </section>
+      <ObservedDataSelector
+        files={displayFiles}
+        selectedFile={selectedDisplayFile}
+        isLoading={isLoading}
+        error={error}
+        onSelectFile={handleSelectDisplayFile}
+      />
 
       <div className="chart-grid">
         <BreathingChart data={chartData.breathing} sleepStageData={chartData.sleepStages} window={sessionWindow} />
