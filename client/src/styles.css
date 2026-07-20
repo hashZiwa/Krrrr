@@ -140,6 +140,7 @@ h1 {
 }
 
 .observed-data-panel__select-wrap {
+  position: relative;
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
@@ -157,14 +158,100 @@ h1 {
   block-size: 28px;
 }
 
-.observed-data-panel__select-wrap select {
+.observed-data-select {
+  position: relative;
   min-inline-size: 0;
+}
+
+.observed-data-select > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  inline-size: 100%;
+  min-height: 32px;
   border: 0;
-  outline: 0;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 850;
+  padding: 0;
+  text-align: left;
+}
+
+.observed-data-select > button:disabled {
+  cursor: not-allowed;
+  color: var(--color-muted);
+}
+
+.observed-data-select > button span {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.observed-data-select > button i {
+  inline-size: 0;
+  block-size: 0;
+  border-inline: 5px solid transparent;
+  border-block-start: 6px solid #a5a199;
+  justify-self: end;
+}
+
+.observed-data-select__list {
+  position: absolute;
+  z-index: 12;
+  inset-block-start: calc(100% + 12px);
+  inset-inline: -52px 0;
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow: auto;
+  margin: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 18px;
+  background: #fffdf8;
+  box-shadow: 0 18px 40px rgb(40 36 28 / 16%);
+  list-style: none;
+  padding: 12px;
+}
+
+.observed-data-select__list button {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  inline-size: 100%;
+  border: 0;
   background: transparent;
   color: var(--color-text);
   font: inherit;
-  font-weight: 800;
+  font-weight: 850;
+  min-height: 44px;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.observed-data-select__list button:hover,
+.observed-data-select__list button:focus-visible,
+.observed-data-select__option--selected {
+  border-radius: 12px;
+  background: #e7f3ed;
+  outline: 0;
+}
+
+.observed-data-select__list button img {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+.observed-data-select__list button span {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .observed-data-panel__select-wrap:focus-within {

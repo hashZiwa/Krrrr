@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getObservedDataFileLabel } from "../components/ObservedDataSelector";
+import { getObservedDataFileLabel, isObservedDataFileSelected } from "../components/ObservedDataSelector";
 
 describe("ObservedDataSelector helpers", () => {
   it("formats platform breath condition file names as Korean dates", () => {
@@ -10,5 +10,10 @@ describe("ObservedDataSelector helpers", () => {
     expect(getObservedDataFileLabel("sleep_respiratory_rate_20260718_20260719.csv")).toBe(
       "sleep_respiratory_rate_20260718_20260719.csv",
     );
+  });
+
+  it("checks selected file identity for custom listbox options", () => {
+    expect(isObservedDataFileSelected("a.csv", "a.csv")).toBe(true);
+    expect(isObservedDataFileSelected("a.csv", "b.csv")).toBe(false);
   });
 });
