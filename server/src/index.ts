@@ -8,11 +8,13 @@ import { createSleepDataProvider } from "./providers/sleepDataProviderFactory.js
 import { createDisplayDataRouter } from "./routes/displayData.js";
 import { createPlatformDataRouter } from "./routes/platformData.js";
 import { createPlatformUploadRouter } from "./routes/platformUpload.js";
+import { createRealtimePlatformMonitorRouter } from "./routes/realtimePlatformMonitor.js";
 import { createSleepSessionRouter } from "./routes/sleepSessions.js";
 import { createSleepStageTrainingRouter } from "./routes/sleepStageTraining.js";
 import { createDisplayDataService } from "./services/displayDataService.js";
 import { createPlatformDataService } from "./services/platformDataService.js";
 import { createPlatformUploadService } from "./services/platformUploadService.js";
+import { createRealtimePlatformMonitorService } from "./services/realtimePlatformMonitorService.js";
 import { createSleepSessionService } from "./services/sleepSessionService.js";
 import { createSleepStageTrainingService } from "./services/sleepStageTrainingService.js";
 
@@ -35,6 +37,13 @@ const platformDataService = mobiusConfig
       sleepStageTrainingService,
     })
   : null;
+const realtimePlatformMonitorService = mobiusConfig
+  ? createRealtimePlatformMonitorService(createMobiusClient(mobiusConfig), {
+      breathConditionContainer: mobiusConfig.statusContainers.breathCondition,
+      displayDataService,
+      sleepStageTrainingService,
+    })
+  : null;
 
 const app = express();
 
@@ -44,6 +53,7 @@ app.use("/api/sleep-sessions", createSleepSessionRouter(service));
 app.use("/api/display-data", createDisplayDataRouter(displayDataService));
 app.use("/api/platform-data", createPlatformDataRouter(platformDataService));
 app.use("/api/platform-upload", createPlatformUploadRouter(uploadService));
+app.use("/api/realtime-platform", createRealtimePlatformMonitorRouter(realtimePlatformMonitorService));
 app.use("/api/sleep-stage-training", createSleepStageTrainingRouter(sleepStageTrainingService));
 
 app.get("/api/health", (_req, res) => {

@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchDisplayDataFiles, fetchDisplayDataSession, type DisplayDataFile } from "./api/displayDataApi";
+import {
+  fetchRealtimePlatformSession,
+  startRealtimePlatformMonitoring,
+  stopRealtimePlatformMonitoring,
+  type RealtimePlatformSessionResponse,
+} from "./api/realtimePlatformApi";
 import { BreathingChart } from "./charts/BreathingChart";
 import { SleepStageChart } from "./charts/SleepStageChart";
 import { AlarmControlPanel } from "./components/AlarmControlPanel";
@@ -16,6 +22,29 @@ export default function App() {
   const [session, setSession] = useState<SleepSessionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRealtime, setIsRealtime] = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState("실시간 모니터링 대기 중");
+
+  const applyRealtimeSession = useCallback((result: RealtimePlatformSessionResponse) => {
+    const state = result.state;
+
+    if (state.lastError) {
+      setRealtimeStatus(`실시간 오류: ${state.lastError}`);
+    } else if (result.session) {
+      setRealtimeStatus(
+        `실시간 수집 중 · 호흡 ${result.session.breathingSamples.length}개 · 수면 ${result.session.sleepStageSamples.length}개`,
+      );
+    } else if (state.primed) {
+      setRealtimeStatus("기준 cin 확인 완료 · 새 데이터 대기 중");
+    } else {
+      setRealtimeStatus("기준 cin 확인 중...");
+    }
+
+    if (result.session) {
+      setSession(result.session);
+      setError(null);
+    }
+  }, []);
 
   const loadDisplaySession = useCallback(async (fileName: string) => {
     setIsLoading(true);
@@ -76,6 +105,7 @@ export default function App() {
 
   const handleSelectDisplayFile = useCallback(
     (fileName: string) => {
+      setIsRealtime(false);
       setSelectedDisplayFile(fileName);
       void loadDisplaySession(fileName);
     },
@@ -92,6 +122,38 @@ export default function App() {
     },
     [loadDisplaySession],
   );
+
+  const handleToggleRealtime = useCallback(async () => {
+    if (isRealtime) {
+      await stopRealtimePlatformMonitoring();
+      setIsRealtime(false);
+      setRealtimeStatus("실시간 모니터링 대기 중");
+      if (selectedDisplayFile) void loadDisplaySession(selectedDisplayFile);
+      return;
+    }
+
+    setError(null);
+    setRealtimeStatus("실시간 모니터링 시작 중...");
+    await startRealtimePlatformMonitoring();
+    setIsRealtime(true);
+    applyRealtimeSession(await fetchRealtimePlatformSession());
+  }, [applyRealtimeSession, isRealtime, loadDisplaySession, selectedDisplayFile]);
+
+  useEffect(() => {
+    if (!isRealtime) return;
+
+    const timer = window.setInterval(() => {
+      void fetchRealtimePlatformSession()
+        .then(applyRealtimeSession)
+        .catch((nextError: unknown) => {
+          setRealtimeStatus(
+            nextError instanceof Error ? `실시간 오류: ${nextError.message}` : "실시간 데이터를 불러오지 못했습니다.",
+          );
+        });
+    }, 30_000);
+
+    return () => window.clearInterval(timer);
+  }, [applyRealtimeSession, isRealtime]);
 
   const chartData = useMemo(() => {
     if (!session) return null;
@@ -132,7 +194,10 @@ export default function App() {
         selectedFile={selectedDisplayFile}
         isLoading={isLoading}
         error={error}
+        isRealtime={isRealtime}
+        realtimeStatus={realtimeStatus}
         onSelectFile={handleSelectDisplayFile}
+        onToggleRealtime={() => void handleToggleRealtime()}
       />
 
       <section className="summary-grid" aria-label="수면 요약">

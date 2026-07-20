@@ -123,6 +123,18 @@ h1 {
   padding: 7px 10px;
 }
 
+.display-data-panel__control button {
+  justify-self: start;
+  min-height: 34px;
+  padding: 6px 12px;
+}
+
+.display-data-panel__control button.is-active {
+  border-color: #2c6e63;
+  background: #dff4ee;
+  color: #19554b;
+}
+
 .display-data-panel__status {
   min-height: 18px;
   color: var(--color-muted);
