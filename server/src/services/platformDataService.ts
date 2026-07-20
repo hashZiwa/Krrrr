@@ -15,8 +15,13 @@ export type PlatformDataGroup = {
   startAt: string;
   endAt: string;
   count: number;
+  fileName: string;
+  saveState: "new" | "saved" | "updated";
+  savedCount: number | null;
   items: PlatformDataItem[];
 };
+
+type DiscoveredPlatformDataGroup = Omit<PlatformDataGroup, "fileName" | "saveState" | "savedCount">;
 
 export type PlatformDataDiscovery = {
   groups: PlatformDataGroup[];
@@ -168,6 +173,10 @@ function toSaveFileName(groups: PlatformDataExportGroup[]): string {
   return `platform-breath-condition-${suffix}.csv`;
 }
 
+function toSingleGroupSaveFileName(key: string): string {
+  return `platform-breath-condition-${key}.csv`;
+}
+
 function toPredictedDisplayRows(samples: SleepStagePredictedSample[]): PredictedDisplayDataRow[] {
   return samples.map((sample) => ({
     timestampMs: sample.timestampMs,
@@ -189,7 +198,7 @@ export function createPlatformDataService(
 
     const offset = discoveryOptions.offset ?? 0;
     const uris = await client.discoverCinUris(options.breathConditionContainer, { offset, limit: discoveryLimit });
-    const groups = new Map<string, PlatformDataGroup>();
+    const groups = new Map<string, DiscoveredPlatformDataGroup>();
 
     const sortedUris = [...uris].sort((left, right) => (getRnFromUri(right) ?? "").localeCompare(getRnFromUri(left) ?? ""));
     const cins = await Promise.all(sortedUris.map((uri) => client.getCinByUri(uri)));
@@ -218,23 +227,39 @@ export function createPlatformDataService(
           endAt: formatMeasuredAt(end),
           count: 0,
           items: [],
-        } satisfies PlatformDataGroup);
+        } satisfies DiscoveredPlatformDataGroup);
 
       group.items.push({ rn, uri });
       group.count = group.items.length;
       groups.set(key, group);
     }
 
+    const discoveredGroups = [...groups.values()]
+      .map((group) => ({
+        ...group,
+        items: [...group.items].sort((left, right) => right.rn.localeCompare(left.rn)),
+      }))
+      .sort((left, right) => right.key.localeCompare(left.key));
+    const groupsWithSaveState = await Promise.all(
+      discoveredGroups.map(async (group) => {
+        const fileName = toSingleGroupSaveFileName(group.key);
+        const savedCount = (await options.displayDataService?.getSavedSessionSampleCount?.(fileName)) ?? null;
+        const saveState = savedCount === null ? "new" : savedCount === group.count ? "saved" : "updated";
+
+        return {
+          ...group,
+          fileName,
+          saveState,
+          savedCount,
+        } satisfies PlatformDataGroup;
+      }),
+    );
+
     return {
       itemCount: uris.length,
       nextOffset: offset + discoveryLimit,
       hasMore: uris.length === discoveryLimit,
-      groups: [...groups.values()]
-        .map((group) => ({
-          ...group,
-          items: [...group.items].sort((left, right) => right.rn.localeCompare(left.rn)),
-        }))
-        .sort((left, right) => right.key.localeCompare(left.key)),
+      groups: groupsWithSaveState,
     };
   }
 

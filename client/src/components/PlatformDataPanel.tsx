@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import checkmarkIcon from "../assets/checkmark-icon.png";
 import csvIcon from "../assets/csv-icon.png";
 import {
   fetchBreathConditionGroups,
@@ -35,6 +36,12 @@ export function getPlatformDataGroupDisplayName(group: PlatformDataGroup): strin
   const day = group.startAt.slice(6, 8);
 
   return `${year}년 ${month}월 ${day}일`;
+}
+
+export function getPlatformDataGroupSaveLabel(saveState: PlatformDataGroup["saveState"]): string {
+  if (saveState === "saved") return "다운로드됨";
+  if (saveState === "updated") return "갱신됨";
+  return "";
 }
 
 function mergeGroups(currentGroups: PlatformDataGroup[], nextGroups: PlatformDataGroup[]): PlatformDataGroup[] {
@@ -89,7 +96,7 @@ export function PlatformDataPanel({ onSaved }: PlatformDataPanelProps) {
       setNextOffset(result.nextOffset);
       setHasMore(result.hasMore);
       setHasLoaded(true);
-      setStatus("saved");
+      setStatus("success");
     } catch (error) {
       if (offset === 0) {
         setGroups([]);
@@ -113,6 +120,14 @@ export function PlatformDataPanel({ onSaved }: PlatformDataPanelProps) {
       const selectedGroups = groups.filter((group) => selectedKeys.includes(group.key));
       const result = await saveBreathConditionDisplayData(selectedGroups);
 
+      setGroups((current) =>
+        current.map((group) =>
+          selectedKeys.includes(group.key)
+            ? { ...group, saveState: "saved", savedCount: group.count, fileName: group.fileName }
+            : group,
+        ),
+      );
+      setSelectedKeys([]);
       onSaved?.(result.fileName);
       setStatus("success");
     } catch (error) {
@@ -123,6 +138,9 @@ export function PlatformDataPanel({ onSaved }: PlatformDataPanelProps) {
 
   function toggleGroup(key: string, checked: boolean) {
     setSelectedKeys((current) => {
+      const group = groups.find((item) => item.key === key);
+
+      if (group?.saveState === "saved") return current;
       if (checked) return [...new Set([...current, key])].sort();
       return current.filter((item) => item !== key);
     });
@@ -168,25 +186,32 @@ export function PlatformDataPanel({ onSaved }: PlatformDataPanelProps) {
 
       {groups.length > 0 ? (
         <div className="platform-data-panel__groups" aria-label="플랫폼 데이터 날짜 묶음">
-          {groups.map((group) => (
+          {groups.map((group) => {
+            const saveLabel = getPlatformDataGroupSaveLabel(group.saveState);
+            const isSaved = group.saveState === "saved";
+
+            return (
             <label
               className={`platform-data-panel__group${
                 selectedKeys.includes(group.key) ? " platform-data-panel__group--selected" : ""
-              }`}
+              } platform-data-panel__group--${group.saveState}`}
               key={group.key}
             >
               <input
                 type="checkbox"
                 checked={selectedKeys.includes(group.key)}
+                disabled={isSaved}
                 onChange={(event) => toggleGroup(group.key, event.target.checked)}
               />
-              <img src={csvIcon} alt="" aria-hidden="true" />
+              <img src={isSaved ? checkmarkIcon : csvIcon} alt="" aria-hidden="true" />
               <span>
+                {saveLabel ? <em>{saveLabel}</em> : null}
                 <strong>{getPlatformDataGroupDisplayName(group)}</strong>
                 <small>데이터 {group.count}개 분량</small>
               </span>
             </label>
-          ))}
+            );
+          })}
         </div>
       ) : null}
 

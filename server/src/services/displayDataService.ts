@@ -21,6 +21,7 @@ export type DisplayDataSaveResult = {
 
 export type DisplayDataWriter = {
   savePredictedSession(fileName: string, rows: PredictedDisplayDataRow[]): Promise<DisplayDataSaveResult>;
+  getSavedSessionSampleCount?(fileName: string): Promise<number | null>;
 };
 
 const sleepStageLabels: Record<SleepStageValue, { label: string; code: string }> = {
@@ -123,6 +124,20 @@ export function createDisplayDataService(displayDataDir = path.resolve(process.c
         breathingSamples,
         summary: summarize(sleepStageSamples, breathingSamples),
       };
+    },
+
+    async getSavedSessionSampleCount(fileName: string): Promise<number | null> {
+      assertSafeCsvFileName(fileName);
+
+      try {
+        const csvText = await readFile(path.join(displayDataDir, fileName), "utf8");
+        return parseSleepStageCsv(csvText).length;
+      } catch (error) {
+        if (error && typeof error === "object" && "code" in error && error.code === "ENOENT") {
+          return null;
+        }
+        throw error;
+      }
     },
 
     async savePredictedSession(fileName: string, rows: PredictedDisplayDataRow[]): Promise<DisplayDataSaveResult> {

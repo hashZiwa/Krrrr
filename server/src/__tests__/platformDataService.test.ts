@@ -49,6 +49,9 @@ describe("platformDataService", () => {
         startAt: "20260719180000",
         endAt: "20260720180000",
         count: 2,
+        saveState: "new",
+        savedCount: null,
+        fileName: "platform-breath-condition-2026-07-19.csv",
         items: [
           {
             rn: "4-20260719190000000",
@@ -66,6 +69,9 @@ describe("platformDataService", () => {
         startAt: "20260718180000",
         endAt: "20260719180000",
         count: 3,
+        saveState: "new",
+        savedCount: null,
+        fileName: "platform-breath-condition-2026-07-18.csv",
         items: [
           {
             rn: "4-20260719175959000",
@@ -87,6 +93,9 @@ describe("platformDataService", () => {
         startAt: "20260717180000",
         endAt: "20260718180000",
         count: 1,
+        saveState: "new",
+        savedCount: null,
+        fileName: "platform-breath-condition-2026-07-17.csv",
         items: [
           {
             rn: "4-20260718175959000",
@@ -143,6 +152,30 @@ describe("platformDataService", () => {
     expect(result.itemCount).toBe(500);
     expect(result.groups).toHaveLength(1);
     expect(result.groups[0].count).toBe(9);
+  });
+
+  it("marks discovered groups as saved or updated by comparing display data sample counts", async () => {
+    const client = createClient();
+    const getSavedSessionSampleCount = vi.fn(async (fileName: string) => {
+      if (fileName === "platform-breath-condition-2026-07-19.csv") return 2;
+      if (fileName === "platform-breath-condition-2026-07-18.csv") return 2;
+      return null;
+    });
+    const service = createPlatformDataService(client, {
+      breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
+      displayDataService: {
+        getSavedSessionSampleCount,
+        savePredictedSession: vi.fn(),
+      },
+    });
+
+    const result = await service.discoverBreathConditionGroups();
+
+    expect(result.groups.map((group) => [group.key, group.fileName, group.saveState, group.savedCount])).toEqual([
+      ["2026-07-19", "platform-breath-condition-2026-07-19.csv", "saved", 2],
+      ["2026-07-18", "platform-breath-condition-2026-07-18.csv", "updated", 2],
+      ["2026-07-17", "platform-breath-condition-2026-07-17.csv", "new", null],
+    ]);
   });
 
   it("saves selected platform data as display data with predicted sleep stages", async () => {

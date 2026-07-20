@@ -9,6 +9,9 @@ export type PlatformDataGroup = {
   startAt: string;
   endAt: string;
   count: number;
+  fileName: string;
+  saveState: "new" | "saved" | "updated";
+  savedCount: number | null;
   items: PlatformDataItem[];
 };
 

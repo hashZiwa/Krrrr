@@ -498,6 +498,14 @@ h1 {
   gap: 2px;
 }
 
+.platform-data-panel__group em {
+  color: #199264;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .platform-data-panel__group strong {
   color: var(--color-text);
   font-size: 13px;
@@ -518,6 +526,25 @@ h1 {
 
 .platform-data-panel__group--selected strong {
   color: var(--color-primary);
+}
+
+.platform-data-panel__group--saved {
+  border-color: #11b982;
+  box-shadow: 0 0 0 1px #11b982 inset;
+  cursor: not-allowed;
+}
+
+.platform-data-panel__group--saved img {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+.platform-data-panel__group--saved small {
+  color: #368064;
+}
+
+.platform-data-panel__group--updated {
+  border-color: #64b78d;
 }
 
 .platform-data-panel__footer {

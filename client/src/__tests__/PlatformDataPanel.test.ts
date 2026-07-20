@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getPlatformDataGroupDisplayName,
+  getPlatformDataGroupSaveLabel,
   getPlatformDataLoadButtonText,
   getPlatformDataStatusText,
   getTotalDataText,
@@ -34,8 +35,17 @@ describe("PlatformDataPanel helpers", () => {
         startAt: "20260718180000",
         endAt: "20260719180000",
         count: 12,
+        fileName: "platform-breath-condition-2026-07-18.csv",
+        saveState: "new",
+        savedCount: null,
         items: [],
       }),
     ).toBe("26년 07월 18일");
+  });
+
+  it("formats platform data save state labels", () => {
+    expect(getPlatformDataGroupSaveLabel("new")).toBe("");
+    expect(getPlatformDataGroupSaveLabel("saved")).toBe("다운로드됨");
+    expect(getPlatformDataGroupSaveLabel("updated")).toBe("갱신됨");
   });
 });
