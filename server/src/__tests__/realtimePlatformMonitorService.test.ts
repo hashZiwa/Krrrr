@@ -74,4 +74,28 @@ describe("createRealtimePlatformMonitorService", () => {
     expect(service.getSession().sleepStageSamples.map((sample) => sample.value)).toEqual([1, 2]);
     expect(service.getSession().breathingSamples.map((sample) => sample.value)).toEqual([19, 20]);
   });
+
+  it("evaluates alarm state after refreshing sleep stage predictions", async () => {
+    const client = createClient([
+      { rn: "4-20260720090000000", con: "18" },
+      { rn: "4-20260720090030000", con: "19" },
+    ]);
+    const evaluate = vi.fn().mockResolvedValue(undefined);
+    const service = createRealtimePlatformMonitorService(client, {
+      breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
+      displayDataService: { savePredictedSession: vi.fn().mockResolvedValue({ fileName: "realtime.csv" }) },
+      sleepStageTrainingService: {
+        predictFromBreathingSamples: vi
+          .fn()
+          .mockResolvedValue([{ timestampMs: new Date(2026, 6, 20, 9, 0, 30).getTime(), respiratoryRate: 19, sleepStage: 1 }]),
+      },
+      alarmService: { evaluate },
+    });
+
+    await service.pollLatest();
+    await service.pollLatest();
+    await service.refreshPredictions();
+
+    expect(evaluate).toHaveBeenCalledWith({ latestSleepStage: 1 });
+  });
 });

@@ -8,12 +8,14 @@ import { createSleepDataProvider } from "./providers/sleepDataProviderFactory.js
 import { createDisplayDataRouter } from "./routes/displayData.js";
 import { createPlatformDataRouter } from "./routes/platformData.js";
 import { createPlatformUploadRouter } from "./routes/platformUpload.js";
+import { createAlarmRouter } from "./routes/alarm.js";
 import { createRealtimePlatformMonitorRouter } from "./routes/realtimePlatformMonitor.js";
 import { createSleepSessionRouter } from "./routes/sleepSessions.js";
 import { createSleepStageTrainingRouter } from "./routes/sleepStageTraining.js";
 import { createDisplayDataService } from "./services/displayDataService.js";
 import { createPlatformDataService } from "./services/platformDataService.js";
 import { createPlatformUploadService } from "./services/platformUploadService.js";
+import { createAlarmService } from "./services/alarmService.js";
 import { createRealtimePlatformMonitorService } from "./services/realtimePlatformMonitorService.js";
 import { createSleepSessionService } from "./services/sleepSessionService.js";
 import { createSleepStageTrainingService } from "./services/sleepStageTrainingService.js";
@@ -30,6 +32,18 @@ void sleepStageTrainingService.loadLatestModel();
 const uploadService = mobiusConfig
   ? createPlatformUploadService(createMobiusClient(mobiusConfig), mobiusConfig.uploadContainers)
   : null;
+const alarmContainers =
+  mobiusConfig?.uploadContainers.alarmEnabled &&
+  mobiusConfig.uploadContainers.alarmTime &&
+  mobiusConfig.uploadContainers.alarmStatus
+    ? {
+        enabled: mobiusConfig.uploadContainers.alarmEnabled,
+        time: mobiusConfig.uploadContainers.alarmTime,
+        status: mobiusConfig.uploadContainers.alarmStatus,
+      }
+    : null;
+const alarmService =
+  mobiusConfig && alarmContainers ? createAlarmService(createMobiusClient(mobiusConfig), alarmContainers) : null;
 const platformDataService = mobiusConfig
   ? createPlatformDataService(createMobiusClient(mobiusConfig), {
       breathConditionContainer: mobiusConfig.statusContainers.breathCondition,
@@ -42,6 +56,7 @@ const realtimePlatformMonitorService = mobiusConfig
       breathConditionContainer: mobiusConfig.statusContainers.breathCondition,
       displayDataService,
       sleepStageTrainingService,
+      alarmService: alarmService ?? undefined,
     })
   : null;
 
@@ -53,6 +68,7 @@ app.use("/api/sleep-sessions", createSleepSessionRouter(service));
 app.use("/api/display-data", createDisplayDataRouter(displayDataService));
 app.use("/api/platform-data", createPlatformDataRouter(platformDataService));
 app.use("/api/platform-upload", createPlatformUploadRouter(uploadService));
+app.use("/api/alarm", createAlarmRouter(alarmService));
 app.use("/api/realtime-platform", createRealtimePlatformMonitorRouter(realtimePlatformMonitorService));
 app.use("/api/sleep-stage-training", createSleepStageTrainingRouter(sleepStageTrainingService));
 

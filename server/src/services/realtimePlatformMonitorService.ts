@@ -37,6 +37,9 @@ type RealtimePlatformMonitorOptions = {
   sleepStageTrainingService?: {
     predictFromBreathingSamples(samples: BreathingSample[]): Promise<SleepStagePredictedSample[]>;
   };
+  alarmService?: {
+    evaluate(input: { now?: Date; latestSleepStage: SleepStagePredictedSample["sleepStage"] | null }): Promise<unknown>;
+  };
 };
 
 function parseCinDateFromRn(rn: string | undefined): Date | null {
@@ -160,6 +163,9 @@ export function createRealtimePlatformMonitorService(
     try {
       predictedSamples = await options.sleepStageTrainingService.predictFromBreathingSamples([...breathingSamples]);
       await options.displayDataService.savePredictedSession(backupFileName, toPredictedDisplayRows(predictedSamples));
+      await options.alarmService?.evaluate({
+        latestSleepStage: predictedSamples[predictedSamples.length - 1]?.sleepStage ?? null,
+      });
       lastPredictionAt = new Date().toISOString();
       lastError = null;
     } catch (error) {

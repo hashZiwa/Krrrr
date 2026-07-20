@@ -1,15 +1,9 @@
-import { useState } from "react";
-import { uploadPlatformContent } from "../api/platformUploadApi";
+import { useEffect, useState } from "react";
+import { fetchAlarmSettings, updateAlarmSetting } from "../api/alarmApi";
 
 export type UploadState = "idle" | "uploading" | "success" | "error";
 type AlarmFieldKey = "enabled" | "time" | "status";
 type AlarmUploadStates = Record<AlarmFieldKey, UploadState>;
-
-const alarmFeatures: Record<AlarmFieldKey, string> = {
-  enabled: "alarmEnabled",
-  time: "alarmTime",
-  status: "alarmStatus",
-};
 
 const initialUploadStates: AlarmUploadStates = {
   enabled: "idle",
@@ -58,15 +52,30 @@ export function AlarmControlPanel() {
   const alarmTimeValue = `${String(alarmHour).padStart(2, "0")}${String(alarmMinute).padStart(2, "0")}`;
   const alarmStatusReadout = getAlarmStatusReadout(isEnabled, isAlarmActive);
 
+  useEffect(() => {
+    fetchAlarmSettings()
+      .then((settings) => {
+        setIsEnabled(settings.enabled);
+        setAlarmHour(Number(settings.time.slice(0, 2)));
+        setAlarmMinute(Number(settings.time.slice(2, 4)));
+        setIsAlarmActive(settings.active);
+      })
+      .catch(() => undefined);
+  }, []);
+
   function setFieldUploadStatus(field: AlarmFieldKey, status: UploadState) {
     setUploadStates((current) => ({ ...current, [field]: status }));
   }
 
-  async function upload(field: AlarmFieldKey, content: string) {
+  async function upload(field: AlarmFieldKey, value: boolean | string) {
     setFieldUploadStatus(field, "uploading");
 
     try {
-      await uploadPlatformContent(alarmFeatures[field], content);
+      const nextSettings = await updateAlarmSetting(field, value);
+      setIsEnabled(nextSettings.enabled);
+      setAlarmHour(Number(nextSettings.time.slice(0, 2)));
+      setAlarmMinute(Number(nextSettings.time.slice(2, 4)));
+      setIsAlarmActive(nextSettings.active);
       setFieldUploadStatus(field, "success");
     } catch {
       setFieldUploadStatus(field, "error");
@@ -75,12 +84,12 @@ export function AlarmControlPanel() {
 
   function handleEnabledChange(nextEnabled: boolean) {
     setIsEnabled(nextEnabled);
-    void upload("enabled", nextEnabled ? "1" : "0");
+    void upload("enabled", nextEnabled);
   }
 
   function handleAlarmStatusChange(nextActive: boolean) {
     setIsAlarmActive(nextActive);
-    void upload("status", nextActive ? "1" : "0");
+    void upload("status", nextActive);
   }
 
   return (
