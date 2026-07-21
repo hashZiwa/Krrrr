@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getInitialObservedDataSelection,
   shouldBlockRealtimeStartForMissingModel,
+  shouldPromptRealtimeSessionSave,
   shouldUseEmptyMonitorGraph,
   shouldShowMonitorCharts,
   shouldShowObservedDataSelector,
@@ -40,5 +41,30 @@ describe("App helpers", () => {
         stageCounts: {},
       }),
     ).toBe(false);
+  });
+
+  it("prompts to save realtime data only when collected samples exist", () => {
+    expect(
+      shouldPromptRealtimeSessionSave({
+        running: false,
+        primed: true,
+        lastRn: "4-20260720090000000",
+        lastError: null,
+        breathingSamples: [],
+        predictedSamples: [],
+        lastPredictionAt: null,
+      }),
+    ).toBe(false);
+    expect(
+      shouldPromptRealtimeSessionSave({
+        running: false,
+        primed: true,
+        lastRn: "4-20260720090030000",
+        lastError: null,
+        breathingSamples: [{ timestampMs: 1, respiratoryRate: 19 }],
+        predictedSamples: [],
+        lastPredictionAt: null,
+      }),
+    ).toBe(true);
   });
 });

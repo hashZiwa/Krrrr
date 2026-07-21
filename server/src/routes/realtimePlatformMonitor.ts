@@ -31,6 +31,20 @@ export function createRealtimePlatformMonitorRouter(service: RealtimePlatformMon
     res.status(200).json({ state: service.getState() });
   });
 
+  router.post("/save", async (_req, res) => {
+    if (!service) {
+      unavailable(res);
+      return;
+    }
+
+    try {
+      res.status(200).json(await service.saveCurrentSession());
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown realtime platform save failure";
+      res.status(500).json({ error: "realtime_platform_save_failed", message });
+    }
+  });
+
   router.get("/session", (_req, res) => {
     if (!service) {
       unavailable(res);

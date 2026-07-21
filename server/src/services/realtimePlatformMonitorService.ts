@@ -19,11 +19,25 @@ export type RealtimePlatformMonitorState = {
   lastPredictionAt: string | null;
 };
 
+export type RealtimePlatformSaveResult =
+  | {
+      saved: true;
+      fileName: string;
+      sampleCount: number;
+    }
+  | {
+      saved: false;
+      fileName: null;
+      sampleCount: number;
+      reason: "no_data";
+    };
+
 export type RealtimePlatformMonitorService = {
   start(): void;
   stop(): void;
   pollLatest(): Promise<void>;
   refreshPredictions(): Promise<void>;
+  saveCurrentSession(): Promise<RealtimePlatformSaveResult>;
   getState(): RealtimePlatformMonitorState;
   getSession(): SleepSessionResponse;
 };
@@ -106,6 +120,16 @@ function toPredictedDisplayRows(samples: SleepStagePredictedSample[]): Predicted
   }));
 }
 
+function toRealtimeSaveFileName(timestampMs: number): string {
+  const date = new Date(timestampMs);
+
+  return `realtime-breath-condition-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate(),
+  ).padStart(2, "0")}-${String(date.getHours()).padStart(2, "0")}${String(date.getMinutes()).padStart(2, "0")}${String(
+    date.getSeconds(),
+  ).padStart(2, "0")}.csv`;
+}
+
 export function createRealtimePlatformMonitorService(
   client: Pick<MobiusClient, "getLatestCin">,
   options: RealtimePlatformMonitorOptions,
@@ -122,6 +146,16 @@ export function createRealtimePlatformMonitorService(
   let lastPredictionAt: string | null = null;
   let pollTimer: NodeJS.Timeout | null = null;
   let predictionTimer: NodeJS.Timeout | null = null;
+
+  async function predictCurrentSamples(): Promise<SleepStagePredictedSample[]> {
+    if (!options.sleepStageTrainingService) {
+      throw new Error("Realtime sleep stage prediction is not configured");
+    }
+
+    predictedSamples = await options.sleepStageTrainingService.predictFromBreathingSamples([...breathingSamples]);
+
+    return predictedSamples;
+  }
 
   async function pollLatest(): Promise<void> {
     try {
@@ -161,7 +195,7 @@ export function createRealtimePlatformMonitorService(
     if (breathingSamples.length === 0 || !options.sleepStageTrainingService || !options.displayDataService) return;
 
     try {
-      predictedSamples = await options.sleepStageTrainingService.predictFromBreathingSamples([...breathingSamples]);
+      predictedSamples = await predictCurrentSamples();
       await options.displayDataService.savePredictedSession(backupFileName, toPredictedDisplayRows(predictedSamples));
       await options.alarmService?.evaluate({
         latestSleepStage: predictedSamples[predictedSamples.length - 1]?.sleepStage ?? null,
@@ -193,6 +227,34 @@ export function createRealtimePlatformMonitorService(
 
     pollLatest,
     refreshPredictions,
+
+    async saveCurrentSession() {
+      if (breathingSamples.length === 0) {
+        return {
+          saved: false,
+          fileName: null,
+          sampleCount: 0,
+          reason: "no_data",
+        };
+      }
+
+      if (!options.displayDataService) {
+        throw new Error("Realtime display data saving is not configured");
+      }
+
+      const hasFreshPredictions =
+        predictedSamples.length === breathingSamples.length &&
+        predictedSamples[predictedSamples.length - 1]?.timestampMs === breathingSamples[breathingSamples.length - 1]?.timestampMs;
+      const samplesToSave = hasFreshPredictions ? predictedSamples : await predictCurrentSamples();
+      const fileName = toRealtimeSaveFileName(breathingSamples[breathingSamples.length - 1].timestampMs);
+      const result = await options.displayDataService.savePredictedSession(fileName, toPredictedDisplayRows(samplesToSave));
+
+      return {
+        saved: true,
+        fileName: result.fileName,
+        sampleCount: samplesToSave.length,
+      };
+    },
 
     getState() {
       return {

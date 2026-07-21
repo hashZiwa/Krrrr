@@ -6,7 +6,7 @@ type DisplayDataSelectorProps = {
 };
 
 type RealtimeStatusTone = "idle" | "uploading" | "success" | "error";
-export type RealtimeTrackingModalMode = "confirm" | "missing-model";
+export type RealtimeTrackingModalMode = "confirm" | "missing-model" | "save-session";
 
 export function getRealtimeTrackingSwitchText(isRealtime: boolean): { state: "ON" | "OFF"; action: string } {
   return isRealtime
@@ -25,10 +25,19 @@ export function getRealtimeTrackingConfirmation(
 } {
   if (mode === "missing-model") {
     return {
-      title: "학습 모델이 필요합니다",
+      title: "학습 모델이 필요합니다.",
       body: "실시간 트래킹을 시작하려면 먼저 수면 단계 학습 패널에서 모델을 학습해 주세요.",
       confirmLabel: "확인",
       cancelLabel: null,
+    };
+  }
+
+  if (mode === "save-session") {
+    return {
+      title: "수집된 데이터를 바로 저장하시겠습니까?",
+      body: "",
+      confirmLabel: "저장",
+      cancelLabel: "취소",
     };
   }
 
@@ -50,7 +59,7 @@ export function getRealtimeTrackingConfirmation(
 export function getRealtimeStatusTone(status: string): RealtimeStatusTone {
   if (!status) return "idle";
   if (status.includes("오류")) return "error";
-  if (status.includes("시작") || status.includes("확인 중")) return "uploading";
+  if (status.includes("시작") || status.includes("확인 중") || status.includes("저장 중")) return "uploading";
   return "success";
 }
 

@@ -15,6 +15,19 @@ export type RealtimePlatformSessionResponse = {
   session: SleepSessionResponse | null;
 };
 
+export type RealtimePlatformSaveResponse =
+  | {
+      saved: true;
+      fileName: string;
+      sampleCount: number;
+    }
+  | {
+      saved: false;
+      fileName: null;
+      sampleCount: number;
+      reason: "no_data";
+    };
+
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
 
@@ -35,4 +48,8 @@ export function stopRealtimePlatformMonitoring(): Promise<{ state: RealtimePlatf
 
 export function fetchRealtimePlatformSession(): Promise<RealtimePlatformSessionResponse> {
   return requestJson("/api/realtime-platform/session");
+}
+
+export function saveRealtimePlatformSession(): Promise<RealtimePlatformSaveResponse> {
+  return requestJson("/api/realtime-platform/save", { method: "POST" });
 }

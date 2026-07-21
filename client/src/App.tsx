@@ -2,23 +2,24 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { fetchDisplayDataFiles, fetchDisplayDataSession, type DisplayDataFile } from "./api/displayDataApi";
 import {
   fetchRealtimePlatformSession,
+  saveRealtimePlatformSession,
   startRealtimePlatformMonitoring,
   stopRealtimePlatformMonitoring,
+  type RealtimePlatformState,
   type RealtimePlatformSessionResponse,
 } from "./api/realtimePlatformApi";
+import { fetchSleepStageTrainingStatus, type SleepStageTrainingStatus } from "./api/sleepStageTrainingApi";
 import { BreathingChart } from "./charts/BreathingChart";
 import { SleepStageChart } from "./charts/SleepStageChart";
 import { AlarmControlPanel } from "./components/AlarmControlPanel";
-import { DisplayDataSelector } from "./components/DisplayDataSelector";
-import { getRealtimeTrackingConfirmation } from "./components/DisplayDataSelector";
+import { DisplayDataSelector, getRealtimeTrackingConfirmation } from "./components/DisplayDataSelector";
 import { ObservedDataSelector } from "./components/ObservedDataSelector";
 import { PlatformDataPanel } from "./components/PlatformDataPanel";
 import { SleepAnalysisPanel } from "./components/SleepAnalysisPanel";
 import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
 import { parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
-import { fetchSleepStageTrainingStatus, type SleepStageTrainingStatus } from "./api/sleepStageTrainingApi";
-import type { SleepSessionResponse } from "./types/sleep";
 import type { RealtimeTrackingModalMode } from "./components/DisplayDataSelector";
+import type { SleepSessionResponse } from "./types/sleep";
 
 export function shouldShowObservedDataSelector(isRealtime: boolean): boolean {
   return !isRealtime;
@@ -28,11 +29,7 @@ export function getInitialObservedDataSelection(): string {
   return "";
 }
 
-export function shouldShowMonitorCharts({
-  hasChartData,
-}: {
-  hasChartData: boolean;
-}): boolean {
+export function shouldShowMonitorCharts({ hasChartData }: { hasChartData: boolean }): boolean {
   return hasChartData;
 }
 
@@ -48,6 +45,10 @@ export function shouldUseEmptyMonitorGraph({
 
 export function shouldBlockRealtimeStartForMissingModel(status: SleepStageTrainingStatus): boolean {
   return !status.trained;
+}
+
+export function shouldPromptRealtimeSessionSave(state: RealtimePlatformState): boolean {
+  return state.breathingSamples.length > 0;
 }
 
 export default function App() {
@@ -163,11 +164,18 @@ export default function App() {
 
   const handleToggleRealtime = useCallback(async () => {
     if (isRealtime) {
-      await stopRealtimePlatformMonitoring();
+      const result = await stopRealtimePlatformMonitoring();
+
       setIsRealtime(false);
       setRealtimeStatus("실시간 모니터링 대기 중");
       if (selectedDisplayFile) {
         void loadDisplaySession(selectedDisplayFile);
+      }
+      if (shouldPromptRealtimeSessionSave(result.state)) {
+        window.setTimeout(() => {
+          setRealtimeModalMode("save-session");
+          setIsRealtimeConfirmOpen(true);
+        }, 220);
       }
       return;
     }
@@ -178,6 +186,28 @@ export default function App() {
     setIsRealtime(true);
     applyRealtimeSession(await fetchRealtimePlatformSession());
   }, [applyRealtimeSession, isRealtime, loadDisplaySession, selectedDisplayFile]);
+
+  const handleSaveRealtimeSession = useCallback(async () => {
+    setRealtimeStatus("실시간 데이터 저장 중...");
+
+    try {
+      const result = await saveRealtimePlatformSession();
+
+      if (!result.saved) {
+        setRealtimeStatus("저장할 실시간 데이터가 없습니다.");
+        return;
+      }
+
+      await handlePlatformDataSaved(result.fileName);
+      setRealtimeStatus(`실시간 데이터 저장 완료 · ${result.sampleCount}개`);
+    } catch (nextError: unknown) {
+      setRealtimeStatus(
+        nextError instanceof Error
+          ? `실시간 오류: ${nextError.message}`
+          : "실시간 오류: 수집 데이터를 저장하지 못했습니다.",
+      );
+    }
+  }, [handlePlatformDataSaved]);
 
   const realtimeConfirmation = getRealtimeTrackingConfirmation(isRealtime, realtimeModalMode);
 
@@ -276,7 +306,7 @@ export default function App() {
     <main className="app-shell">
       <header className="dashboard-header">
         <div>
-          <h1>[숙면의호흡] IoT 모니터링 · 관리 시스템</h1>
+          <h1>[수면호흡] IoT 모니터링 · 관리 시스템</h1>
         </div>
       </header>
 
@@ -315,6 +345,8 @@ export default function App() {
                   closeRealtimeConfirm();
                   if (realtimeModalMode === "confirm") {
                     void handleToggleRealtime();
+                  } else if (realtimeModalMode === "save-session") {
+                    void handleSaveRealtimeSession();
                   }
                 }}
               >

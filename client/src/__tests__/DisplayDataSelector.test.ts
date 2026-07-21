@@ -11,7 +11,7 @@ describe("DisplayDataSelector realtime tracking helpers", () => {
     expect(getRealtimeTrackingSwitchText(true)).toEqual({ state: "ON", action: "실시간 트래킹 끄기" });
   });
 
-  it("returns confirmation copy for enabling and disabling tracking", () => {
+  it("returns confirmation copy for realtime modal states", () => {
     expect(getRealtimeTrackingConfirmation(false)).toEqual({
       title: "실시간 트래킹을 켜시겠습니까?",
       body: "",
@@ -25,10 +25,16 @@ describe("DisplayDataSelector realtime tracking helpers", () => {
       cancelLabel: "취소",
     });
     expect(getRealtimeTrackingConfirmation(false, "missing-model")).toEqual({
-      title: "학습 모델이 필요합니다",
+      title: "학습 모델이 필요합니다.",
       body: "실시간 트래킹을 시작하려면 먼저 수면 단계 학습 패널에서 모델을 학습해 주세요.",
       confirmLabel: "확인",
       cancelLabel: null,
+    });
+    expect(getRealtimeTrackingConfirmation(false, "save-session")).toEqual({
+      title: "수집된 데이터를 바로 저장하시겠습니까?",
+      body: "",
+      confirmLabel: "저장",
+      cancelLabel: "취소",
     });
   });
 

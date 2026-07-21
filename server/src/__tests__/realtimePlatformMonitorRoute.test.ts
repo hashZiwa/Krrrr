@@ -32,6 +32,7 @@ describe("createRealtimePlatformMonitorRouter", () => {
       stop: vi.fn(),
       pollLatest: vi.fn(),
       refreshPredictions: vi.fn(),
+      saveCurrentSession: vi.fn(),
       getState: vi.fn().mockReturnValue({ running: true, breathingSamples: [], predictedSamples: [] }),
       getSession: vi.fn(),
     };
@@ -66,6 +67,7 @@ describe("createRealtimePlatformMonitorRouter", () => {
       stop: vi.fn(),
       pollLatest: vi.fn(),
       refreshPredictions: vi.fn(),
+      saveCurrentSession: vi.fn(),
       getState: vi.fn().mockReturnValue({ running: true, breathingSamples: [], predictedSamples: [] }),
       getSession: vi.fn().mockReturnValue(session),
     };
@@ -77,6 +79,30 @@ describe("createRealtimePlatformMonitorRouter", () => {
       state: { running: true, breathingSamples: [], predictedSamples: [] },
       session,
     });
+  });
+
+  it("saves the current realtime session", async () => {
+    const saveResult = {
+      saved: true,
+      fileName: "realtime-breath-condition-2026-07-20-090100.csv",
+      sampleCount: 2,
+    };
+    const service = {
+      start: vi.fn(),
+      stop: vi.fn(),
+      pollLatest: vi.fn(),
+      refreshPredictions: vi.fn(),
+      saveCurrentSession: vi.fn().mockResolvedValue(saveResult),
+      getState: vi.fn().mockReturnValue({ running: false, breathingSamples: [], predictedSamples: [] }),
+      getSession: vi.fn(),
+    };
+    const baseUrl = await createTestServer(service);
+
+    const response = await fetch(`${baseUrl}/api/realtime-platform/save`, { method: "POST" });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual(saveResult);
+    expect(service.saveCurrentSession).toHaveBeenCalledOnce();
   });
 
   it("returns service unavailable when realtime monitoring is not configured", async () => {
