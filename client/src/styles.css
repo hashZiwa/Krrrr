@@ -1239,6 +1239,15 @@ h1 {
   flex-wrap: wrap;
 }
 
+.alarm-control-note {
+  margin: 12px 0 0;
+  color: #6f746f;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.45;
+  text-align: center;
+}
+
 .alarm-control-field {
   display: inline-grid;
   justify-items: center;
