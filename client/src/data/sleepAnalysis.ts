@@ -13,6 +13,18 @@ export type SleepStageDonutSegment = SleepStageRatio & {
   endRatio: number;
 };
 
+export type ApneaGaugeDisplay =
+  | {
+      hasData: true;
+      maxApneaCount: number;
+      severity: ApneaSeverityLevel;
+    }
+  | {
+      hasData: false;
+      maxApneaCount: null;
+      severity: null;
+    };
+
 export function getSlidingWindowApneaCount(
   samples: ChartSample[],
   windowMinutes = apneaGaugeConfig.windowMinutes,
@@ -43,6 +55,24 @@ export function getApneaSeverity(
   return [...thresholds]
     .sort((left, right) => right.minCount - left.minCount)
     .find((level) => count >= level.minCount) ?? thresholds[0];
+}
+
+export function getApneaGaugeDisplay(samples: ChartSample[]): ApneaGaugeDisplay {
+  if (samples.length === 0) {
+    return {
+      hasData: false,
+      maxApneaCount: null,
+      severity: null,
+    };
+  }
+
+  const maxApneaCount = getSlidingWindowApneaCount(samples);
+
+  return {
+    hasData: true,
+    maxApneaCount,
+    severity: getApneaSeverity(maxApneaCount),
+  };
 }
 
 export function getSleepStageRatios(samples: ChartSample[]): SleepStageRatio[] {

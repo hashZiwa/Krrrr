@@ -404,6 +404,10 @@ h1 {
   font-weight: 900;
 }
 
+.apnea-card__comment--empty {
+  opacity: 0;
+}
+
 .sleep-ratio-card__body {
   display: grid;
   grid-template-columns: minmax(120px, 200px) max-content;

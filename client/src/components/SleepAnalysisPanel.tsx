@@ -1,10 +1,9 @@
 import { sleepStageLabels, sleepStageLineStyles, sleepStageValues } from "../charts/chartConfig";
 import { getChartAnimationKey } from "../data/chartAnimation";
 import {
-  getApneaSeverity,
+  getApneaGaugeDisplay,
   getSleepStageDonutSegments,
   getSleepStageRatios,
-  getSlidingWindowApneaCount,
 } from "../data/sleepAnalysis";
 import { apneaGaugeConfig, apneaSeverityThresholds, getApneaGaugeBoundaryLabels } from "../data/sleepAnalysisConfig";
 import type { ChartSample } from "../types/sleep";
@@ -64,9 +63,8 @@ function describeDonutArc(startRatio: number, endRatio: number, radius = 15.9155
 }
 
 export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnalysisPanelProps) {
-  const maxApneaCount = getSlidingWindowApneaCount(breathingData);
-  const severity = getApneaSeverity(maxApneaCount);
-  const needle = getGaugeNeedlePoint(maxApneaCount);
+  const apneaDisplay = getApneaGaugeDisplay(breathingData);
+  const needle = apneaDisplay.hasData ? getGaugeNeedlePoint(apneaDisplay.maxApneaCount) : null;
   const apneaGaugeBoundaryLabels = getApneaGaugeBoundaryLabels();
   const ratios = getSleepStageRatios(sleepStageData);
   const donutSegments = getSleepStageDonutSegments(ratios);
@@ -81,7 +79,14 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
           <h2>무호흡증 정도</h2>
         </div>
         <div className="apnea-card__body">
-          <div className="apnea-gauge" aria-label={`최대 1시간 무호흡 ${maxApneaCount}회, ${severity.label}`}>
+          <div
+            className="apnea-gauge"
+            aria-label={
+              apneaDisplay.hasData
+                ? `최대 1시간 무호흡 ${apneaDisplay.maxApneaCount}회, ${apneaDisplay.severity.label}`
+                : "무호흡증 정도 데이터 없음"
+            }
+          >
             <svg viewBox="0 0 200 122" role="img" aria-hidden="true">
               {apneaSeverityThresholds.map((level, index) => {
                 const nextLevel = apneaSeverityThresholds[index + 1];
@@ -111,18 +116,30 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
                   </text>
                 );
               })}
-              <line x1="100" y1="100" x2={needle.x} y2={needle.y} className="apnea-gauge__needle" />
-              <circle cx="100" cy="100" r="7" className="apnea-gauge__hub" />
+              {needle ? (
+                <>
+                  <line x1="100" y1="100" x2={needle.x} y2={needle.y} className="apnea-gauge__needle" />
+                  <circle cx="100" cy="100" r="7" className="apnea-gauge__hub" />
+                </>
+              ) : null}
             </svg>
             <div className="apnea-gauge__readout">
-              <strong style={{ color: severity.color }}>{severity.label}</strong>
+              {apneaDisplay.hasData ? (
+                <strong style={{ color: apneaDisplay.severity.color }}>{apneaDisplay.severity.label}</strong>
+              ) : null}
               <span>시간당 최대 무호흡 횟수 기준</span>
             </div>
           </div>
         </div>
-        <p className="apnea-card__comment" style={{ color: severity.color }}>
-          {severity.comment}
-        </p>
+        {apneaDisplay.hasData ? (
+          <p className="apnea-card__comment" style={{ color: apneaDisplay.severity.color }}>
+            {apneaDisplay.severity.comment}
+          </p>
+        ) : (
+          <p className="apnea-card__comment apnea-card__comment--empty" aria-hidden="true">
+            &nbsp;
+          </p>
+        )}
       </article>
 
       <article className="analysis-card sleep-ratio-card">

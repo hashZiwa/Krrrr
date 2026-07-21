@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  getApneaGaugeDisplay,
   getApneaSeverity,
-  getSleepStageRatios,
   getSleepStageDonutSegments,
+  getSleepStageRatios,
   getSlidingWindowApneaCount,
 } from "../data/sleepAnalysis";
 import { apneaSeverityThresholds, getApneaGaugeBoundaryLabels, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
@@ -58,6 +59,14 @@ describe("sleepAnalysis", () => {
 
   it("uses non-zero apnea thresholds as gauge boundary labels", () => {
     expect(getApneaGaugeBoundaryLabels().map((item) => item.label)).toEqual(["5", "15", "25"]);
+  });
+
+  it("does not classify the apnea gauge when there is no breathing data", () => {
+    expect(getApneaGaugeDisplay([])).toEqual({
+      hasData: false,
+      maxApneaCount: null,
+      severity: null,
+    });
   });
 
   it("calculates sleep stage ratios for donut segments", () => {
