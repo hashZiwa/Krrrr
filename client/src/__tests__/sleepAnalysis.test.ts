@@ -4,7 +4,7 @@ import {
   getSleepStageRatios,
   getSlidingWindowApneaCount,
 } from "../data/sleepAnalysis";
-import { apneaSeverityThresholds } from "../data/sleepAnalysisConfig";
+import { apneaSeverityThresholds, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
 import type { ChartSample } from "../types/sleep";
 
 function sample(minutes: number, value: number): ChartSample {
@@ -38,6 +38,21 @@ describe("sleepAnalysis", () => {
     expect(getApneaSeverity(5, apneaSeverityThresholds).label).toBe("경증");
     expect(getApneaSeverity(15, apneaSeverityThresholds).label).toBe("중등증");
     expect(getApneaSeverity(25, apneaSeverityThresholds).label).toBe("중증");
+  });
+
+  it("keeps apnea range labels and comments configurable by severity", () => {
+    expect(apneaSeverityThresholds.map((level, index) => getApneaSeverityRangeLabel(level, index))).toEqual([
+      "0~4회",
+      "5~14회",
+      "15~24회",
+      "25회 이상",
+    ]);
+    expect(apneaSeverityThresholds.map((level) => level.comment)).toEqual([
+      "안정적인 호흡 흐름입니다.",
+      "가벼운 무호흡 경향이 보입니다.",
+      "수면 중 호흡 상태를 주의 깊게 확인하세요.",
+      "병원 검진을 권장합니다.",
+    ]);
   });
 
   it("calculates sleep stage ratios for donut segments", () => {

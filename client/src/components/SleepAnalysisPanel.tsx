@@ -1,6 +1,6 @@
 import { sleepStageLabels, sleepStageLineStyles, sleepStageValues } from "../charts/chartConfig";
 import { getApneaSeverity, getSleepStageRatios, getSlidingWindowApneaCount } from "../data/sleepAnalysis";
-import { apneaGaugeConfig, apneaSeverityThresholds } from "../data/sleepAnalysisConfig";
+import { apneaGaugeConfig, apneaSeverityThresholds, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
 import type { ChartSample } from "../types/sleep";
 
 type SleepAnalysisPanelProps = {
@@ -57,32 +57,46 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
           <p className="device-panel__eyebrow">apnea</p>
           <h2>무호흡증 정도</h2>
         </div>
-        <div className="apnea-gauge" aria-label={`최대 1시간 무호흡 ${maxApneaCount}회, ${severity.label}`}>
-          <svg viewBox="0 0 200 122" role="img" aria-hidden="true">
-            {apneaSeverityThresholds.map((level, index) => {
-              const nextLevel = apneaSeverityThresholds[index + 1];
-              const start = clamp((level.minCount / apneaGaugeConfig.maxDisplayCount) * 180, 0, 180);
-              const end = clamp(((nextLevel?.minCount ?? apneaGaugeConfig.maxDisplayCount) / apneaGaugeConfig.maxDisplayCount) * 180, 0, 180);
+        <div className="apnea-card__body">
+          <div className="apnea-gauge" aria-label={`최대 1시간 무호흡 ${maxApneaCount}회, ${severity.label}`}>
+            <svg viewBox="0 0 200 122" role="img" aria-hidden="true">
+              {apneaSeverityThresholds.map((level, index) => {
+                const nextLevel = apneaSeverityThresholds[index + 1];
+                const start = clamp((level.minCount / apneaGaugeConfig.maxDisplayCount) * 180, 0, 180);
+                const end = clamp(((nextLevel?.minCount ?? apneaGaugeConfig.maxDisplayCount) / apneaGaugeConfig.maxDisplayCount) * 180, 0, 180);
 
-              return (
-                <path
-                  key={level.key}
-                  d={describeArc(start, end)}
-                  fill="none"
-                  stroke={level.color}
-                  strokeLinecap="round"
-                  strokeWidth="18"
-                />
-              );
-            })}
-            <line x1="100" y1="100" x2={needle.x} y2={needle.y} className="apnea-gauge__needle" />
-            <circle cx="100" cy="100" r="7" className="apnea-gauge__hub" />
-          </svg>
-          <div className="apnea-gauge__readout">
-            <strong style={{ color: severity.color }}>{severity.label}</strong>
-            <span>최대 1시간 {maxApneaCount}회</span>
+                return (
+                  <path
+                    key={level.key}
+                    d={describeArc(start, end)}
+                    fill="none"
+                    stroke={level.color}
+                    strokeLinecap="round"
+                    strokeWidth="18"
+                  />
+                );
+              })}
+              <line x1="100" y1="100" x2={needle.x} y2={needle.y} className="apnea-gauge__needle" />
+              <circle cx="100" cy="100" r="7" className="apnea-gauge__hub" />
+            </svg>
+            <div className="apnea-gauge__readout">
+              <strong style={{ color: severity.color }}>{severity.label}</strong>
+              <span>최대 1시간 {maxApneaCount}회</span>
+            </div>
           </div>
+          <ul className="apnea-severity-legend" aria-label="무호흡증 판단 기준">
+            {apneaSeverityThresholds.map((level, index) => (
+              <li key={level.key}>
+                <i style={{ background: level.color }} aria-hidden="true" />
+                <span>{level.label}</span>
+                <strong>{getApneaSeverityRangeLabel(level, index)}</strong>
+              </li>
+            ))}
+          </ul>
         </div>
+        <p className="apnea-card__comment" style={{ color: severity.color }}>
+          {severity.comment}
+        </p>
       </article>
 
       <article className="analysis-card sleep-ratio-card">

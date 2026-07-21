@@ -313,6 +313,11 @@ h1 {
   padding: 16px 18px;
 }
 
+.apnea-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
 .analysis-card__header {
   margin-bottom: 12px;
 }
@@ -322,6 +327,13 @@ h1 {
   font-size: 20px;
 }
 
+.apnea-card__body {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) max-content;
+  align-items: center;
+  gap: 14px;
+}
+
 .apnea-gauge {
   display: grid;
   justify-items: center;
@@ -329,7 +341,7 @@ h1 {
 }
 
 .apnea-gauge svg {
-  inline-size: min(260px, 100%);
+  inline-size: min(230px, 100%);
   block-size: auto;
   overflow: visible;
 }
@@ -361,6 +373,45 @@ h1 {
   color: var(--color-muted);
   font-size: 13px;
   font-weight: 800;
+}
+
+.apnea-severity-legend {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apnea-severity-legend li {
+  display: grid;
+  grid-template-columns: 10px max-content max-content;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.apnea-severity-legend i {
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: 3px;
+}
+
+.apnea-severity-legend strong {
+  color: var(--color-text);
+  font-weight: 900;
+}
+
+.apnea-card__comment {
+  margin: 12px 0 0;
+  min-height: 18px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .sleep-ratio-card__body {
@@ -426,10 +477,11 @@ h1 {
 
 .sleep-ratio-legend li {
   display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) max-content;
+  grid-template-columns: 12px max-content max-content;
   align-items: center;
+  justify-content: start;
   gap: 7px;
-  min-width: 0;
+  inline-size: max-content;
   color: var(--color-muted);
   font-size: 13px;
   font-weight: 800;
@@ -442,7 +494,7 @@ h1 {
 }
 
 .sleep-ratio-legend span {
-  min-width: 0;
+  inline-size: max-content;
 }
 
 .sleep-ratio-legend strong {
@@ -1415,6 +1467,17 @@ h1 {
 
   .sleep-analysis-grid {
     grid-template-columns: 1fr;
+  }
+
+  .apnea-card__body {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .apnea-severity-legend {
+    grid-template-columns: repeat(2, max-content);
+    justify-content: center;
+    column-gap: 14px;
   }
 
   .sleep-ratio-card__body {
