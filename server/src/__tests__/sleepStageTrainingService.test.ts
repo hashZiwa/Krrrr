@@ -33,7 +33,7 @@ describe("sleepStageTrainingService", () => {
       "utf8",
     );
 
-    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-modeldata-"));
+    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-model-"));
     const service = createSleepStageTrainingService({ rawDataDir, validationDataDir, modelDir, historyMinutes: 1 });
     const result = await service.trainFromRawData();
 
@@ -50,7 +50,7 @@ describe("sleepStageTrainingService", () => {
 
   it("increments the model version when new rawdata files are added", async () => {
     const rawDataDir = await mkdtemp(join(tmpdir(), "sleeper-rawdata-"));
-    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-modeldata-"));
+    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-model-"));
     await writeFile(
       join(rawDataDir, "a.csv"),
       [
@@ -86,7 +86,7 @@ describe("sleepStageTrainingService", () => {
 
   it("saves uploaded CSV files into the training data directory", async () => {
     const rawDataDir = await mkdtemp(join(tmpdir(), "sleeper-rawdata-"));
-    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-modeldata-"));
+    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-model-"));
     const service = createSleepStageTrainingService({ rawDataDir, modelDir, historyMinutes: 1 });
 
     const result = await service.saveTrainingCsv(

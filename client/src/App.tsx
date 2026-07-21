@@ -113,7 +113,7 @@ export default function App() {
         const firstFile = nextFiles[0]?.name ?? "";
         if (!firstFile) {
           setSession(null);
-          setError("displaydata 폴더에 CSV 파일이 없습니다.");
+          setError("data/displaydata 폴더에 CSV 파일이 없습니다.");
           return;
         }
 

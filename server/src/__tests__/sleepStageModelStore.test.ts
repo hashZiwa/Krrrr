@@ -34,7 +34,7 @@ function storedModel(version = 1): StoredSleepStageModel {
 
 describe("sleepStageModelStore", () => {
   it("saves versioned model snapshots and loads latest", async () => {
-    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-modeldata-"));
+    const modelDir = await mkdtemp(join(tmpdir(), "sleeper-model-"));
     const store = createSleepStageModelStore(modelDir);
 
     const saved = await store.save(storedModel());
