@@ -59,14 +59,18 @@ function findNamedDir(startDir: string, dirName: string): string {
 }
 
 function findRawDataDir(startDir: string): string {
-  const rawDataDir = findNamedDir(startDir, "rawdata");
+  const dataDir = findNamedDir(startDir, "data");
+  const nestedRawDataDir = join(dataDir, "rawdata");
+  const rawDataDir = existsSync(nestedRawDataDir) ? nestedRawDataDir : findNamedDir(startDir, "rawdata");
   const trainDataDir = join(rawDataDir, "train");
 
   return existsSync(trainDataDir) ? trainDataDir : rawDataDir;
 }
 
 function findValidationDataDir(startDir: string): string | null {
-  const rawDataDir = findNamedDir(startDir, "rawdata");
+  const dataDir = findNamedDir(startDir, "data");
+  const nestedRawDataDir = join(dataDir, "rawdata");
+  const rawDataDir = existsSync(nestedRawDataDir) ? nestedRawDataDir : findNamedDir(startDir, "rawdata");
   const validationDataDir = join(rawDataDir, "validation");
 
   return existsSync(validationDataDir) ? validationDataDir : null;
@@ -76,15 +80,16 @@ function findModelDir(startDir: string): string {
   let current = resolve(startDir);
 
   while (true) {
-    if (existsSync(join(current, "rawdata"))) return join(current, "modeldata");
-    if (existsSync(join(current, "modeldata"))) return join(current, "modeldata");
+    if (existsSync(join(current, "data", "rawdata"))) return join(current, "model");
+    if (existsSync(join(current, "rawdata"))) return join(current, "model");
+    if (existsSync(join(current, "model"))) return join(current, "model");
 
     const parent = dirname(current);
     if (parent === current) break;
     current = parent;
   }
 
-  return join(resolve(startDir), "modeldata");
+  return join(resolve(startDir), "model");
 }
 
 async function getCsvFiles(rawDataDir: string): Promise<string[]> {

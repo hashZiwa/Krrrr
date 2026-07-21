@@ -85,7 +85,7 @@ function toPredictedSessionCsv(rows: PredictedDisplayDataRow[]): string {
   return `${csvRows.join("\n")}\n`;
 }
 
-export function createDisplayDataService(displayDataDir = path.resolve(process.cwd(), "..", "displaydata")) {
+export function createDisplayDataService(displayDataDir = path.resolve(process.cwd(), "..", "data", "displaydata")) {
   return {
     async listFiles(): Promise<DisplayDataFile[]> {
       const entries = await readdir(displayDataDir, { withFileTypes: true });

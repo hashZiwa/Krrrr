@@ -7,6 +7,9 @@ Mock-first sleep monitoring webapp.
 The initial implementation uses mock data only. `SLEEP_DATA_SOURCE` defaults to `mock`.
 Real Mobius/oneM2M communication is intentionally disabled until explicitly enabled later.
 
+Shared CSV datasets live under `data/displaydata` and `data/rawdata`.
+The local trained model is stored under `model`, which is ignored by git.
+
 ## Mobius Environment
 
 Copy `.env.example` to `.env` and fill the Mobius values there. `.env` is ignored by git.

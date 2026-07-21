@@ -16,11 +16,19 @@ describe("DisplayDataSelector realtime tracking helpers", () => {
       title: "실시간 트래킹을 켜시겠습니까?",
       body: "",
       confirmLabel: "확인",
+      cancelLabel: "취소",
     });
     expect(getRealtimeTrackingConfirmation(true)).toEqual({
       title: "실시간 트래킹을 끄시겠습니까?",
       body: "수면 데이터는 저장되나, 지금까지의 실시간 그래프 작성은 중단됩니다.",
       confirmLabel: "끄기",
+      cancelLabel: "취소",
+    });
+    expect(getRealtimeTrackingConfirmation(false, "missing-model")).toEqual({
+      title: "학습 모델이 필요합니다",
+      body: "실시간 트래킹을 시작하려면 먼저 수면 단계 학습 패널에서 모델을 학습해 주세요.",
+      confirmLabel: "확인",
+      cancelLabel: null,
     });
   });
 
