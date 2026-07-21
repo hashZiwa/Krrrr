@@ -15,7 +15,9 @@ import { ObservedDataSelector } from "./components/ObservedDataSelector";
 import { PlatformDataPanel } from "./components/PlatformDataPanel";
 import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
 import { parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
+import { fetchSleepStageTrainingStatus, type SleepStageTrainingStatus } from "./api/sleepStageTrainingApi";
 import type { SleepSessionResponse } from "./types/sleep";
+import type { RealtimeTrackingModalMode } from "./components/DisplayDataSelector";
 
 export function shouldShowObservedDataSelector(isRealtime: boolean): boolean {
   return !isRealtime;
@@ -43,6 +45,10 @@ export function shouldUseEmptyMonitorGraph({
   return !isRealtime && selectedDisplayFile.length === 0;
 }
 
+export function shouldBlockRealtimeStartForMissingModel(status: SleepStageTrainingStatus): boolean {
+  return !status.trained;
+}
+
 export default function App() {
   const [displayFiles, setDisplayFiles] = useState<DisplayDataFile[]>([]);
   const [selectedDisplayFile, setSelectedDisplayFile] = useState(getInitialObservedDataSelection());
@@ -53,6 +59,7 @@ export default function App() {
   const [realtimeStatus, setRealtimeStatus] = useState("실시간 모니터링 대기 중");
   const [isRealtimeConfirmOpen, setIsRealtimeConfirmOpen] = useState(false);
   const [isRealtimeConfirmClosing, setIsRealtimeConfirmClosing] = useState(false);
+  const [realtimeModalMode, setRealtimeModalMode] = useState<RealtimeTrackingModalMode>("confirm");
 
   const applyRealtimeSession = useCallback((result: RealtimePlatformSessionResponse) => {
     const state = result.state;
@@ -171,15 +178,46 @@ export default function App() {
     applyRealtimeSession(await fetchRealtimePlatformSession());
   }, [applyRealtimeSession, isRealtime, loadDisplaySession, selectedDisplayFile]);
 
-  const realtimeConfirmation = getRealtimeTrackingConfirmation(isRealtime);
+  const realtimeConfirmation = getRealtimeTrackingConfirmation(isRealtime, realtimeModalMode);
 
   const closeRealtimeConfirm = useCallback(() => {
     setIsRealtimeConfirmClosing(true);
     window.setTimeout(() => {
       setIsRealtimeConfirmOpen(false);
       setIsRealtimeConfirmClosing(false);
+      setRealtimeModalMode("confirm");
     }, 180);
   }, []);
+
+  const handleRequestToggleRealtime = useCallback(async () => {
+    if (isRealtime) {
+      setRealtimeModalMode("confirm");
+      setIsRealtimeConfirmOpen(true);
+      return;
+    }
+
+    setRealtimeStatus("학습 모델 확인 중...");
+
+    try {
+      const trainingStatus = await fetchSleepStageTrainingStatus();
+
+      if (shouldBlockRealtimeStartForMissingModel(trainingStatus)) {
+        setRealtimeStatus("실시간 모니터링 대기 중");
+        setRealtimeModalMode("missing-model");
+        setIsRealtimeConfirmOpen(true);
+        return;
+      }
+
+      setRealtimeModalMode("confirm");
+      setIsRealtimeConfirmOpen(true);
+    } catch (nextError: unknown) {
+      setRealtimeStatus(
+        nextError instanceof Error
+          ? `실시간 오류: ${nextError.message}`
+          : "실시간 오류: 학습 모델 상태를 확인하지 못했습니다.",
+      );
+    }
+  }, [isRealtime]);
 
   useEffect(() => {
     if (!isRealtime) return;
@@ -245,7 +283,7 @@ export default function App() {
         error={error}
         isRealtime={isRealtime}
         realtimeStatus={realtimeStatus}
-        onRequestToggleRealtime={() => setIsRealtimeConfirmOpen(true)}
+        onRequestToggleRealtime={() => void handleRequestToggleRealtime()}
       />
 
       {isRealtimeConfirmOpen ? (
@@ -264,15 +302,19 @@ export default function App() {
             <h2 id="tracking-modal-title">{realtimeConfirmation.title}</h2>
             {realtimeConfirmation.body ? <p>{realtimeConfirmation.body}</p> : null}
             <div className="tracking-modal__actions">
-              <button type="button" onClick={closeRealtimeConfirm}>
-                취소
-              </button>
+              {realtimeConfirmation.cancelLabel ? (
+                <button type="button" onClick={closeRealtimeConfirm}>
+                  {realtimeConfirmation.cancelLabel}
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="tracking-modal__confirm"
                 onClick={() => {
                   closeRealtimeConfirm();
-                  void handleToggleRealtime();
+                  if (realtimeModalMode === "confirm") {
+                    void handleToggleRealtime();
+                  }
                 }}
               >
                 {realtimeConfirmation.confirmLabel}

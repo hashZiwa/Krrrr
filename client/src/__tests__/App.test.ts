@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getInitialObservedDataSelection,
+  shouldBlockRealtimeStartForMissingModel,
   shouldUseEmptyMonitorGraph,
   shouldShowMonitorCharts,
   shouldShowObservedDataSelector,
@@ -25,5 +26,19 @@ describe("App helpers", () => {
     expect(shouldUseEmptyMonitorGraph({ selectedDisplayFile: "", isRealtime: false })).toBe(true);
     expect(shouldUseEmptyMonitorGraph({ selectedDisplayFile: "sleep.csv", isRealtime: false })).toBe(false);
     expect(shouldUseEmptyMonitorGraph({ selectedDisplayFile: "", isRealtime: true })).toBe(false);
+  });
+
+  it("blocks realtime tracking when no sleep stage model is trained", () => {
+    expect(shouldBlockRealtimeStartForMissingModel({ trained: false })).toBe(true);
+    expect(
+      shouldBlockRealtimeStartForMissingModel({
+        trained: true,
+        version: 1,
+        trainingMode: "full",
+        trainingExamples: 12,
+        trainedAt: "2026-07-21T00:00:00.000Z",
+        stageCounts: {},
+      }),
+    ).toBe(false);
   });
 });
