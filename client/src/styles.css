@@ -390,22 +390,23 @@ h1 {
   min-height: 18px;
   text-align: center;
   font-size: 13px;
+  font-style: italic;
   font-weight: 900;
 }
 
 .sleep-ratio-card__body {
   display: grid;
-  grid-template-columns: minmax(120px, 150px) max-content;
+  grid-template-columns: minmax(120px, 200px) max-content;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 40px;
 }
 
 .sleep-donut {
   position: relative;
   display: grid;
   place-items: center;
-  inline-size: min(150px, 100%);
+  inline-size: min(200px, 100%);
   aspect-ratio: 1;
 }
 
