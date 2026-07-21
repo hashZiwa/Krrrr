@@ -13,6 +13,7 @@ import { DisplayDataSelector } from "./components/DisplayDataSelector";
 import { getRealtimeTrackingConfirmation } from "./components/DisplayDataSelector";
 import { ObservedDataSelector } from "./components/ObservedDataSelector";
 import { PlatformDataPanel } from "./components/PlatformDataPanel";
+import { SleepAnalysisPanel } from "./components/SleepAnalysisPanel";
 import { TrainingInfoPanel } from "./components/TrainingInfoPanel";
 import { parseMeasuredAt, toChartSamples } from "./data/chartTransforms";
 import { fetchSleepStageTrainingStatus, type SleepStageTrainingStatus } from "./api/sleepStageTrainingApi";
@@ -330,6 +331,13 @@ export default function App() {
           selectedFile={selectedDisplayFile}
           isLoading={isLoading}
           onSelectFile={handleSelectDisplayFile}
+        />
+      ) : null}
+
+      {shouldRenderCharts && renderedChartData ? (
+        <SleepAnalysisPanel
+          breathingData={renderedChartData.breathing}
+          sleepStageData={renderedChartData.sleepStages}
         />
       ) : null}
 
