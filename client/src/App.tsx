@@ -306,7 +306,7 @@ export default function App() {
     <main className="app-shell">
       <header className="dashboard-header">
         <div>
-          <h1>[수면호흡] IoT 모니터링 · 관리 시스템</h1>
+          <h1>[숙면의호흡] IoT 모니터링 · 관리 시스템</h1>
         </div>
       </header>
 
