@@ -55,3 +55,14 @@ export function getApneaSeverityRangeLabel(
 
   return `${level.minCount}~${nextLevel.minCount - 1}회`;
 }
+
+export function getApneaGaugeBoundaryLabels(
+  thresholds = apneaSeverityThresholds,
+): Array<{ value: number; label: string }> {
+  return thresholds
+    .filter((level) => level.minCount > 0)
+    .map((level) => ({
+      value: level.minCount,
+      label: String(level.minCount),
+    }));
+}

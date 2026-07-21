@@ -5,7 +5,7 @@ import {
   getSleepStageRatios,
   getSlidingWindowApneaCount,
 } from "../data/sleepAnalysis";
-import { apneaGaugeConfig, apneaSeverityThresholds, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
+import { apneaGaugeConfig, apneaSeverityThresholds, getApneaGaugeBoundaryLabels } from "../data/sleepAnalysisConfig";
 import type { ChartSample } from "../types/sleep";
 
 type SleepAnalysisPanelProps = {
@@ -38,7 +38,14 @@ function getGaugeNeedlePoint(count: number): { x: number; y: number } {
   const ratio = clamp(count / apneaGaugeConfig.maxDisplayCount, 0, 1);
   const angle = ratio * 180;
 
-  return polarToCartesian(100, 100, 66, angle);
+  return polarToCartesian(100, 100, 48, angle);
+}
+
+function getGaugeBoundaryLabelPoint(count: number): { x: number; y: number } {
+  const ratio = clamp(count / apneaGaugeConfig.maxDisplayCount, 0, 1);
+  const angle = ratio * 180;
+
+  return polarToCartesian(100, 100, 56, angle);
 }
 
 function describeDonutArc(startRatio: number, endRatio: number, radius = 15.9155): string {
@@ -59,6 +66,7 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
   const maxApneaCount = getSlidingWindowApneaCount(breathingData);
   const severity = getApneaSeverity(maxApneaCount);
   const needle = getGaugeNeedlePoint(maxApneaCount);
+  const apneaGaugeBoundaryLabels = getApneaGaugeBoundaryLabels();
   const ratios = getSleepStageRatios(sleepStageData);
   const donutSegments = getSleepStageDonutSegments(ratios);
   const deepSleepRatio = ratios.find((item) => item.value === 3)?.ratio ?? 0;
@@ -89,23 +97,23 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
                   />
                 );
               })}
+              {apneaGaugeBoundaryLabels.map((label) => {
+                const point = getGaugeBoundaryLabelPoint(label.value);
+
+                return (
+                  <text key={label.value} x={point.x} y={point.y} className="apnea-gauge__boundary-label">
+                    {label.label}
+                  </text>
+                );
+              })}
               <line x1="100" y1="100" x2={needle.x} y2={needle.y} className="apnea-gauge__needle" />
               <circle cx="100" cy="100" r="7" className="apnea-gauge__hub" />
             </svg>
             <div className="apnea-gauge__readout">
               <strong style={{ color: severity.color }}>{severity.label}</strong>
-              <span>최대 1시간 {maxApneaCount}회</span>
+              <span>시간당 최대 무호흡 횟수 기준</span>
             </div>
           </div>
-          <ul className="apnea-severity-legend" aria-label="무호흡증 판단 기준">
-            {apneaSeverityThresholds.map((level, index) => (
-              <li key={level.key}>
-                <i style={{ background: level.color }} aria-hidden="true" />
-                <span>{level.label}</span>
-                <strong>{getApneaSeverityRangeLabel(level, index)}</strong>
-              </li>
-            ))}
-          </ul>
         </div>
         <p className="apnea-card__comment" style={{ color: severity.color }}>
           {severity.comment}

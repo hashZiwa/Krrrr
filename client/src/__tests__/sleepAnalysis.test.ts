@@ -5,7 +5,7 @@ import {
   getSleepStageDonutSegments,
   getSlidingWindowApneaCount,
 } from "../data/sleepAnalysis";
-import { apneaSeverityThresholds, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
+import { apneaSeverityThresholds, getApneaGaugeBoundaryLabels, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
 import type { ChartSample } from "../types/sleep";
 
 function sample(minutes: number, value: number): ChartSample {
@@ -54,6 +54,10 @@ describe("sleepAnalysis", () => {
       "수면 중 호흡 상태를 주의 깊게 확인하세요.",
       "병원 검진을 권장합니다.",
     ]);
+  });
+
+  it("uses non-zero apnea thresholds as gauge boundary labels", () => {
+    expect(getApneaGaugeBoundaryLabels().map((item) => item.label)).toEqual(["5", "15", "25"]);
   });
 
   it("calculates sleep stage ratios for donut segments", () => {
