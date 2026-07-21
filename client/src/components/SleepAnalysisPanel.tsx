@@ -1,5 +1,10 @@
 import { sleepStageLabels, sleepStageLineStyles, sleepStageValues } from "../charts/chartConfig";
-import { getApneaSeverity, getSleepStageRatios, getSlidingWindowApneaCount } from "../data/sleepAnalysis";
+import {
+  getApneaSeverity,
+  getSleepStageDonutSegments,
+  getSleepStageRatios,
+  getSlidingWindowApneaCount,
+} from "../data/sleepAnalysis";
 import { apneaGaugeConfig, apneaSeverityThresholds, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
 import type { ChartSample } from "../types/sleep";
 
@@ -36,10 +41,18 @@ function getGaugeNeedlePoint(count: number): { x: number; y: number } {
   return polarToCartesian(100, 100, 66, angle);
 }
 
-function getDonutStrokeDash(ratio: number): string {
-  const circumference = 100;
+function describeDonutArc(startRatio: number, endRatio: number, radius = 15.9155): string {
+  if (endRatio <= startRatio) {
+    return "";
+  }
 
-  return `${ratio * circumference} ${circumference}`;
+  const startAngle = startRatio * 360;
+  const endAngle = endRatio * 360;
+  const start = polarToCartesian(21, 21, radius, startAngle + 90);
+  const end = polarToCartesian(21, 21, radius, endAngle + 90);
+  const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+
+  return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
 }
 
 export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnalysisPanelProps) {
@@ -47,8 +60,8 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
   const severity = getApneaSeverity(maxApneaCount);
   const needle = getGaugeNeedlePoint(maxApneaCount);
   const ratios = getSleepStageRatios(sleepStageData);
+  const donutSegments = getSleepStageDonutSegments(ratios);
   const deepSleepRatio = ratios.find((item) => item.value === 3)?.ratio ?? 0;
-  let donutOffset = 25;
 
   return (
     <section className="sleep-analysis-grid" aria-label="수면 분석">
@@ -108,22 +121,13 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
           <div className="sleep-donut" aria-label={`깊은 잠 ${Math.round(deepSleepRatio * 100)}%`}>
             <svg viewBox="0 0 42 42" role="img" aria-hidden="true">
               <circle className="sleep-donut__track" cx="21" cy="21" r="15.9155" />
-              {ratios.map((item) => {
-                const dash = getDonutStrokeDash(item.ratio);
-                const offset = donutOffset;
-
-                donutOffset -= item.ratio * 100;
-
+              {donutSegments.map((item) => {
                 return (
-                  <circle
+                  <path
                     key={item.value}
                     className="sleep-donut__segment"
-                    cx="21"
-                    cy="21"
-                    r="15.9155"
+                    d={describeDonutArc(item.startRatio, item.endRatio)}
                     stroke={sleepStageLineStyles[item.value]?.color ?? sleepStageLineStyles[0].color}
-                    strokeDasharray={dash}
-                    strokeDashoffset={offset}
                   />
                 );
               })}

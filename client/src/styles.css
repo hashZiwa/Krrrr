@@ -329,8 +329,9 @@ h1 {
 
 .apnea-card__body {
   display: grid;
-  grid-template-columns: minmax(170px, 1fr) max-content;
+  grid-template-columns: max-content max-content;
   align-items: center;
+  justify-content: center;
   gap: 14px;
 }
 
@@ -416,8 +417,9 @@ h1 {
 
 .sleep-ratio-card__body {
   display: grid;
-  grid-template-columns: minmax(120px, 150px) minmax(0, 1fr);
+  grid-template-columns: minmax(120px, 150px) max-content;
   align-items: center;
+  justify-content: center;
   gap: 16px;
 }
 
@@ -432,7 +434,6 @@ h1 {
 .sleep-donut svg {
   inline-size: 100%;
   block-size: 100%;
-  transform: rotate(-90deg);
 }
 
 .sleep-donut__track {
@@ -470,6 +471,7 @@ h1 {
 .sleep-ratio-legend {
   display: grid;
   gap: 7px;
+  inline-size: max-content;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -477,11 +479,11 @@ h1 {
 
 .sleep-ratio-legend li {
   display: grid;
-  grid-template-columns: 12px max-content max-content;
+  grid-template-columns: 12px minmax(0, 1fr) max-content;
   align-items: center;
   justify-content: start;
   gap: 7px;
-  inline-size: max-content;
+  min-width: 0;
   color: var(--color-muted);
   font-size: 13px;
   font-weight: 800;
@@ -494,7 +496,7 @@ h1 {
 }
 
 .sleep-ratio-legend span {
-  inline-size: max-content;
+  min-width: 0;
 }
 
 .sleep-ratio-legend strong {

@@ -8,6 +8,11 @@ export type SleepStageRatio = {
   ratio: number;
 };
 
+export type SleepStageDonutSegment = SleepStageRatio & {
+  startRatio: number;
+  endRatio: number;
+};
+
 export function getSlidingWindowApneaCount(
   samples: ChartSample[],
   windowMinutes = apneaGaugeConfig.windowMinutes,
@@ -50,6 +55,22 @@ export function getSleepStageRatios(samples: ChartSample[]): SleepStageRatio[] {
       value,
       count,
       ratio: total === 0 ? 0 : count / total,
+    };
+  });
+}
+
+export function getSleepStageDonutSegments(ratios: SleepStageRatio[]): SleepStageDonutSegment[] {
+  let cursor = 0;
+
+  return ratios.map((ratio) => {
+    const startRatio = Number(cursor.toFixed(6));
+    const endRatio = Number(Math.min(1, startRatio + ratio.ratio).toFixed(6));
+    cursor = endRatio;
+
+    return {
+      ...ratio,
+      startRatio,
+      endRatio,
     };
   });
 }

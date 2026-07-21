@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getApneaSeverity,
   getSleepStageRatios,
+  getSleepStageDonutSegments,
   getSlidingWindowApneaCount,
 } from "../data/sleepAnalysis";
 import { apneaSeverityThresholds, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
@@ -61,6 +62,22 @@ describe("sleepAnalysis", () => {
       { value: 1, count: 1, ratio: 0.2 },
       { value: 2, count: 1, ratio: 0.2 },
       { value: 3, count: 2, ratio: 0.4 },
+    ]);
+  });
+
+  it("creates non-overlapping donut segment ranges for each sleep stage", () => {
+    const segments = getSleepStageDonutSegments([
+      { value: 0, count: 1, ratio: 0.2 },
+      { value: 1, count: 2, ratio: 0.4 },
+      { value: 2, count: 1, ratio: 0.2 },
+      { value: 3, count: 1, ratio: 0.2 },
+    ]);
+
+    expect(segments.map(({ value, startRatio, endRatio }) => ({ value, startRatio, endRatio }))).toEqual([
+      { value: 0, startRatio: 0, endRatio: 0.2 },
+      { value: 1, startRatio: 0.2, endRatio: 0.6 },
+      { value: 2, startRatio: 0.6, endRatio: 0.8 },
+      { value: 3, startRatio: 0.8, endRatio: 1 },
     ]);
   });
 });
