@@ -3,7 +3,7 @@
   --color-muted: #68786d;
   --color-subtle: #405747;
   --color-page: #f1f6ef;
-  --color-surface: #fbfdf8;
+  --color-surface: #ffffff;
   --color-border: #d6e3d6;
   --color-border-strong: #abc5af;
   --color-control-bg: #eaf2e8;
@@ -147,9 +147,7 @@ h1 {
   padding: 14px 18px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  background:
-    linear-gradient(90deg, rgb(255 255 255 / 68%), rgb(255 255 255 / 26%)),
-    var(--color-surface);
+  background: var(--color-surface);
 }
 
 .observed-data-panel h2 {
@@ -307,9 +305,7 @@ h1 {
   min-height: 210px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  background:
-    linear-gradient(135deg, rgb(255 255 255 / 72%), rgb(255 255 255 / 28%)),
-    var(--color-surface);
+  background: var(--color-surface);
   padding: 16px 18px;
 }
 
