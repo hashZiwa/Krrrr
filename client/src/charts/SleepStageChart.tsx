@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { getChartAnimationKey } from "../data/chartAnimation";
 import {
   formatTimeLabel,
   getTwentyMinuteTimeTicks,
@@ -147,6 +148,7 @@ function SleepStageSegmentsLayer({
           return (
             <line
               key={`${transition.timeMs}-${transition.fromValue}-${transition.toValue}`}
+              className="sleep-stage-transition-animated"
               x1={x}
               x2={x}
               y1={lineCoordinates.y1}
@@ -154,6 +156,8 @@ function SleepStageSegmentsLayer({
               stroke={`url(#${transitionGradientId(index)})`}
               strokeWidth={sleepStageTransitionLineStyle.strokeWidth}
               strokeLinecap={sleepStageTransitionLineStyle.strokeLinecap}
+              pathLength={1}
+              style={{ animationDelay: `${Math.min(index * 28, 420)}ms` }}
             />
           );
         })}
@@ -168,6 +172,7 @@ function SleepStageSegmentsLayer({
           return (
             <line
               key={key}
+              className="sleep-stage-segment-animated"
               x1={x1}
               x2={x2}
               y1={y}
@@ -175,6 +180,8 @@ function SleepStageSegmentsLayer({
               stroke={style.color}
               strokeWidth={style.strokeWidth}
               strokeLinecap="butt"
+              pathLength={1}
+              style={{ animationDelay: `${Math.min(index * 28, 420)}ms` }}
             />
           );
         })}
@@ -211,6 +218,7 @@ function FixedSleepStageYAxis() {
 export function SleepStageChart({ data, window }: SleepStageChartProps) {
   const timeTicks = getTwentyMinuteTimeTicks(window.start, window.end);
   const scrollableWidth = getSleepStageScrollableWidth(window.start, window.end);
+  const animationKey = getChartAnimationKey(data);
 
   return (
     <section className="chart-panel">
@@ -223,7 +231,11 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
       <div className="scroll-chart-layout">
         <FixedSleepStageYAxis />
         <div className="chart-scroll-frame">
-          <div className="chart-scroll-content" style={{ width: `${scrollableWidth}px` }}>
+          <div
+            key={animationKey}
+            className="chart-scroll-content"
+            style={{ width: `${scrollableWidth}px` }}
+          >
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={data} margin={{ top: 12, right: 20, bottom: 0, left: 0 }}>
                 <CartesianGrid stroke={chartColors.grid} strokeDasharray="4 4" />

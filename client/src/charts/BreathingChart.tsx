@@ -10,6 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { getChartAnimationKey } from "../data/chartAnimation";
 import {
   formatTimeLabel,
   getTwentyMinuteTimeTicks,
@@ -338,6 +339,7 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
   const scrollableWidth = getBreathingScrollableWidth(window.start, window.end);
   const displayData = toBreathingDisplaySamples(data);
   const yAxisConfig = getBreathingYAxisConfig(data.map((sample) => sample.value));
+  const animationKey = getChartAnimationKey(data);
 
   return (
     <section className="chart-panel">
@@ -359,7 +361,11 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
       <div className="scroll-chart-layout">
         <FixedBreathingYAxis ticks={yAxisConfig.ticks} />
         <div className="chart-scroll-frame">
-          <div className="chart-scroll-content" style={{ width: `${scrollableWidth}px` }}>
+          <div
+            key={animationKey}
+            className="chart-scroll-content"
+            style={{ width: `${scrollableWidth}px` }}
+          >
             <ResponsiveContainer width="100%" height={280}>
               <ComposedChart data={displayData} margin={{ top: 12, right: 20, bottom: 0, left: 0 }}>
                 <defs>
@@ -406,7 +412,10 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                   stroke="none"
                   dot={false}
                   activeDot={false}
-                  isAnimationActive={false}
+                  isAnimationActive
+                  animationBegin={90}
+                  animationDuration={820}
+                  animationEasing="ease-out"
                 />
                 <Line
                   type={breathingCurveStyle.type}
@@ -415,7 +424,9 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                   strokeWidth={breathingCurveStyle.strokeWidth}
                   dot={breathingCurveStyle.showDots ? <BreathingDot /> : false}
                   activeDot={false}
-                  isAnimationActive={false}
+                  isAnimationActive
+                  animationDuration={920}
+                  animationEasing="ease-out"
                 />
                 <Customized component={<BreathingEventOverlayLayer data={data} />} />
                 {showSleepStageOverlay ? (

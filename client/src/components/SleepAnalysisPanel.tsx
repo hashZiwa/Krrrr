@@ -1,4 +1,5 @@
 import { sleepStageLabels, sleepStageLineStyles, sleepStageValues } from "../charts/chartConfig";
+import { getChartAnimationKey } from "../data/chartAnimation";
 import {
   getApneaSeverity,
   getSleepStageDonutSegments,
@@ -70,9 +71,10 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
   const ratios = getSleepStageRatios(sleepStageData);
   const donutSegments = getSleepStageDonutSegments(ratios);
   const deepSleepRatio = ratios.find((item) => item.value === 3)?.ratio ?? 0;
+  const analysisAnimationKey = `${getChartAnimationKey(breathingData)}-${getChartAnimationKey(sleepStageData)}`;
 
   return (
-    <section className="sleep-analysis-grid" aria-label="수면 분석">
+    <section key={analysisAnimationKey} className="sleep-analysis-grid" aria-label="수면 분석">
       <article className="analysis-card apnea-card">
         <div className="analysis-card__header">
           <p className="device-panel__eyebrow">apnea</p>
@@ -89,11 +91,14 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
                 return (
                   <path
                     key={level.key}
+                    className="apnea-gauge__arc"
                     d={describeArc(start, end)}
                     fill="none"
                     stroke={level.color}
                     strokeLinecap="round"
                     strokeWidth="18"
+                    pathLength={1}
+                    style={{ animationDelay: `${index * 80}ms` }}
                   />
                 );
               })}
@@ -136,6 +141,8 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
                     className="sleep-donut__segment"
                     d={describeDonutArc(item.startRatio, item.endRatio)}
                     stroke={sleepStageLineStyles[item.value]?.color ?? sleepStageLineStyles[0].color}
+                    pathLength={1}
+                    style={{ animationDelay: `${item.value * 90}ms` }}
                   />
                 );
               })}

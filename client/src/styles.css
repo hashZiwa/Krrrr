@@ -344,13 +344,23 @@ h1 {
   overflow: visible;
 }
 
+.apnea-gauge__arc {
+  animation: chart-draw-stroke 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+
 .apnea-gauge__needle {
+  animation: gauge-needle-rise 650ms 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-box: fill-box;
+  transform-origin: 100px 100px;
   stroke: #26392d;
   stroke-linecap: round;
   stroke-width: 4;
 }
 
 .apnea-gauge__hub {
+  animation: chart-pop-in 420ms 520ms cubic-bezier(0.2, 1.4, 0.34, 1) both;
   fill: #26392d;
   stroke: var(--color-surface);
   stroke-width: 3;
@@ -422,8 +432,11 @@ h1 {
 }
 
 .sleep-donut__segment {
+  animation: chart-draw-stroke 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
   fill: transparent;
   stroke-linecap: butt;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
   stroke-width: 7;
 }
 
@@ -778,6 +791,13 @@ h1 {
 .chart-scroll-content {
   min-width: 100%;
   height: 280px;
+}
+
+.sleep-stage-segment-animated,
+.sleep-stage-transition-animated {
+  animation: chart-draw-stroke 780ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
 }
 
 .breathing-event-legend {
@@ -1423,6 +1443,60 @@ h1 {
   background: var(--color-danger);
   box-shadow: inset 0 1px 2px rgba(24, 37, 30, 0.2), 0 0 0 3px rgba(217, 71, 63, 0.16),
     0 0 14px rgba(217, 71, 63, 0.42);
+}
+
+@keyframes chart-draw-stroke {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1;
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes gauge-needle-rise {
+  0% {
+    opacity: 0;
+    transform: rotate(-8deg) scaleX(0.45);
+  }
+
+  100% {
+    opacity: 1;
+    transform: rotate(0deg) scaleX(1);
+  }
+}
+
+@keyframes chart-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.68);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sleep-stage-segment-animated,
+  .sleep-stage-transition-animated,
+  .apnea-gauge__arc,
+  .apnea-gauge__needle,
+  .apnea-gauge__hub,
+  .sleep-donut__segment {
+    animation: none;
+    opacity: 1;
+    stroke-dashoffset: 0;
+    transform: none;
+  }
 }
 
 @media (max-width: 760px) {
