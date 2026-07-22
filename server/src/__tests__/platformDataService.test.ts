@@ -5,6 +5,7 @@ import { createPlatformDataService } from "../services/platformDataService.js";
 function createClient(): MobiusClient {
   return {
     createCin: vi.fn(),
+    getContainer: vi.fn().mockResolvedValue({ currentNrOfInstances: 1_000 }),
     getLatestCin: vi.fn(),
     discoverCinUris: vi.fn().mockResolvedValue([
       "Mobius/ae_Test/STATUS_CNT/BREATH_CONDITION_CNT/4-20260719190000000",
@@ -29,6 +30,42 @@ function createClient(): MobiusClient {
 }
 
 describe("platformDataService", () => {
+  it("discovers the latest breath condition page from the container instance count", async () => {
+    const client = createClient();
+    vi.mocked(client.getContainer).mockResolvedValue({ currentNrOfInstances: 2_000 });
+    vi.mocked(client.discoverCinUris).mockResolvedValue([]);
+    const service = createPlatformDataService(client, {
+      breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
+    });
+
+    const result = await service.discoverBreathConditionGroups();
+
+    expect(client.getContainer).toHaveBeenCalledWith("STATUS_CNT/BREATH_CONDITION_CNT");
+    expect(client.discoverCinUris).toHaveBeenCalledWith("STATUS_CNT/BREATH_CONDITION_CNT", {
+      offset: 1_500,
+      limit: 500,
+    });
+    expect(result.nextOffset).toBe(500);
+    expect(result.hasMore).toBe(true);
+  });
+
+  it("loads the previous breath condition page when an offset is requested after the latest page", async () => {
+    const client = createClient();
+    vi.mocked(client.getContainer).mockResolvedValue({ currentNrOfInstances: 2_000 });
+    vi.mocked(client.discoverCinUris).mockResolvedValue([]);
+    const service = createPlatformDataService(client, {
+      breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
+    });
+
+    const result = await service.discoverBreathConditionGroups({ offset: 500 });
+
+    expect(client.discoverCinUris).toHaveBeenCalledWith("STATUS_CNT/BREATH_CONDITION_CNT", {
+      offset: 1_000,
+      limit: 500,
+    });
+    expect(result.nextOffset).toBe(1_000);
+    expect(result.hasMore).toBe(true);
+  });
   it("groups discovered breath condition cin entries by 18:00 day boundaries", async () => {
     const client = createClient();
     const service = createPlatformDataService(client, {
@@ -38,7 +75,7 @@ describe("platformDataService", () => {
     const result = await service.discoverBreathConditionGroups({ offset: 500 });
 
     expect(client.discoverCinUris).toHaveBeenCalledWith("STATUS_CNT/BREATH_CONDITION_CNT", {
-      offset: 500,
+      offset: 0,
       limit: 500,
     });
     expect(result).toMatchObject({ nextOffset: 1000, hasMore: false, itemCount: 7 });
@@ -184,8 +221,6 @@ describe("platformDataService", () => {
       fileName: "platform-breath-condition-2026-07-18.csv",
     });
     const predictFromBreathingSamples = vi.fn().mockResolvedValue([
-      { timestampMs: new Date(2026, 6, 18, 18, 0, 0).getTime(), respiratoryRate: 20, sleepStage: 1 },
-      { timestampMs: new Date(2026, 6, 18, 18, 5, 0).getTime(), respiratoryRate: 12, sleepStage: 2 },
       { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12, sleepStage: 3 },
     ]);
     const service = createPlatformDataService(client, {
@@ -206,13 +241,11 @@ describe("platformDataService", () => {
     ]);
 
     expect(predictFromBreathingSamples).toHaveBeenCalledWith([
-      { timestampMs: new Date(2026, 6, 18, 18, 0, 0).getTime(), respiratoryRate: 20 },
-      { timestampMs: new Date(2026, 6, 18, 18, 5, 0).getTime(), respiratoryRate: 12 },
       { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12 },
     ]);
     expect(savePredictedSession).toHaveBeenCalledWith("platform-breath-condition-2026-07-18.csv", [
-      { timestampMs: new Date(2026, 6, 18, 18, 0, 0).getTime(), respiratoryRate: 20, sleepStage: 1 },
-      { timestampMs: new Date(2026, 6, 18, 18, 5, 0).getTime(), respiratoryRate: 12, sleepStage: 2 },
+      { timestampMs: new Date(2026, 6, 18, 18, 0, 0).getTime(), respiratoryRate: 20, sleepStage: null },
+      { timestampMs: new Date(2026, 6, 18, 18, 5, 0).getTime(), respiratoryRate: 12, sleepStage: null },
       { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12, sleepStage: 3 },
     ]);
     expect(result).toEqual({

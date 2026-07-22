@@ -1,4 +1,4 @@
-import { sleepStageValues } from "../charts/chartConfig";
+import { initialAnalysisExclusion, sleepStageValues } from "../charts/chartConfig";
 import type { ChartSample } from "../types/sleep";
 import { apneaGaugeConfig, apneaSeverityThresholds, type ApneaSeverityLevel } from "./sleepAnalysisConfig";
 
@@ -63,6 +63,18 @@ export function getAverageHourlyApneaCount(samples: ChartSample[]): number | nul
   return apneaCount / durationHours;
 }
 
+function getAnalysisEligibleSamples(
+  samples: ChartSample[],
+  exclusionMinutes = initialAnalysisExclusion.minutes,
+): ChartSample[] {
+  if (samples.length === 0) return [];
+
+  const sortedSamples = [...samples].sort((left, right) => left.timeMs - right.timeMs);
+  const analysisStartMs = sortedSamples[0].timeMs + exclusionMinutes * 60 * 1000;
+
+  return sortedSamples.filter((sample) => sample.timeMs >= analysisStartMs);
+}
+
 export function getApneaSeverity(
   count: number,
   thresholds: ApneaSeverityLevel[] = apneaSeverityThresholds,
@@ -73,7 +85,7 @@ export function getApneaSeverity(
 }
 
 export function getApneaGaugeDisplay(samples: ChartSample[]): ApneaGaugeDisplay {
-  const apneaCountPerHour = getAverageHourlyApneaCount(samples);
+  const apneaCountPerHour = getAverageHourlyApneaCount(getAnalysisEligibleSamples(samples));
 
   if (apneaCountPerHour === null) {
     return {

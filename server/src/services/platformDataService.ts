@@ -3,6 +3,7 @@ import type { DisplayDataWriter, PredictedDisplayDataRow } from "./displayDataSe
 import type { SleepStagePredictedSample } from "./sleepStageTrainingService.js";
 
 const discoveryLimit = 500;
+const initialAnalysisExclusionMs = 30 * 60 * 1000;
 
 export type PlatformDataItem = {
   rn: string;
@@ -177,16 +178,21 @@ function toSingleGroupSaveFileName(key: string): string {
   return `platform-breath-condition-${key}.csv`;
 }
 
-function toPredictedDisplayRows(samples: SleepStagePredictedSample[]): PredictedDisplayDataRow[] {
-  return samples.map((sample) => ({
+function toPredictedDisplayRows(
+  breathingSamples: Array<{ timestampMs: number; respiratoryRate: number }>,
+  predictions: SleepStagePredictedSample[],
+): PredictedDisplayDataRow[] {
+  const predictionsByTimestamp = new Map(predictions.map((sample) => [sample.timestampMs, sample.sleepStage]));
+
+  return breathingSamples.map((sample) => ({
     timestampMs: sample.timestampMs,
     respiratoryRate: sample.respiratoryRate,
-    sleepStage: sample.sleepStage,
+    sleepStage: predictionsByTimestamp.get(sample.timestampMs) ?? null,
   }));
 }
 
 export function createPlatformDataService(
-  client: Pick<MobiusClient, "discoverCinUris" | "getCinByUri">,
+  client: Pick<MobiusClient, "getContainer" | "discoverCinUris" | "getCinByUri">,
   options: PlatformDataServiceOptions,
 ): PlatformDataService {
   async function discoverBreathConditionGroups(
@@ -197,7 +203,16 @@ export function createPlatformDataService(
     }
 
     const offset = discoveryOptions.offset ?? 0;
-    const uris = await client.discoverCinUris(options.breathConditionContainer, { offset, limit: discoveryLimit });
+    const { currentNrOfInstances } = await client.getContainer(options.breathConditionContainer);
+    const discoveryOffset = Math.max(0, currentNrOfInstances - discoveryLimit - offset);
+    const discoveryPageSize = Math.max(0, Math.min(discoveryLimit, currentNrOfInstances - offset));
+    const uris =
+      discoveryPageSize === 0
+        ? []
+        : await client.discoverCinUris(options.breathConditionContainer, {
+            offset: discoveryOffset,
+            limit: discoveryPageSize,
+          });
     const groups = new Map<string, DiscoveredPlatformDataGroup>();
 
     const sortedUris = [...uris].sort((left, right) => (getRnFromUri(right) ?? "").localeCompare(getRnFromUri(left) ?? ""));
@@ -258,7 +273,7 @@ export function createPlatformDataService(
     return {
       itemCount: uris.length,
       nextOffset: offset + discoveryLimit,
-      hasMore: uris.length === discoveryLimit,
+      hasMore: discoveryOffset > 0,
       groups: groupsWithSaveState,
     };
   }
@@ -307,12 +322,19 @@ export function createPlatformDataService(
         throw new Error("No valid breath condition samples were selected");
       }
 
-      const predictions = await options.sleepStageTrainingService.predictFromBreathingSamples(sortedSamples);
-      const saved = await options.displayDataService.savePredictedSession(toSaveFileName(groups), toPredictedDisplayRows(predictions));
+      const analysisStartMs = sortedSamples[0].timestampMs + initialAnalysisExclusionMs;
+      const predictionInput = sortedSamples.filter((sample) => sample.timestampMs >= analysisStartMs);
+      const predictions = predictionInput.length > 0
+        ? await options.sleepStageTrainingService.predictFromBreathingSamples(predictionInput)
+        : [];
+      const saved = await options.displayDataService.savePredictedSession(
+        toSaveFileName(groups),
+        toPredictedDisplayRows(sortedSamples, predictions),
+      );
 
       return {
         fileName: saved.fileName,
-        sampleCount: predictions.length,
+        sampleCount: sortedSamples.length,
       };
     },
   };

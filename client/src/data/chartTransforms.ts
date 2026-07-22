@@ -40,6 +40,38 @@ export function getTwentyMinuteTimeTicks(startMs: number, endMs: number): number
   return getTimeTicksByInterval(startMs, endMs, 20);
 }
 
+export type InitialAnalysisExclusionRange = {
+  startMs: number;
+  endMs: number;
+};
+
+export function getInitialAnalysisExclusionRange(
+  window: { start: number; end: number },
+  minutes: number,
+): InitialAnalysisExclusionRange | null {
+  const endMs = Math.min(window.end, window.start + minutes * 60 * 1000);
+
+  if (endMs <= window.start) return null;
+
+  return { startMs: window.start, endMs };
+}
+export function getInitialAnalysisExclusionRangeForSamples(
+  samples: ChartSample[],
+  window: { start: number; end: number },
+  minutes: number,
+): InitialAnalysisExclusionRange | null {
+  const firstSample = samples[0];
+
+  if (!firstSample) return null;
+
+  const startMs = Math.max(window.start, firstSample.timeMs);
+  const endMs = Math.min(window.end, firstSample.timeMs + minutes * 60 * 1000);
+
+  if (endMs <= startMs) return null;
+
+  return { startMs, endMs };
+}
+
 export function toChartSamples(samples: SensorSample[]): ChartSample[] {
   return samples.map((sample) => {
     const timeMs = parseMeasuredAt(sample.measuredAt);
@@ -56,6 +88,10 @@ export function getSleepStageValueAtTime(samples: ChartSample[], timeMs: number)
   return samples.find((sample) => sample.timeMs === timeMs)?.value ?? null;
 }
 
+function isLongChartGap(previous: ChartSample, next: ChartSample, gapThresholdMs = Number.POSITIVE_INFINITY): boolean {
+  return next.timeMs - previous.timeMs >= gapThresholdMs;
+}
+
 export type SleepStageSegment = {
   value: number;
   points: Array<{
@@ -64,14 +100,25 @@ export type SleepStageSegment = {
   }>;
 };
 
-export function toSleepStageSegments(samples: ChartSample[]): SleepStageSegment[] {
-  return samples.slice(0, -1).map((sample, index) => ({
-    value: sample.value,
-    points: [
-      { timeMs: sample.timeMs, value: sample.value },
-      { timeMs: samples[index + 1].timeMs, value: sample.value },
-    ],
-  }));
+export function toSleepStageSegments(
+  samples: ChartSample[],
+  gapThresholdMs = Number.POSITIVE_INFINITY,
+): SleepStageSegment[] {
+  return samples.slice(0, -1).flatMap((sample, index) => {
+    const next = samples[index + 1];
+
+    if (isLongChartGap(sample, next, gapThresholdMs)) return [];
+
+    return [
+      {
+        value: sample.value,
+        points: [
+          { timeMs: sample.timeMs, value: sample.value },
+          { timeMs: next.timeMs, value: sample.value },
+        ],
+      },
+    ];
+  });
 }
 
 export type SleepStageTransitionSegment = {
@@ -80,11 +127,14 @@ export type SleepStageTransitionSegment = {
   timeMs: number;
 };
 
-export function toSleepStageTransitionSegments(samples: ChartSample[]): SleepStageTransitionSegment[] {
+export function toSleepStageTransitionSegments(
+  samples: ChartSample[],
+  gapThresholdMs = Number.POSITIVE_INFINITY,
+): SleepStageTransitionSegment[] {
   return samples.slice(1).flatMap((sample, index) => {
     const previous = samples[index];
 
-    if (previous.value === sample.value) {
+    if (previous.value === sample.value || isLongChartGap(previous, sample, gapThresholdMs)) {
       return [];
     }
 
@@ -121,19 +171,25 @@ function getSleepStageOverlayPositions(breathingDomain: [number, number]): Recor
 export function toSleepStageOverlaySegments(
   samples: ChartSample[],
   breathingDomain: [number, number],
+  gapThresholdMs = Number.POSITIVE_INFINITY,
 ): SleepStageOverlaySegment[] {
   const stagePositions = getSleepStageOverlayPositions(breathingDomain);
 
-  return samples.slice(0, -1).map((sample, index) => {
+  return samples.slice(0, -1).flatMap((sample, index) => {
+    const next = samples[index + 1];
     const overlayValue = stagePositions[sample.value] ?? stagePositions[0];
 
-    return {
-      value: sample.value,
-      points: [
-        { timeMs: sample.timeMs, overlayValue },
-        { timeMs: samples[index + 1].timeMs, overlayValue },
-      ],
-    };
+    if (isLongChartGap(sample, next, gapThresholdMs)) return [];
+
+    return [
+      {
+        value: sample.value,
+        points: [
+          { timeMs: sample.timeMs, overlayValue },
+          { timeMs: next.timeMs, overlayValue },
+        ],
+      },
+    ];
   });
 }
 
@@ -148,13 +204,14 @@ export type SleepStageOverlayTransitionSegment = {
 export function toSleepStageOverlayTransitionSegments(
   samples: ChartSample[],
   breathingDomain: [number, number],
+  gapThresholdMs = Number.POSITIVE_INFINITY,
 ): SleepStageOverlayTransitionSegment[] {
   const stagePositions = getSleepStageOverlayPositions(breathingDomain);
 
   return samples.slice(1).flatMap((sample, index) => {
     const previous = samples[index];
 
-    if (previous.value === sample.value) {
+    if (previous.value === sample.value || isLongChartGap(previous, sample, gapThresholdMs)) {
       return [];
     }
 
@@ -177,8 +234,10 @@ export type BreathingEventOverlay = {
   endMs: number;
 };
 
-export type BreathingDisplaySample = ChartSample & {
+export type BreathingDisplaySample = Omit<ChartSample, "value"> & {
+  value: number | null;
   displayValue: number | null;
+  isGap?: true;
 };
 
 function findPreviousNormalSample(samples: ChartSample[], startIndex: number): ChartSample | null {
@@ -197,8 +256,11 @@ function findNextNormalSample(samples: ChartSample[], startIndex: number): Chart
   return null;
 }
 
-export function toBreathingDisplaySamples(samples: ChartSample[]): BreathingDisplaySample[] {
-  const displaySamples = samples.map((sample) => ({
+export function toBreathingDisplaySamples(
+  samples: ChartSample[],
+  gapThresholdMs = Number.POSITIVE_INFINITY,
+): BreathingDisplaySample[] {
+  const displaySamples: BreathingDisplaySample[] = samples.map((sample) => ({
     ...sample,
     displayValue: sample.value > 0 ? sample.value : null,
   }));
@@ -234,7 +296,27 @@ export function toBreathingDisplaySamples(samples: ChartSample[]): BreathingDisp
     }
   }
 
-  return displaySamples;
+  return displaySamples.flatMap((sample, index) => {
+    const previous = samples[index - 1];
+
+    if (!previous || !isLongChartGap(previous, samples[index], gapThresholdMs)) {
+      return [sample];
+    }
+
+    const gapTimeMs = previous.timeMs + 1;
+
+    return [
+      {
+        ...previous,
+        value: null,
+        displayValue: null,
+        isGap: true as const,
+        timeMs: gapTimeMs,
+        timeLabel: formatTimeLabel(gapTimeMs),
+      },
+      sample,
+    ];
+  });
 }
 
 export function toBreathingEventOverlays(samples: ChartSample[]): BreathingEventOverlay[] {

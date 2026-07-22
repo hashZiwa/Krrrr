@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import checkmarkIcon from "../assets/checkmark-icon.png";
 import csvIcon from "../assets/csv-icon.png";
 import {
   fetchBreathConditionGroups,
@@ -44,6 +43,13 @@ export function getPlatformDataGroupSaveLabel(saveState: PlatformDataGroup["save
   return "";
 }
 
+export function getPlatformDataGroupSelectionDisabled(_saveState: PlatformDataGroup["saveState"]): boolean {
+  return false;
+}
+
+export function getPlatformDataGroupIconKind(_saveState: PlatformDataGroup["saveState"]): "csv" {
+  return "csv";
+}
 function mergeGroups(currentGroups: PlatformDataGroup[], nextGroups: PlatformDataGroup[]): PlatformDataGroup[] {
   const groups = new Map<string, PlatformDataGroup>();
 
@@ -138,9 +144,6 @@ export function PlatformDataPanel({ onSaved }: PlatformDataPanelProps) {
 
   function toggleGroup(key: string, checked: boolean) {
     setSelectedKeys((current) => {
-      const group = groups.find((item) => item.key === key);
-
-      if (group?.saveState === "saved") return current;
       if (checked) return [...new Set([...current, key])].sort();
       return current.filter((item) => item !== key);
     });
@@ -188,7 +191,8 @@ export function PlatformDataPanel({ onSaved }: PlatformDataPanelProps) {
         <div className="platform-data-panel__groups" aria-label="플랫폼 데이터 날짜 묶음">
           {groups.map((group) => {
             const saveLabel = getPlatformDataGroupSaveLabel(group.saveState);
-            const isSaved = group.saveState === "saved";
+            const isSelectionDisabled = getPlatformDataGroupSelectionDisabled(group.saveState);
+            const iconKind = getPlatformDataGroupIconKind(group.saveState);
 
             return (
             <label
@@ -200,10 +204,10 @@ export function PlatformDataPanel({ onSaved }: PlatformDataPanelProps) {
               <input
                 type="checkbox"
                 checked={selectedKeys.includes(group.key)}
-                disabled={isSaved}
+                disabled={isSelectionDisabled}
                 onChange={(event) => toggleGroup(group.key, event.target.checked)}
               />
-              <img src={isSaved ? checkmarkIcon : csvIcon} alt="" aria-hidden="true" />
+              <img src={csvIcon} alt="" aria-hidden="true" data-icon-kind={iconKind} />
               <span>
                 {saveLabel ? <em>{saveLabel}</em> : null}
                 <strong>{getPlatformDataGroupDisplayName(group)}</strong>

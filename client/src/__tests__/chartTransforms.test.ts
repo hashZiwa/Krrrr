@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   formatTimeLabel,
   getTwentyMinuteTimeTicks,
+  getInitialAnalysisExclusionRange,
+  getInitialAnalysisExclusionRangeForSamples,
   getSleepStageValueAtTime,
   parseMeasuredAt,
   toBreathingEventOverlays,
@@ -237,5 +239,85 @@ describe("chartTransforms", () => {
         toOverlayValue: 11.5,
       },
     ]);
+  });
+  it("breaks sleep stage segments and transitions across long time gaps", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: 0 },
+      { measuredAt: "20260714230500", value: 1 },
+      { measuredAt: "20260714232000", value: 2 },
+      { measuredAt: "20260714232500", value: 3 },
+    ]);
+    const gapThresholdMs = 10 * 60 * 1000;
+
+    expect(toSleepStageSegments(samples, gapThresholdMs)).toEqual([
+      {
+        value: 0,
+        points: [
+          { timeMs: samples[0].timeMs, value: 0 },
+          { timeMs: samples[1].timeMs, value: 0 },
+        ],
+      },
+      {
+        value: 2,
+        points: [
+          { timeMs: samples[2].timeMs, value: 2 },
+          { timeMs: samples[3].timeMs, value: 2 },
+        ],
+      },
+    ]);
+    expect(toSleepStageTransitionSegments(samples, gapThresholdMs)).toEqual([
+      {
+        fromValue: 0,
+        toValue: 1,
+        timeMs: samples[1].timeMs,
+      },
+      {
+        fromValue: 2,
+        toValue: 3,
+        timeMs: samples[3].timeMs,
+      },
+    ]);
+  });
+
+  it("inserts null breathing display samples across long time gaps", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: 14 },
+      { measuredAt: "20260714230500", value: 16 },
+      { measuredAt: "20260714232000", value: 18 },
+    ]);
+    const gapThresholdMs = 10 * 60 * 1000;
+
+    const displaySamples = toBreathingDisplaySamples(samples, gapThresholdMs);
+
+    expect(displaySamples.map((sample) => sample.displayValue)).toEqual([14, 16, null, 18]);
+    expect(displaySamples[2]).toMatchObject({ value: null, isGap: true });
+    expect(displaySamples[2].timeMs).toBe(samples[1].timeMs + 1);
+  });
+  it("creates an initial analysis exclusion range from the first sample even when it is abnormal", () => {
+    const samples = toChartSamples([
+      { measuredAt: "20260714230000", value: -1 },
+      { measuredAt: "20260714230500", value: 0 },
+      { measuredAt: "20260714231000", value: 18 },
+    ]);
+    const window = {
+      start: parseMeasuredAt("20260714225000"),
+      end: parseMeasuredAt("20260714234000"),
+    };
+
+    expect(getInitialAnalysisExclusionRangeForSamples(samples, window, 30)).toEqual({
+      startMs: samples[0].timeMs,
+      endMs: parseMeasuredAt("20260714233000"),
+    });
+  });
+
+  it("creates an initial analysis exclusion range clipped to the chart window", () => {
+    const start = parseMeasuredAt("20260714230000");
+    const end = parseMeasuredAt("20260714232000");
+
+    expect(getInitialAnalysisExclusionRange({ start, end }, 30)).toEqual({
+      startMs: start,
+      endMs: end,
+    });
+    expect(getInitialAnalysisExclusionRange({ start, end: start }, 30)).toBeNull();
   });
 });

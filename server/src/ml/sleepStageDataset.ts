@@ -6,6 +6,12 @@ export type SleepStageTrainingRow = {
   respiratoryRate: number;
 };
 
+export type SleepStageCsvRow = {
+  timestampMs: number;
+  sleepStage: SleepStageValue | null;
+  respiratoryRate: number;
+};
+
 const sleepStageByLabel: Record<string, SleepStageValue> = {
   Wake: 0,
   REM: 1,
@@ -50,7 +56,9 @@ function parseTimestamp(value: string): number {
   return timestamp;
 }
 
-function parseSleepStage(label: string, code: string): SleepStageValue {
+function parseSleepStage(label: string, code: string): SleepStageValue | null {
+  if (!label && !code) return null;
+
   const stage = sleepStageByLabel[label] ?? sleepStageByCode[code];
 
   if (stage === undefined) {
@@ -60,7 +68,7 @@ function parseSleepStage(label: string, code: string): SleepStageValue {
   return stage;
 }
 
-export function parseSleepStageCsv(csvText: string): SleepStageTrainingRow[] {
+export function parseSleepStageCsv(csvText: string): SleepStageCsvRow[] {
   const lines = csvText
     .split(/\r?\n/)
     .map((line) => line.trim())

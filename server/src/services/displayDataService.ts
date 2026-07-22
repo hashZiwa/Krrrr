@@ -11,7 +11,7 @@ export type DisplayDataFile = {
 
 export type PredictedDisplayDataRow = {
   timestampMs: number;
-  sleepStage: SleepStageValue;
+  sleepStage: SleepStageValue | null;
   respiratoryRate: number;
 };
 
@@ -78,8 +78,8 @@ function toPredictedSessionCsv(rows: PredictedDisplayDataRow[]): string {
   const csvRows = ["timestamp,sleep_stage,sleep_stage_code,respiratory_rate_bpm"];
 
   for (const row of sortedRows) {
-    const stage = sleepStageLabels[row.sleepStage];
-    csvRows.push(`${formatCsvTimestamp(row.timestampMs)},${stage.label},${stage.code},${row.respiratoryRate}`);
+    const stage = row.sleepStage === null ? null : sleepStageLabels[row.sleepStage];
+    csvRows.push(`${formatCsvTimestamp(row.timestampMs)},${stage?.label ?? ""},${stage?.code ?? ""},${row.respiratoryRate}`);
   }
 
   return `${csvRows.join("\n")}\n`;
@@ -106,10 +106,11 @@ export function createDisplayDataService(displayDataDir = path.resolve(process.c
         throw new Error("Display data CSV is empty");
       }
 
-      const sleepStageSamples = rows.map((row) => ({
-        measuredAt: formatTimestamp(new Date(row.timestampMs)),
-        value: row.sleepStage,
-      }));
+      const sleepStageSamples = rows.flatMap((row) =>
+        row.sleepStage === null
+          ? []
+          : [{ measuredAt: formatTimestamp(new Date(row.timestampMs)), value: row.sleepStage }],
+      );
       const breathingSamples = rows.map((row) => ({
         measuredAt: formatTimestamp(new Date(row.timestampMs)),
         value: row.respiratoryRate,
@@ -117,8 +118,8 @@ export function createDisplayDataService(displayDataDir = path.resolve(process.c
 
       return {
         id: `displaydata-${fileName}`,
-        startedAt: sleepStageSamples[0].measuredAt,
-        endedAt: sleepStageSamples[sleepStageSamples.length - 1].measuredAt,
+        startedAt: breathingSamples[0].measuredAt,
+        endedAt: breathingSamples[breathingSamples.length - 1].measuredAt,
         intervalMinutes: getIntervalMinutes(rows[0].timestampMs, rows[1]?.timestampMs),
         sleepStageSamples,
         breathingSamples,

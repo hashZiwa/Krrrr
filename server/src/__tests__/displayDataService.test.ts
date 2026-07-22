@@ -87,4 +87,25 @@ describe("createDisplayDataService", () => {
 
     await expect(service.getSession("../rawdata/train.csv")).rejects.toThrow(/invalid display data file/i);
   });
+  it("keeps breathing rows but omits sleep stage samples when the analysis stage is blank", async () => {
+    const displayDataDir = await createTempDisplayDir();
+    await writeFile(
+      path.join(displayDataDir, "excluded.csv"),
+      [
+        "timestamp,sleep_stage,sleep_stage_code,respiratory_rate_bpm",
+        "2026-07-19 01:20:17,,,16",
+        "2026-07-19 01:25:17,,,15",
+        "2026-07-19 01:50:17,Light,40002,14",
+      ].join("\n"),
+    );
+
+    const service = createDisplayDataService(displayDataDir);
+    const session = await service.getSession("excluded.csv");
+
+    expect(session.startedAt).toBe("20260719012017");
+    expect(session.endedAt).toBe("20260719015017");
+    expect(session.breathingSamples.map((sample) => sample.value)).toEqual([16, 15, 14]);
+    expect(session.sleepStageSamples).toEqual([{ measuredAt: "20260719015017", value: 2 }]);
+    expect(session.summary.deepSleepRatio).toBe(0);
+  });
 });

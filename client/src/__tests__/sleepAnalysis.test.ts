@@ -42,9 +42,25 @@ describe("sleepAnalysis", () => {
     expect(getAverageHourlyApneaCount(samples)).toBe(2.5);
     expect(getApneaGaugeDisplay(samples)).toMatchObject({
       hasData: true,
-      apneaCountPerHour: 2.5,
+      apneaCountPerHour: 2,
     });
   });
+  it("ignores apnea events inside the initial analysis exclusion window", () => {
+    const samples = [
+      sample(0, 0),
+      sample(10, 0),
+      sample(20, 0),
+      sample(30, 16),
+      sample(45, 0),
+      sample(90, 16),
+    ];
+
+    expect(getApneaGaugeDisplay(samples)).toMatchObject({
+      hasData: true,
+      apneaCountPerHour: 1,
+    });
+  });
+
   it("maps apnea count thresholds to severity labels", () => {
     expect(getApneaSeverity(4, apneaSeverityThresholds).label).toBe("정상");
     expect(getApneaSeverity(5, apneaSeverityThresholds).label).toBe("경증");

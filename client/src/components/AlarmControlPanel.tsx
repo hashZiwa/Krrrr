@@ -156,7 +156,7 @@ export function AlarmControlPanel() {
         </div>
       </div>
       <p className="alarm-control-note">
-        설정한 시간이 되거나, 혹은 설정한 시간의 30분 이내면서 REM 이상 상태일 경우 알람을 울립니다.
+        설정한 시간이 되거나, 혹은 설정한 시간의 30분 이내면서 REM 상태 이상일 경우, 알람을 울립니다.
       </p>
     </section>
   );

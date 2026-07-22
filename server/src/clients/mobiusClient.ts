@@ -6,7 +6,12 @@ export type MobiusCin = {
   con?: string | number | boolean | Record<string, unknown> | Array<unknown>;
 };
 
+export type MobiusContainer = {
+  currentNrOfInstances: number;
+};
+
 export type MobiusClient = {
+  getContainer(containerName: string): Promise<MobiusContainer>;
   getLatestCin(containerName: string): Promise<MobiusCin>;
   createCin(containerName: string, content: MobiusCin["con"]): Promise<MobiusCin>;
   discoverCinUris(containerName: string, options?: { offset?: number; limit?: number }): Promise<string[]>;
@@ -51,6 +56,27 @@ function commonHeaders(config: MobiusConfig): Record<string, string> {
   };
 }
 
+async function parseContainerResponse(response: Response): Promise<MobiusContainer> {
+  const responseBody = (await response.json()) as { "m2m:cnt"?: { cni?: number | string } };
+  const container = responseBody["m2m:cnt"];
+  const currentNrOfInstances = Number(container?.cni ?? 0);
+
+  if (!Number.isFinite(currentNrOfInstances) || currentNrOfInstances < 0) {
+    throw new Error("Mobius container response did not include a valid cni");
+  }
+
+  return { currentNrOfInstances };
+}
+
+async function requestContainer(fetchImpl: FetchLike, url: string, init: RequestInit): Promise<MobiusContainer> {
+  const response = await fetchImpl(url, init);
+
+  if (!response.ok) {
+    throw new Error(`Mobius container request failed with status ${response.status}`);
+  }
+
+  return parseContainerResponse(response);
+}
 async function parseCinResponse(response: Response): Promise<MobiusCin> {
   const responseBody = (await response.json()) as { "m2m:cin"?: MobiusCin };
   const cin = responseBody["m2m:cin"];
@@ -86,6 +112,13 @@ async function requestUriList(fetchImpl: FetchLike, url: string, init: RequestIn
 
 export function createMobiusClient(config: MobiusConfig, fetchImpl: FetchLike = fetch): MobiusClient {
   return {
+    getContainer(containerName) {
+      return requestContainer(fetchImpl, joinUrl(config.baseUrl, config.aePath, containerName), {
+        method: "GET",
+        headers: commonHeaders(config),
+      });
+    },
+
     getLatestCin(containerName) {
       return requestCin(fetchImpl, joinUrl(config.baseUrl, config.aePath, containerName, "la"), {
         method: "GET",

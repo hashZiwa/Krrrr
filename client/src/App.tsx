@@ -51,6 +51,13 @@ export function shouldPromptRealtimeSessionSave(state: RealtimePlatformState): b
   return state.breathingSamples.length > 0;
 }
 
+export function getRealtimeStartPendingUiState(): { isRealtime: true; realtimeStatus: string } {
+  return {
+    isRealtime: true,
+    realtimeStatus: "플랫폼 기존 데이터 확인 중...",
+  };
+}
+
 export default function App() {
   const [displayFiles, setDisplayFiles] = useState<DisplayDataFile[]>([]);
   const [selectedDisplayFile, setSelectedDisplayFile] = useState(getInitialObservedDataSelection());
@@ -181,10 +188,18 @@ export default function App() {
     }
 
     setError(null);
-    setRealtimeStatus("실시간 모니터링 시작 중...");
-    await startRealtimePlatformMonitoring();
-    setIsRealtime(true);
-    applyRealtimeSession(await fetchRealtimePlatformSession());
+    const pendingState = getRealtimeStartPendingUiState();
+    setIsRealtime(pendingState.isRealtime);
+    setRealtimeStatus(pendingState.realtimeStatus);
+
+    try {
+      await startRealtimePlatformMonitoring();
+      setRealtimeStatus("실시간 세션 구성 중...");
+      applyRealtimeSession(await fetchRealtimePlatformSession());
+    } catch (nextError: unknown) {
+      setIsRealtime(false);
+      setError(nextError instanceof Error ? `실시간 오류: ${nextError.message}` : "실시간 오류: 트래킹을 시작하지 못했습니다.");
+    }
   }, [applyRealtimeSession, isRealtime, loadDisplaySession, selectedDisplayFile]);
 
   const handleSaveRealtimeSession = useCallback(async () => {

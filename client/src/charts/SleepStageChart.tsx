@@ -11,6 +11,7 @@ import {
 import { getChartAnimationKey } from "../data/chartAnimation";
 import {
   formatTimeLabel,
+  getInitialAnalysisExclusionRange,
   getTwentyMinuteTimeTicks,
   toSleepStageSegments,
   toSleepStageTransitionSegments,
@@ -19,6 +20,8 @@ import type { TimeWindow } from "../data/timeWindow";
 import type { ChartSample } from "../types/sleep";
 import {
   chartColors,
+  chartGapThresholdMinutes,
+  initialAnalysisExclusion,
   getSleepStageDisplayValue,
   getSleepStageTransitionLineCoordinates,
   getSleepStageTooltipValue,
@@ -54,6 +57,46 @@ type ChartOffset = {
   height: number;
 };
 
+type AnalysisExclusionLayerProps = {
+  window: TimeWindow;
+  xAxisMap?: AxisMap;
+  offset?: ChartOffset;
+};
+
+function AnalysisExclusionLayer({ window, xAxisMap, offset }: AnalysisExclusionLayerProps) {
+  const xScale = getPrimaryScale(xAxisMap);
+  const range = getInitialAnalysisExclusionRange(window, initialAnalysisExclusion.minutes);
+
+  if (!xScale || !offset || !range) return null;
+
+  const x1 = xScale(range.startMs);
+  const x2 = xScale(range.endMs);
+  const x = Math.min(x1, x2);
+  const width = Math.abs(x2 - x1);
+
+  return (
+    <g data-testid="initial-analysis-exclusion-overlay">
+      <rect
+        x={x}
+        y={offset.top}
+        width={width}
+        height={offset.height}
+        fill={initialAnalysisExclusion.fill}
+        opacity={initialAnalysisExclusion.opacity}
+      />
+      <text
+        x={x + width / 2}
+        y={offset.top + 22}
+        fill={initialAnalysisExclusion.textColor}
+        fontSize={12}
+        fontWeight={800}
+        textAnchor="middle"
+      >
+        {initialAnalysisExclusion.label}
+      </text>
+    </g>
+  );
+}
 type SleepStageSegmentsLayerProps = {
   data: ChartSample[];
   xAxisMap?: AxisMap;
@@ -252,6 +295,7 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
                 <YAxis domain={[0, 3]} ticks={[0, 1, 2, 3]} width={0} hide />
                 <Tooltip content={<SleepStageTooltip />} />
                 <Customized component={<SleepStageSegmentsLayer data={data} />} />
+                <Customized component={<AnalysisExclusionLayer window={window} />} />
                 <Line
                   type="linear"
                   dataKey="value"

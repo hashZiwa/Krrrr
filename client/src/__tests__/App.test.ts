@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getInitialObservedDataSelection,
+  getRealtimeStartPendingUiState,
   shouldBlockRealtimeStartForMissingModel,
   shouldPromptRealtimeSessionSave,
   shouldUseEmptyMonitorGraph,
@@ -16,6 +17,13 @@ describe("App helpers", () => {
 
   it("starts without an observed data selection", () => {
     expect(getInitialObservedDataSelection()).toBe("");
+  });
+
+  it("turns the realtime switch on while platform preloading is pending", () => {
+    expect(getRealtimeStartPendingUiState()).toEqual({
+      isRealtime: true,
+      realtimeStatus: "플랫폼 기존 데이터 확인 중...",
+    });
   });
 
   it("keeps monitor charts visible when chart data exists", () => {

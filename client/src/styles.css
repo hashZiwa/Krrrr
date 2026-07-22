@@ -1027,7 +1027,6 @@ h1 {
 .platform-data-panel__group--saved {
   border-color: var(--color-success);
   box-shadow: 0 0 0 1px var(--color-success) inset;
-  cursor: not-allowed;
 }
 
 .platform-data-panel__group--saved img {
@@ -1241,9 +1240,10 @@ h1 {
 
 .alarm-control-note {
   margin: 12px 0 0;
-  color: #6f746f;
+  color: #8f908f;
   font-size: 11px;
   font-weight: 650;
+  font-style: italic;
   line-height: 1.45;
   text-align: center;
 }

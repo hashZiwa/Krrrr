@@ -8,7 +8,7 @@ import type { SleepStageModel } from "../ml/sleepStageModel.js";
 import type { SleepStageModelEvaluation } from "../ml/sleepStageModel.js";
 import { evaluateSleepStageModel, predictSleepStage, trainSleepStageModel } from "../ml/sleepStageModel.js";
 import { parseSleepStageCsv } from "../ml/sleepStageDataset.js";
-import type { SleepStageValue } from "../ml/sleepStageDataset.js";
+import type { SleepStageTrainingRow, SleepStageValue } from "../ml/sleepStageDataset.js";
 import { createSleepStageModelStore } from "./sleepStageModelStore.js";
 import type { SourceFileFingerprint, SleepStageTrainingMode, StoredSleepStageModel } from "./sleepStageModelStore.js";
 
@@ -128,6 +128,9 @@ async function fingerprintFile(rawDataDir: string, file: string): Promise<Source
   };
 }
 
+function rowsWithSleepStage(rows: Array<SleepStageTrainingRow | { timestampMs: number; sleepStage: SleepStageValue | null; respiratoryRate: number }>): SleepStageTrainingRow[] {
+  return rows.filter((row): row is SleepStageTrainingRow => row.sleepStage !== null);
+}
 function sanitizeCsvFileName(fileName: string): string {
   const baseName = fileName
     .trim()
@@ -162,14 +165,15 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
     const rows = (
       await Promise.all(files.map(async (file) => parseSleepStageCsv(await readFile(join(rawDataDir, file), "utf8"))))
     ).flat();
-    const examples = createWindowedSleepStageExamples(rows, { historyMinutes });
+    const trainingRows = rowsWithSleepStage(rows);
+    const examples = createWindowedSleepStageExamples(trainingRows, { historyMinutes });
     const validationFiles = await getOptionalCsvFiles(validationDataDir);
     const validationRows = (
       await Promise.all(
         validationFiles.map(async (file) => parseSleepStageCsv(await readFile(join(validationDataDir ?? "", file), "utf8"))),
       )
     ).flat();
-    const validationExamples = createWindowedSleepStageExamples(validationRows, { historyMinutes });
+    const validationExamples = createWindowedSleepStageExamples(rowsWithSleepStage(validationRows), { historyMinutes });
 
     model = trainSleepStageModel(examples);
     const trainingEvaluation = evaluateSleepStageModel(model, examples);

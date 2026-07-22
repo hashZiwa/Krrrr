@@ -13,6 +13,7 @@ import {
 import { getChartAnimationKey } from "../data/chartAnimation";
 import {
   formatTimeLabel,
+  getInitialAnalysisExclusionRangeForSamples,
   getTwentyMinuteTimeTicks,
   getSleepStageValueAtTime,
   toBreathingDisplaySamples,
@@ -32,6 +33,8 @@ import {
   breathingYAxisTicks,
   type BreathingEventOverlayLayerKey,
   chartColors,
+  chartGapThresholdMinutes,
+  initialAnalysisExclusion,
   formatBreathingValue,
   getBreathingEventDotOpacity,
   getBreathingEventOverlayColor,
@@ -64,6 +67,47 @@ type ChartOffset = {
   height: number;
 };
 
+type AnalysisExclusionLayerProps = {
+  data: ChartSample[];
+  window: TimeWindow;
+  xAxisMap?: AxisMap;
+  offset?: ChartOffset;
+};
+
+function AnalysisExclusionLayer({ data, window, xAxisMap, offset }: AnalysisExclusionLayerProps) {
+  const xScale = getPrimaryScale(xAxisMap);
+  const range = getInitialAnalysisExclusionRangeForSamples(data, window, initialAnalysisExclusion.minutes);
+
+  if (!xScale || !offset || !range) return null;
+
+  const x1 = xScale(range.startMs);
+  const x2 = xScale(range.endMs);
+  const x = Math.min(x1, x2);
+  const width = Math.abs(x2 - x1);
+
+  return (
+    <g data-testid="initial-analysis-exclusion-overlay">
+      <rect
+        x={x}
+        y={offset.top}
+        width={width}
+        height={offset.height}
+        fill={initialAnalysisExclusion.fill}
+        opacity={initialAnalysisExclusion.opacity}
+      />
+      <text
+        x={x + width / 2}
+        y={offset.top + 22}
+        fill={initialAnalysisExclusion.textColor}
+        fontSize={12}
+        fontWeight={800}
+        textAnchor="middle"
+      >
+        {initialAnalysisExclusion.label}
+      </text>
+    </g>
+  );
+}
 type BreathingEventOverlayLayerProps = {
   data: ChartSample[];
   xAxisMap?: AxisMap;
@@ -337,7 +381,8 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
   const [showSleepStageOverlay, setShowSleepStageOverlay] = useState(false);
   const timeTicks = getTwentyMinuteTimeTicks(window.start, window.end);
   const scrollableWidth = getBreathingScrollableWidth(window.start, window.end);
-  const displayData = toBreathingDisplaySamples(data);
+  const gapThresholdMs = chartGapThresholdMinutes * 60 * 1000;
+  const displayData = toBreathingDisplaySamples(data, gapThresholdMs);
   const yAxisConfig = getBreathingYAxisConfig(data.map((sample) => sample.value));
   const animationKey = getChartAnimationKey(data);
 
@@ -429,6 +474,7 @@ export function BreathingChart({ data, sleepStageData, window }: BreathingChartP
                   animationEasing="ease-out"
                 />
                 <Customized component={<BreathingEventOverlayLayer data={data} />} />
+                <Customized component={<AnalysisExclusionLayer data={data} window={window} />} />
                 {showSleepStageOverlay ? (
                   <Customized
                     component={

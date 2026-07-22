@@ -11,13 +11,13 @@ function unavailable(res: Response) {
 export function createRealtimePlatformMonitorRouter(service: RealtimePlatformMonitorService | null): Router {
   const router = Router();
 
-  router.post("/start", (_req, res) => {
+  router.post("/start", async (_req, res) => {
     if (!service) {
       unavailable(res);
       return;
     }
 
-    service.start();
+    await service.start();
     res.status(200).json({ state: service.getState() });
   });
 

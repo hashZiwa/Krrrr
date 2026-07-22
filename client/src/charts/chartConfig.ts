@@ -17,6 +17,16 @@ export const sleepStageLabels: Record<number, string> = {
 
 export const sleepStageValues = [0, 1, 2, 3] as const;
 
+export const chartGapThresholdMinutes = 10;
+
+export const initialAnalysisExclusion = {
+  minutes: 30,
+  label: "분석 배제 구간",
+  fill: "#6daee8",
+  opacity: 0.18,
+  textColor: "#276998",
+} as const;
+
 export type SleepStageLineStyle = {
   color: string;
   strokeWidth: number;

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   getPlatformDataGroupDisplayName,
   getPlatformDataGroupSaveLabel,
+  getPlatformDataGroupIconKind,
+  getPlatformDataGroupSelectionDisabled,
   getPlatformDataLoadButtonText,
   getPlatformDataStatusText,
   getTotalDataText,
@@ -47,5 +49,13 @@ describe("PlatformDataPanel helpers", () => {
     expect(getPlatformDataGroupSaveLabel("new")).toBe("");
     expect(getPlatformDataGroupSaveLabel("saved")).toBe("다운로드됨");
     expect(getPlatformDataGroupSaveLabel("updated")).toBe("갱신됨");
+  });
+  it("keeps platform data groups selectable and csv-icon based after saving", () => {
+    expect(getPlatformDataGroupSelectionDisabled("new")).toBe(false);
+    expect(getPlatformDataGroupSelectionDisabled("updated")).toBe(false);
+    expect(getPlatformDataGroupSelectionDisabled("saved")).toBe(false);
+    expect(getPlatformDataGroupIconKind("new")).toBe("csv");
+    expect(getPlatformDataGroupIconKind("updated")).toBe("csv");
+    expect(getPlatformDataGroupIconKind("saved")).toBe("csv");
   });
 });
