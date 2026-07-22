@@ -16,12 +16,12 @@ export type SleepStageDonutSegment = SleepStageRatio & {
 export type ApneaGaugeDisplay =
   | {
       hasData: true;
-      maxApneaCount: number;
+      apneaCountPerHour: number;
       severity: ApneaSeverityLevel;
     }
   | {
       hasData: false;
-      maxApneaCount: null;
+      apneaCountPerHour: null;
       severity: null;
     };
 
@@ -48,6 +48,21 @@ export function getSlidingWindowApneaCount(
   return maxCount;
 }
 
+export function getAverageHourlyApneaCount(samples: ChartSample[]): number | null {
+  if (samples.length < 2) return null;
+
+  const sortedSamples = [...samples].sort((left, right) => left.timeMs - right.timeMs);
+  const firstSample = sortedSamples[0];
+  const lastSample = sortedSamples[sortedSamples.length - 1];
+  const durationHours = (lastSample.timeMs - firstSample.timeMs) / (60 * 60 * 1000);
+
+  if (durationHours <= 0) return null;
+
+  const apneaCount = sortedSamples.filter((sample) => sample.value === 0).length;
+
+  return apneaCount / durationHours;
+}
+
 export function getApneaSeverity(
   count: number,
   thresholds: ApneaSeverityLevel[] = apneaSeverityThresholds,
@@ -58,20 +73,20 @@ export function getApneaSeverity(
 }
 
 export function getApneaGaugeDisplay(samples: ChartSample[]): ApneaGaugeDisplay {
-  if (samples.length === 0) {
+  const apneaCountPerHour = getAverageHourlyApneaCount(samples);
+
+  if (apneaCountPerHour === null) {
     return {
       hasData: false,
-      maxApneaCount: null,
+      apneaCountPerHour: null,
       severity: null,
     };
   }
 
-  const maxApneaCount = getSlidingWindowApneaCount(samples);
-
   return {
     hasData: true,
-    maxApneaCount,
-    severity: getApneaSeverity(maxApneaCount),
+    apneaCountPerHour,
+    severity: getApneaSeverity(apneaCountPerHour),
   };
 }
 

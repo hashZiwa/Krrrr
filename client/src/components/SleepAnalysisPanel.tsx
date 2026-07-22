@@ -64,7 +64,7 @@ function describeDonutArc(startRatio: number, endRatio: number, radius = 15.9155
 
 export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnalysisPanelProps) {
   const apneaDisplay = getApneaGaugeDisplay(breathingData);
-  const needle = apneaDisplay.hasData ? getGaugeNeedlePoint(apneaDisplay.maxApneaCount) : null;
+  const needle = apneaDisplay.hasData ? getGaugeNeedlePoint(apneaDisplay.apneaCountPerHour) : null;
   const apneaGaugeBoundaryLabels = getApneaGaugeBoundaryLabels();
   const ratios = getSleepStageRatios(sleepStageData);
   const donutSegments = getSleepStageDonutSegments(ratios);
@@ -83,7 +83,7 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
             className="apnea-gauge"
             aria-label={
               apneaDisplay.hasData
-                ? `최대 1시간 무호흡 ${apneaDisplay.maxApneaCount}회, ${apneaDisplay.severity.label}`
+                ? `시간당 평균 무호흡 ${apneaDisplay.apneaCountPerHour.toFixed(1)}회, ${apneaDisplay.severity.label}`
                 : "무호흡증 정도 데이터 없음"
             }
           >
@@ -127,7 +127,7 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
               {apneaDisplay.hasData ? (
                 <strong style={{ color: apneaDisplay.severity.color }}>{apneaDisplay.severity.label}</strong>
               ) : null}
-              <span>시간당 최대 무호흡 횟수 기준</span>
+              <span>시간당 평균 무호흡 횟수 기준</span>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import {
   getApneaSeverity,
   getSleepStageDonutSegments,
   getSleepStageRatios,
+  getAverageHourlyApneaCount,
   getSlidingWindowApneaCount,
 } from "../data/sleepAnalysis";
 import { apneaSeverityThresholds, getApneaGaugeBoundaryLabels, getApneaSeverityRangeLabel } from "../data/sleepAnalysisConfig";
@@ -35,6 +36,15 @@ describe("sleepAnalysis", () => {
     expect(getSlidingWindowApneaCount(samples)).toBe(5);
   });
 
+  it("uses total apnea events per total observed hour for apnea frequency", () => {
+    const samples = [sample(0, 16), sample(10, 0), sample(20, 0), sample(30, 0), sample(40, 0), sample(50, 0), sample(120, 16)];
+
+    expect(getAverageHourlyApneaCount(samples)).toBe(2.5);
+    expect(getApneaGaugeDisplay(samples)).toMatchObject({
+      hasData: true,
+      apneaCountPerHour: 2.5,
+    });
+  });
   it("maps apnea count thresholds to severity labels", () => {
     expect(getApneaSeverity(4, apneaSeverityThresholds).label).toBe("정상");
     expect(getApneaSeverity(5, apneaSeverityThresholds).label).toBe("경증");
@@ -64,7 +74,7 @@ describe("sleepAnalysis", () => {
   it("does not classify the apnea gauge when there is no breathing data", () => {
     expect(getApneaGaugeDisplay([])).toEqual({
       hasData: false,
-      maxApneaCount: null,
+      apneaCountPerHour: null,
       severity: null,
     });
   });
