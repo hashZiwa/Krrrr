@@ -1,4 +1,4 @@
-import { initialAnalysisExclusion, sleepStageValues } from "../charts/chartConfig";
+import { initialAnalysisExclusion, normalizeSleepStageValue, sleepStageValues } from "../charts/chartConfig";
 import type { ChartSample } from "../types/sleep";
 import { apneaGaugeConfig, apneaSeverityThresholds, type ApneaSeverityLevel } from "./sleepAnalysisConfig";
 
@@ -106,7 +106,7 @@ export function getSleepStageRatios(samples: ChartSample[]): SleepStageRatio[] {
   const total = samples.length;
 
   return sleepStageValues.map((value) => {
-    const count = samples.filter((sample) => sample.value === value).length;
+    const count = samples.filter((sample) => normalizeSleepStageValue(sample.value) === value).length;
 
     return {
       value,

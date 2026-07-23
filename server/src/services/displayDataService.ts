@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { SensorSample, SleepSessionResponse, SleepSessionSummary } from "../models/sleep.js";
 import type { SleepStageValue } from "../ml/sleepStageDataset.js";
-import { parseSleepStageCsv } from "../ml/sleepStageDataset.js";
+import { normalizeSleepStageValue, parseSleepStageCsv } from "../ml/sleepStageDataset.js";
 import { formatTimestamp } from "../utils/time.js";
 
 export type DisplayDataFile = {
@@ -27,8 +27,7 @@ export type DisplayDataWriter = {
 const sleepStageLabels: Record<SleepStageValue, { label: string; code: string }> = {
   0: { label: "Wake", code: "40001" },
   1: { label: "REM", code: "40004" },
-  2: { label: "Light", code: "40002" },
-  3: { label: "Deep", code: "40003" },
+  2: { label: "NREM", code: "40002" },
 };
 
 function assertSafeCsvFileName(fileName: string): void {
@@ -44,7 +43,7 @@ function roundTo(value: number, digits: number): number {
 
 function summarize(sleepStageSamples: SensorSample[], breathingSamples: SensorSample[]): SleepSessionSummary {
   const validBreathing = breathingSamples.map((sample) => sample.value).filter((value) => value > 0);
-  const deepSleepCount = sleepStageSamples.filter((sample) => sample.value === 3).length;
+  const deepSleepCount = sleepStageSamples.filter((sample) => normalizeSleepStageValue(sample.value) === 2).length;
 
   return {
     averageBreathingRate:
@@ -78,7 +77,7 @@ function toPredictedSessionCsv(rows: PredictedDisplayDataRow[]): string {
   const csvRows = ["timestamp,sleep_stage,sleep_stage_code,respiratory_rate_bpm"];
 
   for (const row of sortedRows) {
-    const stage = row.sleepStage === null ? null : sleepStageLabels[row.sleepStage];
+    const stage = row.sleepStage === null ? null : sleepStageLabels[normalizeSleepStageValue(row.sleepStage)];
     csvRows.push(`${formatCsvTimestamp(row.timestampMs)},${stage?.label ?? ""},${stage?.code ?? ""},${row.respiratoryRate}`);
   }
 
@@ -109,7 +108,7 @@ export function createDisplayDataService(displayDataDir = path.resolve(process.c
       const sleepStageSamples = rows.flatMap((row) =>
         row.sleepStage === null
           ? []
-          : [{ measuredAt: formatTimestamp(new Date(row.timestampMs)), value: row.sleepStage }],
+          : [{ measuredAt: formatTimestamp(new Date(row.timestampMs)), value: normalizeSleepStageValue(row.sleepStage) }],
       );
       const breathingSamples = rows.map((row) => ({
         measuredAt: formatTimestamp(new Date(row.timestampMs)),

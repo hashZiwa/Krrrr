@@ -99,8 +99,7 @@ describe("sleepAnalysis", () => {
     expect(getSleepStageRatios([sample(0, 0), sample(5, 1), sample(10, 2), sample(15, 3), sample(20, 3)])).toEqual([
       { value: 0, count: 1, ratio: 0.2 },
       { value: 1, count: 1, ratio: 0.2 },
-      { value: 2, count: 1, ratio: 0.2 },
-      { value: 3, count: 2, ratio: 0.4 },
+      { value: 2, count: 3, ratio: 0.6 },
     ]);
   });
 
@@ -108,15 +107,13 @@ describe("sleepAnalysis", () => {
     const segments = getSleepStageDonutSegments([
       { value: 0, count: 1, ratio: 0.2 },
       { value: 1, count: 2, ratio: 0.4 },
-      { value: 2, count: 1, ratio: 0.2 },
-      { value: 3, count: 1, ratio: 0.2 },
+      { value: 2, count: 2, ratio: 0.4 },
     ]);
 
     expect(segments.map(({ value, startRatio, endRatio }) => ({ value, startRatio, endRatio }))).toEqual([
       { value: 0, startRatio: 0, endRatio: 0.2 },
       { value: 1, startRatio: 0.2, endRatio: 0.6 },
-      { value: 2, startRatio: 0.6, endRatio: 0.8 },
-      { value: 3, startRatio: 0.8, endRatio: 1 },
+      { value: 2, startRatio: 0.6, endRatio: 1 },
     ]);
   });
 });

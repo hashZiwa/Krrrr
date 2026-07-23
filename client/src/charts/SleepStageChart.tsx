@@ -292,7 +292,7 @@ export function SleepStageChart({ data, window }: SleepStageChartProps) {
                   stroke="transparent"
                   tickMargin={8}
                 />
-                <YAxis domain={[0, 3]} ticks={[0, 1, 2, 3]} width={0} hide />
+                <YAxis domain={[0, 2]} ticks={[0, 1, 2]} width={0} hide />
                 <Tooltip content={<SleepStageTooltip />} />
                 <Customized component={<SleepStageSegmentsLayer data={data} />} />
                 <Customized component={<AnalysisExclusionLayer window={window} />} />

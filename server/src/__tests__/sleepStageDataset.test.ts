@@ -13,7 +13,7 @@ describe("sleepStageDataset", () => {
       ].join("\n"),
     );
 
-    expect(rows.map((row) => row.sleepStage)).toEqual([2, 0, 3, 1]);
+    expect(rows.map((row) => row.sleepStage)).toEqual([2, 0, 2, 1]);
     expect(rows.map((row) => row.respiratoryRate)).toEqual([14, 16, 12, 15]);
     expect(rows[0].timestampMs).toBeLessThan(rows[1].timestampMs);
   });

@@ -1,4 +1,4 @@
-export type SleepStageValue = 0 | 1 | 2 | 3;
+export type SleepStageValue = 0 | 1 | 2;
 
 export type SleepStageTrainingRow = {
   timestampMs: number;
@@ -16,14 +16,15 @@ const sleepStageByLabel: Record<string, SleepStageValue> = {
   Wake: 0,
   REM: 1,
   Light: 2,
-  Deep: 3,
+  Deep: 2,
+  NREM: 2,
 };
 
 const sleepStageByCode: Record<string, SleepStageValue> = {
   "40001": 0,
   "40004": 1,
   "40002": 2,
-  "40003": 3,
+  "40003": 2,
 };
 
 function parseCsvLine(line: string): string[] {
@@ -54,6 +55,10 @@ function parseTimestamp(value: string): number {
   }
 
   return timestamp;
+}
+
+export function normalizeSleepStageValue(value: number): SleepStageValue {
+  return value >= 3 ? 2 : (value as SleepStageValue);
 }
 
 function parseSleepStage(label: string, code: string): SleepStageValue | null {

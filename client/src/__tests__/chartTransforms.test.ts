@@ -44,7 +44,7 @@ describe("chartTransforms", () => {
       { measuredAt: "20260714231000", value: 3 },
     ]);
 
-    expect(getSleepStageValueAtTime(samples, samples[2].timeMs)).toBe(3);
+    expect(getSleepStageValueAtTime(samples, samples[2].timeMs)).toBe(2);
     expect(getSleepStageValueAtTime(samples, samples[2].timeMs + 1)).toBeNull();
   });
 
@@ -192,19 +192,19 @@ describe("chartTransforms", () => {
       {
         value: 1,
         points: [
-          { timeMs: samples[1].timeMs, overlayValue: 16.166666666666664 },
-          { timeMs: samples[2].timeMs, overlayValue: 16.166666666666664 },
+          { timeMs: samples[1].timeMs, overlayValue: 15 },
+          { timeMs: samples[2].timeMs, overlayValue: 15 },
         ],
       },
       {
         value: 2,
         points: [
-          { timeMs: samples[2].timeMs, overlayValue: 13.833333333333332 },
-          { timeMs: samples[3].timeMs, overlayValue: 13.833333333333332 },
+          { timeMs: samples[2].timeMs, overlayValue: 11.5 },
+          { timeMs: samples[3].timeMs, overlayValue: 11.5 },
         ],
       },
       {
-        value: 3,
+        value: 2,
         points: [
           { timeMs: samples[3].timeMs, overlayValue: 11.5 },
           { timeMs: samples[4].timeMs, overlayValue: 11.5 },
@@ -229,13 +229,13 @@ describe("chartTransforms", () => {
         toValue: 1,
         timeMs: samples[1].timeMs,
         fromOverlayValue: 18.5,
-        toOverlayValue: 16.166666666666664,
+        toOverlayValue: 15,
       },
       {
         fromValue: 1,
-        toValue: 3,
+        toValue: 2,
         timeMs: samples[3].timeMs,
-        fromOverlayValue: 16.166666666666664,
+        fromOverlayValue: 15,
         toOverlayValue: 11.5,
       },
     ]);
@@ -270,11 +270,6 @@ describe("chartTransforms", () => {
         fromValue: 0,
         toValue: 1,
         timeMs: samples[1].timeMs,
-      },
-      {
-        fromValue: 2,
-        toValue: 3,
-        timeMs: samples[3].timeMs,
       },
     ]);
   });

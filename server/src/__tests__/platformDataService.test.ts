@@ -221,7 +221,7 @@ describe("platformDataService", () => {
       fileName: "platform-breath-condition-2026-07-18.csv",
     });
     const predictFromBreathingSamples = vi.fn().mockResolvedValue([
-      { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12, sleepStage: 3 },
+      { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12, sleepStage: 2 },
     ]);
     const service = createPlatformDataService(client, {
       breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
@@ -246,7 +246,7 @@ describe("platformDataService", () => {
     expect(savePredictedSession).toHaveBeenCalledWith("platform-breath-condition-2026-07-18.csv", [
       { timestampMs: new Date(2026, 6, 18, 18, 0, 0).getTime(), respiratoryRate: 20, sleepStage: null },
       { timestampMs: new Date(2026, 6, 18, 18, 5, 0).getTime(), respiratoryRate: 12, sleepStage: null },
-      { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12, sleepStage: 3 },
+      { timestampMs: new Date(2026, 6, 19, 17, 59, 59).getTime(), respiratoryRate: 12, sleepStage: 2 },
     ]);
     expect(result).toEqual({
       fileName: "platform-breath-condition-2026-07-18.csv",

@@ -11,11 +11,10 @@ export const chartColors = {
 export const sleepStageLabels: Record<number, string> = {
   0: "깸",
   1: "REM",
-  2: "얕은 잠",
-  3: "깊은 잠",
+  2: "NREM",
 };
 
-export const sleepStageValues = [0, 1, 2, 3] as const;
+export const sleepStageValues = [0, 1, 2] as const;
 
 export const chartGapThresholdMinutes = 10;
 
@@ -35,8 +34,7 @@ export type SleepStageLineStyle = {
 export const sleepStageLineStyles: Record<number, SleepStageLineStyle> = {
   0: { color: "#ff5f03ff", strokeWidth: 4 },
   1: { color: "#f8c302ff", strokeWidth: 8 },
-  2: { color: "#239bf1", strokeWidth: 12 },
-  3: { color: "#5541e6", strokeWidth: 16 },
+  2: { color: "#5541e6", strokeWidth: 16 },
 };
 
 export const sleepStageTransitionLineStyle = {
@@ -91,7 +89,7 @@ export const breathingSleepStageOverlayStyle = {
     0: sleepStageLineStyles[0].strokeWidth,
     1: sleepStageLineStyles[1].strokeWidth,
     2: sleepStageLineStyles[2].strokeWidth,
-    3: sleepStageLineStyles[3].strokeWidth,
+    3: sleepStageLineStyles[2].strokeWidth,
   },
 } as const;
 
@@ -249,8 +247,12 @@ export function getSleepStageSegmentClipPadding(): number {
   return maxStrokeWidth / 2 + sleepStageSegmentClipPaddingBuffer;
 }
 
+export function normalizeSleepStageValue(value: number): number {
+  return value >= 3 ? 2 : value;
+}
+
 export function getSleepStageDisplayValue(value: number): number {
-  return 3 - value;
+  return 2 - normalizeSleepStageValue(value);
 }
 
 export function shouldRenderSleepStageGlow(value: number): boolean {
@@ -263,10 +265,10 @@ export type SleepStageTooltipPayloadItem = {
 
 export function getSleepStageTooltipValue(payload?: SleepStageTooltipPayloadItem[] | null): number | null {
   const item = payload?.find((entry) => {
-    return typeof entry.value === "number" && entry.value in sleepStageLabels;
+    return typeof entry.value === "number" && normalizeSleepStageValue(entry.value) in sleepStageLabels;
   });
 
-  return typeof item?.value === "number" ? item.value : null;
+  return typeof item?.value === "number" ? normalizeSleepStageValue(item.value) : null;
 }
 
 export function formatBreathingValue(value: number): string {

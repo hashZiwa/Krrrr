@@ -125,7 +125,7 @@ function roundTo(value: number, digits: number): number {
 
 function summarize(breathingSamples: BreathingSample[], predictedSamples: SleepStagePredictedSample[]): SleepSessionSummary {
   const validBreathing = breathingSamples.map((sample) => sample.respiratoryRate).filter((value) => value > 0);
-  const deepSleepCount = predictedSamples.filter((sample) => sample.sleepStage === 3).length;
+  const deepSleepCount = predictedSamples.filter((sample) => sample.sleepStage === 2).length;
 
   return {
     averageBreathingRate:

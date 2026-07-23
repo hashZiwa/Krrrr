@@ -68,7 +68,7 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
   const apneaGaugeBoundaryLabels = getApneaGaugeBoundaryLabels();
   const ratios = getSleepStageRatios(sleepStageData);
   const donutSegments = getSleepStageDonutSegments(ratios);
-  const deepSleepRatio = ratios.find((item) => item.value === 3)?.ratio ?? 0;
+  const nremRatio = ratios.find((item) => item.value === 2)?.ratio ?? 0;
   const analysisAnimationKey = `${getChartAnimationKey(breathingData)}-${getChartAnimationKey(sleepStageData)}`;
 
   return (
@@ -148,7 +148,7 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
           <h2>수면 깊이 비율</h2>
         </div>
         <div className="sleep-ratio-card__body">
-          <div className="sleep-donut" aria-label={`깊은 잠 ${Math.round(deepSleepRatio * 100)}%`}>
+          <div className="sleep-donut" aria-label={`NREM ${Math.round(nremRatio * 100)}%`}>
             <svg viewBox="0 0 42 42" role="img" aria-hidden="true">
               <circle className="sleep-donut__track" cx="21" cy="21" r="15.9155" />
               {donutSegments.map((item) => {
@@ -165,8 +165,8 @@ export function SleepAnalysisPanel({ breathingData, sleepStageData }: SleepAnaly
               })}
             </svg>
             <div className="sleep-donut__center">
-              <strong>{Math.round(deepSleepRatio * 100)}%</strong>
-              <span>깊은 잠</span>
+              <strong>{Math.round(nremRatio * 100)}%</strong>
+              <span>NREM</span>
             </div>
           </div>
           <ul className="sleep-ratio-legend">

@@ -1,3 +1,4 @@
+import { normalizeSleepStageValue } from "../charts/chartConfig";
 import type { ChartSample, SensorSample } from "../types/sleep";
 
 const pad = (value: number) => String(value).padStart(2, "0");
@@ -85,7 +86,8 @@ export function toChartSamples(samples: SensorSample[]): ChartSample[] {
 }
 
 export function getSleepStageValueAtTime(samples: ChartSample[], timeMs: number): number | null {
-  return samples.find((sample) => sample.timeMs === timeMs)?.value ?? null;
+  const value = samples.find((sample) => sample.timeMs === timeMs)?.value;
+  return typeof value === "number" ? normalizeSleepStageValue(value) : null;
 }
 
 function isLongChartGap(previous: ChartSample, next: ChartSample, gapThresholdMs = Number.POSITIVE_INFINITY): boolean {
@@ -111,10 +113,10 @@ export function toSleepStageSegments(
 
     return [
       {
-        value: sample.value,
+        value: normalizeSleepStageValue(sample.value),
         points: [
-          { timeMs: sample.timeMs, value: sample.value },
-          { timeMs: next.timeMs, value: sample.value },
+          { timeMs: sample.timeMs, value: normalizeSleepStageValue(sample.value) },
+          { timeMs: next.timeMs, value: normalizeSleepStageValue(sample.value) },
         ],
       },
     ];
@@ -134,14 +136,14 @@ export function toSleepStageTransitionSegments(
   return samples.slice(1).flatMap((sample, index) => {
     const previous = samples[index];
 
-    if (previous.value === sample.value || isLongChartGap(previous, sample, gapThresholdMs)) {
+    if (normalizeSleepStageValue(previous.value) === normalizeSleepStageValue(sample.value) || isLongChartGap(previous, sample, gapThresholdMs)) {
       return [];
     }
 
     return [
       {
-        fromValue: previous.value,
-        toValue: sample.value,
+        fromValue: normalizeSleepStageValue(previous.value),
+        toValue: normalizeSleepStageValue(sample.value),
         timeMs: sample.timeMs,
       },
     ];
@@ -162,9 +164,8 @@ function getSleepStageOverlayPositions(breathingDomain: [number, number]): Recor
 
   return {
     0: min + range * 0.85,
-    1: min + range * (0.15 + (0.7 * 2) / 3),
-    2: min + range * (0.15 + 0.7 / 3),
-    3: min + range * 0.15,
+    1: min + range * 0.5,
+    2: min + range * 0.15,
   };
 }
 
@@ -177,13 +178,14 @@ export function toSleepStageOverlaySegments(
 
   return samples.slice(0, -1).flatMap((sample, index) => {
     const next = samples[index + 1];
-    const overlayValue = stagePositions[sample.value] ?? stagePositions[0];
+    const normalizedValue = normalizeSleepStageValue(sample.value);
+    const overlayValue = stagePositions[normalizedValue] ?? stagePositions[0];
 
     if (isLongChartGap(sample, next, gapThresholdMs)) return [];
 
     return [
       {
-        value: sample.value,
+        value: normalizeSleepStageValue(sample.value),
         points: [
           { timeMs: sample.timeMs, overlayValue },
           { timeMs: next.timeMs, overlayValue },
@@ -211,17 +213,17 @@ export function toSleepStageOverlayTransitionSegments(
   return samples.slice(1).flatMap((sample, index) => {
     const previous = samples[index];
 
-    if (previous.value === sample.value || isLongChartGap(previous, sample, gapThresholdMs)) {
+    if (normalizeSleepStageValue(previous.value) === normalizeSleepStageValue(sample.value) || isLongChartGap(previous, sample, gapThresholdMs)) {
       return [];
     }
 
     return [
       {
-        fromValue: previous.value,
-        toValue: sample.value,
+        fromValue: normalizeSleepStageValue(previous.value),
+        toValue: normalizeSleepStageValue(sample.value),
         timeMs: sample.timeMs,
-        fromOverlayValue: stagePositions[previous.value] ?? stagePositions[0],
-        toOverlayValue: stagePositions[sample.value] ?? stagePositions[0],
+        fromOverlayValue: stagePositions[normalizeSleepStageValue(previous.value)] ?? stagePositions[0],
+        toOverlayValue: stagePositions[normalizeSleepStageValue(sample.value)] ?? stagePositions[0],
       },
     ];
   });

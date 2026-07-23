@@ -7,7 +7,7 @@ import type { SleepStageBreathingRow } from "../ml/sleepStageFeatures.js";
 import type { SleepStageModel } from "../ml/sleepStageModel.js";
 import type { SleepStageModelEvaluation } from "../ml/sleepStageModel.js";
 import { evaluateSleepStageModel, predictSleepStage, trainSleepStageModel } from "../ml/sleepStageModel.js";
-import { parseSleepStageCsv } from "../ml/sleepStageDataset.js";
+import { normalizeSleepStageValue, parseSleepStageCsv } from "../ml/sleepStageDataset.js";
 import type { SleepStageTrainingRow, SleepStageValue } from "../ml/sleepStageDataset.js";
 import { createSleepStageModelStore } from "./sleepStageModelStore.js";
 import type { SourceFileFingerprint, SleepStageTrainingMode, StoredSleepStageModel } from "./sleepStageModelStore.js";
@@ -281,7 +281,7 @@ export function createSleepStageTrainingService(options: SleepStageTrainingServi
       return createWindowedSleepStagePredictionInputs(samples, { historyMinutes }).map((input) => ({
         timestampMs: input.timestampMs,
         respiratoryRate: input.respiratoryRate,
-        sleepStage: predictSleepStage(currentModel, input.features).stage,
+        sleepStage: normalizeSleepStageValue(predictSleepStage(currentModel, input.features).stage),
       }));
     },
   };

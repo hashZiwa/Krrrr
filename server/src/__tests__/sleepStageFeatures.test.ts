@@ -15,13 +15,13 @@ function row(index: number, respiratoryRate: number, sleepStage: SleepStageValue
 describe("sleepStageFeatures", () => {
   it("creates examples from current and previous breathing context", () => {
     const examples = createWindowedSleepStageExamples(
-      [row(0, 10), row(1, 11), row(2, 13, 3), row(3, 16, 1)],
+      [row(0, 10), row(1, 11), row(2, 13, 2), row(3, 16, 1)],
       { historyMinutes: 2 },
     );
 
     expect(examples).toHaveLength(2);
     expect(examples[0]).toMatchObject({
-      label: 3,
+      label: 2,
       timestampMs: 2 * minute,
       respiratoryRates: [10, 11, 13],
     });

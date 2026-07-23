@@ -51,13 +51,13 @@ describe("createDisplayDataService", () => {
     expect(session.startedAt).toBe("20260719012017");
     expect(session.endedAt).toBe("20260719013517");
     expect(session.intervalMinutes).toBe(5);
-    expect(session.sleepStageSamples.map((sample) => sample.value)).toEqual([0, 1, 2, 3]);
+    expect(session.sleepStageSamples.map((sample) => sample.value)).toEqual([0, 1, 2, 2]);
     expect(session.breathingSamples.map((sample) => sample.value)).toEqual([16, 15, 0, 12]);
     expect(session.summary).toMatchObject({
       averageBreathingRate: 14.3,
       movementCount: 0,
       apneaRecognitionFailureCount: 1,
-      deepSleepRatio: 0.25,
+      deepSleepRatio: 0.5,
     });
   });
 
@@ -70,14 +70,14 @@ describe("createDisplayDataService", () => {
         { timestampMs: new Date(2026, 6, 19, 1, 20, 17).getTime(), sleepStage: 0, respiratoryRate: 16 },
         { timestampMs: new Date(2026, 6, 19, 1, 25, 17).getTime(), sleepStage: 1, respiratoryRate: 15 },
         { timestampMs: new Date(2026, 6, 19, 1, 30, 17).getTime(), sleepStage: 2, respiratoryRate: 0 },
-        { timestampMs: new Date(2026, 6, 19, 1, 35, 17).getTime(), sleepStage: 3, respiratoryRate: 12 },
+        { timestampMs: new Date(2026, 6, 19, 1, 35, 17).getTime(), sleepStage: 2, respiratoryRate: 12 },
       ]),
     ).resolves.toEqual({ fileName: "predicted.csv" });
 
     const session = await service.getSession("predicted.csv");
 
     expect(session.startedAt).toBe("20260719012017");
-    expect(session.sleepStageSamples.map((sample) => sample.value)).toEqual([0, 1, 2, 3]);
+    expect(session.sleepStageSamples.map((sample) => sample.value)).toEqual([0, 1, 2, 2]);
     expect(session.breathingSamples.map((sample) => sample.value)).toEqual([16, 15, 0, 12]);
   });
 
@@ -106,6 +106,6 @@ describe("createDisplayDataService", () => {
     expect(session.endedAt).toBe("20260719015017");
     expect(session.breathingSamples.map((sample) => sample.value)).toEqual([16, 15, 14]);
     expect(session.sleepStageSamples).toEqual([{ measuredAt: "20260719015017", value: 2 }]);
-    expect(session.summary.deepSleepRatio).toBe(0);
+    expect(session.summary.deepSleepRatio).toBe(1);
   });
 });

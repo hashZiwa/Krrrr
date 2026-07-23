@@ -37,15 +37,14 @@ describe("chartConfig", () => {
     expect(sleepStageLabels).toEqual({
       0: "깸",
       1: "REM",
-      2: "얕은 잠",
-      3: "깊은 잠",
+      2: "NREM",
     });
   });
 
   it("configures one pulse line style per sleep stage", () => {
-    expect(Object.keys(sleepStageLineStyles).map(Number)).toEqual([0, 1, 2, 3]);
-    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.color)).size).toBe(4);
-    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.strokeWidth)).size).toBe(4);
+    expect(Object.keys(sleepStageLineStyles).map(Number)).toEqual([0, 1, 2]);
+    expect(sleepStageLineStyles[2].color).toBe("#5541e6");
+    expect(new Set(Object.values(sleepStageLineStyles).map((style) => style.strokeWidth)).size).toBe(3);
   });
 
   it("keeps horizontal sleep stage segment styles focused on color and stroke width", () => {
@@ -100,9 +99,9 @@ describe("chartConfig", () => {
   });
 
   it("maps sleep stages to reversed y-axis display positions", () => {
-    expect(getSleepStageDisplayValue(0)).toBe(3);
-    expect(getSleepStageDisplayValue(1)).toBe(2);
-    expect(getSleepStageDisplayValue(2)).toBe(1);
+    expect(getSleepStageDisplayValue(0)).toBe(2);
+    expect(getSleepStageDisplayValue(1)).toBe(1);
+    expect(getSleepStageDisplayValue(2)).toBe(0);
     expect(getSleepStageDisplayValue(3)).toBe(0);
   });
 
@@ -197,7 +196,7 @@ describe("chartConfig", () => {
 
   it("derives breathing sleep stage overlay widths from original sleep stage widths", () => {
     expect(getBreathingSleepStageOverlayStrokeWidth(0)).toBe(sleepStageLineStyles[0].strokeWidth);
-    expect(getBreathingSleepStageOverlayStrokeWidth(3)).toBe(sleepStageLineStyles[3].strokeWidth);
+    expect(getBreathingSleepStageOverlayStrokeWidth(3)).toBe(sleepStageLineStyles[2].strokeWidth);
     expect(getBreathingSleepStageOverlayTransitionStrokeWidth()).toBe(sleepStageTransitionLineStyle.strokeWidth);
   });
 });

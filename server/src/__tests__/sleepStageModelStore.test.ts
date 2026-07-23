@@ -18,15 +18,15 @@ function storedModel(version = 1): StoredSleepStageModel {
     trainingEvaluation: { total: 5, correct: 4, accuracy: 0.8, stages: {} },
     validationEvaluation: null,
     model: {
-      labels: [0, 1, 2, 3],
+      labels: [0, 1, 2],
       featureMeans: [1],
       featureScales: [1],
-      weights: [[0], [0], [0], [0]],
+      weights: [[0], [0], [0]],
       metadata: {
         trainedAt: "2026-07-20T00:00:00.000Z",
         trainingExamples: 5,
         featureCount: 1,
-        stageCounts: { 0: 1, 1: 1, 2: 1, 3: 2 },
+        stageCounts: { 0: 1, 1: 1, 2: 3 },
       },
     },
   };

@@ -41,7 +41,7 @@ describe("sleepStageTrainingService", () => {
     expect(result.trainingMode).toBe("full");
     expect(result.datasetRows).toBe(6);
     expect(result.trainingExamples).toBe(5);
-    expect(result.model.metadata.stageCounts).toEqual({ 0: 1, 1: 1, 2: 1, 3: 2 });
+    expect(result.model.metadata.stageCounts).toEqual({ 0: 1, 1: 1, 2: 3 });
     expect(result.trainingEvaluation.total).toBe(5);
     expect(result.validationEvaluation?.total).toBe(3);
     expect(result.trainingEvaluation.accuracy).toBeGreaterThanOrEqual(0);

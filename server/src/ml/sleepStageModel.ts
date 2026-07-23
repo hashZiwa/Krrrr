@@ -31,7 +31,7 @@ export type SleepStageTrainingOptions = {
   learningRate?: number;
 };
 
-const labels: SleepStageValue[] = [0, 1, 2, 3];
+const labels: SleepStageValue[] = [0, 1, 2];
 
 function normalize(features: number[], means: number[], scales: number[]): number[] {
   return features.map((value, index) => (value - means[index]) / scales[index]);

@@ -55,7 +55,7 @@ describe("createSleepStageTrainingRouter", () => {
             trainedAt: "2026-07-20T00:00:00.000Z",
             trainingExamples: 5,
             featureCount: 10,
-            stageCounts: { 0: 1, 1: 1, 2: 2, 3: 1 },
+            stageCounts: { 0: 1, 1: 1, 2: 3 },
           },
         },
         trainingEvaluation: {
@@ -84,7 +84,7 @@ describe("createSleepStageTrainingRouter", () => {
       model: {
         trainedAt: "2026-07-20T00:00:00.000Z",
         featureCount: 10,
-        stageCounts: { 0: 1, 1: 1, 2: 2, 3: 1 },
+        stageCounts: { 0: 1, 1: 1, 2: 3 },
       },
       trainingEvaluation: {
         total: 5,
@@ -112,7 +112,7 @@ describe("createSleepStageTrainingRouter", () => {
             trainedAt: "2026-07-20T00:00:00.000Z",
             trainingExamples: 14,
             featureCount: 10,
-            stageCounts: { 0: 2, 1: 3, 2: 6, 3: 3 },
+            stageCounts: { 0: 2, 1: 3, 2: 9 },
           },
         },
         trainingEvaluation: {
