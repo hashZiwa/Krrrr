@@ -140,6 +140,30 @@ describe("createRealtimePlatformMonitorService", () => {
     ]);
   });
 
+
+  it("evaluates alarm state on every platform poll", async () => {
+    const client = createClient([
+      { rn: "4-20260720100000000", con: "18" },
+      { rn: "4-20260720100000000", con: "18" },
+    ]);
+    const evaluate = vi.fn().mockResolvedValue(undefined);
+    const service = createRealtimePlatformMonitorService(client, {
+      breathConditionContainer: "STATUS_CNT/BREATH_CONDITION_CNT",
+      alarmService: { evaluate },
+      now: () => new Date(2026, 6, 20, 10, 0, 30),
+    });
+
+    await service.pollLatest();
+    await service.pollLatest();
+
+    expect(evaluate).toHaveBeenCalledTimes(2);
+    expect(evaluate).toHaveBeenLastCalledWith({
+      now: new Date(2026, 6, 20, 10, 0, 30),
+      latestSleepStage: null,
+      sleepStageSamples: [],
+    });
+  });
+
   it("predicts sleep stages and backs up a display data csv on refresh", async () => {
     const client = createClient([
       { rn: "4-20260720090000000", con: "18" },
@@ -201,7 +225,11 @@ describe("createRealtimePlatformMonitorService", () => {
     await service.pollLatest();
     await service.refreshPredictions();
 
-    expect(evaluate).toHaveBeenCalledWith({ latestSleepStage: 1 });
+    expect(evaluate).toHaveBeenLastCalledWith({
+      now: expect.any(Date),
+      latestSleepStage: 1,
+      sleepStageSamples: [{ timestampMs: new Date(2026, 6, 20, 9, 31, 0).getTime(), sleepStage: 1 }],
+    });
   });
 
   it("saves the current realtime session as a display data csv", async () => {

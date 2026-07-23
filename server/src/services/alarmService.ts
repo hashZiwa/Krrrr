@@ -19,7 +19,11 @@ export type AlarmService = {
   updateEnabled(enabled: boolean): Promise<AlarmSettings>;
   updateTime(time: string): Promise<AlarmSettings>;
   updateStatus(active: boolean): Promise<AlarmSettings>;
-  evaluate(input: { now?: Date; latestSleepStage: SleepStageValue | null }): Promise<AlarmSettings>;
+  evaluate(input: {
+    now?: Date;
+    latestSleepStage: SleepStageValue | null;
+    sleepStageSamples?: Array<{ timestampMs: number; sleepStage: SleepStageValue }>;
+  }): Promise<AlarmSettings>;
 };
 
 function parseBooleanContent(value: MobiusCin["con"], fallback: boolean): boolean {
@@ -47,6 +51,21 @@ function getTodayAlarmAt(now: Date, time: string): Date {
 
 function isLightEnoughToWake(stage: SleepStageValue | null): boolean {
   return stage === 0 || stage === 1;
+}
+
+function hasLightSleepStageInWindow(
+  samples: Array<{ timestampMs: number; sleepStage: SleepStageValue }> | undefined,
+  observeFrom: Date,
+  now: Date,
+): boolean {
+  return (
+    samples?.some(
+      (sample) =>
+        sample.timestampMs >= observeFrom.getTime() &&
+        sample.timestampMs <= now.getTime() &&
+        isLightEnoughToWake(sample.sleepStage),
+    ) ?? false
+  );
 }
 
 export function createAlarmService(
@@ -103,7 +122,7 @@ export function createAlarmService(
       return { ...settings };
     },
 
-    async evaluate({ now = new Date(), latestSleepStage }) {
+    async evaluate({ now = new Date(), latestSleepStage, sleepStageSamples }) {
       if (!settings.enabled) {
         await uploadStatus(false);
         return { ...settings };
@@ -111,18 +130,21 @@ export function createAlarmService(
 
       const alarmAt = getTodayAlarmAt(now, settings.time);
       const observeFrom = new Date(alarmAt.getTime() - 30 * 60_000);
+      const alarmOffAfter = new Date(alarmAt.getTime() + 60_000);
 
       if (now.getTime() < observeFrom.getTime()) {
         await uploadStatus(false);
         return { ...settings };
       }
 
-      if (now.getTime() > alarmAt.getTime()) {
+      if (now.getTime() >= alarmOffAfter.getTime()) {
         await uploadStatus(false);
         return { ...settings };
       }
 
-      if (now.getTime() >= alarmAt.getTime() || (now >= observeFrom && isLightEnoughToWake(latestSleepStage))) {
+      const hasLightStageInObserveWindow = hasLightSleepStageInWindow(sleepStageSamples, observeFrom, now);
+
+      if (now.getTime() >= alarmAt.getTime() || hasLightStageInObserveWindow || (now >= observeFrom && isLightEnoughToWake(latestSleepStage))) {
         await uploadStatus(true);
       }
 

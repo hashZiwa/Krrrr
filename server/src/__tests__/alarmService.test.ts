@@ -43,6 +43,30 @@ describe("createAlarmService", () => {
     expect(service.getSettings().active).toBe(true);
   });
 
+
+  it("turns alarm on when any predicted REM sample exists inside the pre-alarm window", async () => {
+    const client = { getLatestCin: vi.fn(), createCin: vi.fn().mockResolvedValue({ con: "1" }) };
+    const service = createAlarmService(client, {
+      enabled: "ALARM_ENABLED",
+      time: "ALARM_TIME",
+      status: "ALARM_STATUS",
+    });
+    await service.updateEnabled(true);
+    await service.updateTime("1000");
+
+    await service.evaluate({
+      now: new Date(2026, 6, 20, 9, 45, 0),
+      latestSleepStage: 2,
+      sleepStageSamples: [
+        { timestampMs: new Date(2026, 6, 20, 9, 35, 0).getTime(), sleepStage: 1 },
+        { timestampMs: new Date(2026, 6, 20, 9, 45, 0).getTime(), sleepStage: 2 },
+      ],
+    });
+
+    expect(client.createCin).toHaveBeenLastCalledWith("ALARM_STATUS", "1");
+    expect(service.getSettings().active).toBe(true);
+  });
+
   it("turns alarm on at alarm time if sleep stays deeper", async () => {
     const client = { getLatestCin: vi.fn(), createCin: vi.fn().mockResolvedValue({ con: "1" }) };
     const service = createAlarmService(client, {
@@ -59,6 +83,26 @@ describe("createAlarmService", () => {
     });
     await service.evaluate({
       now: new Date(2026, 6, 20, 10, 0, 0),
+      latestSleepStage: 2,
+    });
+
+    expect(client.createCin).toHaveBeenLastCalledWith("ALARM_STATUS", "1");
+    expect(service.getSettings().active).toBe(true);
+  });
+
+
+  it("turns alarm on during the alarm minute when polling lands after the exact alarm time", async () => {
+    const client = { getLatestCin: vi.fn(), createCin: vi.fn().mockResolvedValue({ con: "1" }) };
+    const service = createAlarmService(client, {
+      enabled: "ALARM_ENABLED",
+      time: "ALARM_TIME",
+      status: "ALARM_STATUS",
+    });
+    await service.updateEnabled(true);
+    await service.updateTime("1000");
+
+    await service.evaluate({
+      now: new Date(2026, 6, 20, 10, 0, 30),
       latestSleepStage: 2,
     });
 

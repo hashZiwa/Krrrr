@@ -52,7 +52,11 @@ type RealtimePlatformMonitorOptions = {
     predictFromBreathingSamples(samples: BreathingSample[]): Promise<SleepStagePredictedSample[]>;
   };
   alarmService?: {
-    evaluate(input: { now?: Date; latestSleepStage: SleepStagePredictedSample["sleepStage"] | null }): Promise<unknown>;
+    evaluate(input: {
+      now?: Date;
+      latestSleepStage: SleepStagePredictedSample["sleepStage"] | null;
+      sleepStageSamples?: Array<{ timestampMs: number; sleepStage: SleepStagePredictedSample["sleepStage"] }>;
+    }): Promise<unknown>;
   };
   now?: () => Date;
 };
@@ -204,6 +208,18 @@ export function createRealtimePlatformMonitorService(
   let pollTimer: NodeJS.Timeout | null = null;
   let predictionTimer: NodeJS.Timeout | null = null;
 
+
+  function getAlarmSleepStageSamples(): Array<{ timestampMs: number; sleepStage: SleepStagePredictedSample["sleepStage"] }> {
+    return predictedSamples.map((sample) => ({ timestampMs: sample.timestampMs, sleepStage: sample.sleepStage }));
+  }
+
+  async function evaluateAlarm(): Promise<void> {
+    await options.alarmService?.evaluate({
+      now: options.now?.() ?? new Date(),
+      latestSleepStage: predictedSamples[predictedSamples.length - 1]?.sleepStage ?? null,
+      sleepStageSamples: getAlarmSleepStageSamples(),
+    });
+  }
   async function predictCurrentSamples(): Promise<SleepStagePredictedSample[]> {
     if (!options.sleepStageTrainingService) {
       throw new Error("Realtime sleep stage prediction is not configured");
@@ -221,9 +237,7 @@ export function createRealtimePlatformMonitorService(
     if (breathingSamples.length === 0 || !options.sleepStageTrainingService) return;
 
     predictedSamples = await predictCurrentSamples();
-    await options.alarmService?.evaluate({
-      latestSleepStage: predictedSamples[predictedSamples.length - 1]?.sleepStage ?? null,
-    });
+    await evaluateAlarm();
     lastPredictionAt = new Date().toISOString();
   }
 
@@ -283,17 +297,22 @@ export function createRealtimePlatformMonitorService(
       const cin = await client.getLatestCin(options.breathConditionContainer);
       const rn = cin.rn ?? null;
 
-      if (!rn) return;
+      if (!rn) {
+        await evaluateAlarm();
+        return;
+      }
 
       if (!primed) {
         lastRn = rn;
         primed = true;
         lastError = null;
+        await evaluateAlarm();
         return;
       }
 
       if (rn === lastRn) {
         lastError = null;
+        await evaluateAlarm();
         return;
       }
 
@@ -302,11 +321,15 @@ export function createRealtimePlatformMonitorService(
       const measuredAt = parseCinDateFromRn(rn);
       const respiratoryRate = parseBreathConditionValue(cin.con);
 
-      if (!measuredAt || respiratoryRate === null) return;
+      if (!measuredAt || respiratoryRate === null) {
+        await evaluateAlarm();
+        return;
+      }
 
       breathingSamples.push({ timestampMs: measuredAt.getTime(), respiratoryRate });
       breathingSamples.sort((left, right) => left.timestampMs - right.timestampMs);
       lastError = null;
+      await evaluateAlarm();
     } catch (error) {
       lastError = error instanceof Error ? error.message : "Unknown realtime platform polling failure";
     }
@@ -318,9 +341,7 @@ export function createRealtimePlatformMonitorService(
     try {
       predictedSamples = await predictCurrentSamples();
       await options.displayDataService.savePredictedSession(backupFileName, toPredictedDisplayRows(breathingSamples, predictedSamples));
-      await options.alarmService?.evaluate({
-        latestSleepStage: predictedSamples[predictedSamples.length - 1]?.sleepStage ?? null,
-      });
+      await evaluateAlarm();
       lastPredictionAt = new Date().toISOString();
       lastError = null;
     } catch (error) {
